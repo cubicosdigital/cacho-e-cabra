@@ -24,3 +24,94 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ── Workspace responsive ─────────────────────────── */
+.ws-nav { padding: 0 32px; flex-wrap: nowrap; }
+.ws-nav-sub { display: inline; }
+.ws-header { padding: 40px 32px 36px; }
+.ws-main { padding: 48px 32px; }
+.ws-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.ws-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ws-gantt-label { width: 220px; flex-shrink: 0; }
+.ws-gantt-hdr { margin-left: 220px; }
+.ws-gantt-hdr-item { position: absolute; font-size: 11px; }
+.ws-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+@media (max-width: 639px) {
+  .ws-nav {
+    padding: 0 12px;
+    height: auto;
+    min-height: 56px;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+  .ws-nav-logo { margin-right: 8px !important; }
+  .ws-nav-sub { display: none; }
+  .ws-nav-link { padding: 6px 10px !important; }
+  .ws-nav-link span:first-child { font-size: 12px !important; }
+
+  .ws-header { padding: 20px 16px 18px; }
+  .ws-header-inner { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+  .ws-header-right { text-align: left !important; }
+  .ws-header-title { font-size: 22px !important; }
+  .ws-header-chips { gap: 6px !important; }
+  .ws-header-chip { font-size: 12px !important; padding: 5px 12px !important; }
+
+  .ws-main { padding: 28px 16px; gap: 32px !important; }
+
+  .ws-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .ws-stats-num { font-size: 2.2rem !important; }
+
+  .ws-grid2 { grid-template-columns: 1fr; }
+
+  .ws-tab-bar { flex-wrap: wrap; }
+  .ws-tab-btn { padding: 8px 14px !important; font-size: 13px !important; }
+
+  .ws-gantt-label { width: 110px; padding-right: 8px !important; }
+  .ws-gantt-hdr { margin-left: 110px; }
+  .ws-gantt-hdr-item { font-size: 10px !important; }
+  .ws-gantt-label-name { font-size: 11px !important; }
+  .ws-gantt-label-sub { font-size: 9px !important; }
+  .ws-gantt-emoji { display: none; }
+
+  .ws-kanban { grid-template-columns: repeat(2, 240px) !important; min-width: unset !important; }
+
+  .ws-urgente { padding: 20px !important; }
+  .ws-urgente-title { font-size: 18px !important; }
+
+  .ws-modulo-btn { padding: 16px 16px !important; gap: 10px !important; }
+  .ws-modulo-name { font-size: 16px !important; }
+  .ws-modulo-pct { font-size: 18px !important; }
+  .ws-modulo-desc { font-size: 13px !important; }
+
+  .ws-table-head { display: none !important; }
+  .ws-table-row {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px 12px !important;
+    padding: 12px 14px !important;
+  }
+  /* Nombre ocupa toda la fila en mobile */
+  .ws-table-row > div:first-child { grid-column: 1 / -1; }
+  /* Drive ocupa toda la fila en mobile */
+  .ws-table-row > div:nth-child(4) { grid-column: 1 / -1; }
+  /* El 5to elemento (status desktop) desaparece */
+  .ws-table-row > div:last-child { display: none !important; }
+
+  .ws-table-col-badge { display: flex; gap: 6px; align-items: center; }
+}
+
+/* ── Carrito: bump al agregar un producto ────────────── */
+@keyframes cart-bump {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.18); }
+  60%  { transform: scale(0.94); }
+  100% { transform: scale(1); }
+}
+.cart-bump { animation: cart-bump 0.4s ease; }
+
+/* ── Ken Burns effect para banner ────────────── */
+@keyframes ken-burns {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.25); }
+}
+.banner-ken-burns { animation: ken-burns 25s ease-in-out infinite alternate; }

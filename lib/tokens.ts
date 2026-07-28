@@ -1,0 +1,13 @@
+export const BG      = "#2d2b27";
+export const SURFACE = "#383430";
+export const SURF2   = "#433f3a";
+export const BORDER  = "#504b46";
+export const TEXT1   = "#f5f2ee";
+export const TEXT2   = "#d8d2cc";
+export const TEXT3   = "#b0a89f";
+export const AMR     = "#FBBF24";
+export const ROJO    = "#f05252";
+export const VERDE   = "#34d399";
+export const AZUL    = "#60a5fa";
+export const FONT    = "var(--font-dm), sans-serif";
+export const TITLE   = "var(--font-raleway), sans-serif";
