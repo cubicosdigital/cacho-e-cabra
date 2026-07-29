@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Imágenes subidas desde el CMS
+/public/uploads/
+
+# Tiene una service_role key de Supabase escrita en el archivo: nunca debe entrar al repo
+/init-db.js
+
+# Datos de clientes: nombres, teléfonos, correos y direcciones no van al repo.
+# data/eventos.json y data/banner.json sí se versionan, porque son contenido del sitio.
+/data/evento_registros.json
+/data/presupuestos.json
+/data/delivery.json

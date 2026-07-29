@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import SelectorFoto from "../SelectorFoto";
+import { resolverImagen } from "../../../../lib/imagenes";
 import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, FONT, TITLE } from "../../../../lib/tokens";
 
 interface Producto {
@@ -45,7 +47,7 @@ export default function SugerenciasChefPage() {
 
   function startEdit(p: Producto) {
     setEditId(p.id);
-    setEditDraft({ nombre: p.nombre, descripcion: p.descripcion, precio: p.precio });
+    setEditDraft({ nombre: p.nombre, descripcion: p.descripcion, precio: p.precio, foto: p.foto });
   }
 
   async function guardarEdit(id: string) {
@@ -109,6 +111,7 @@ export default function SugerenciasChefPage() {
                 <div key={p.id} style={{ padding: "14px 20px", borderTop: idx === 0 ? "none" : `1px solid ${BORDER}`, opacity: p.disponible ? 1 : 0.6 }}>
                   {isEd ? (
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <SelectorFoto valor={editDraft.foto ?? ""} onChange={foto => setEditDraft(d => ({ ...d, foto }))} />
                       <input value={editDraft.nombre ?? ""} onChange={e => setEditDraft(d => ({ ...d, nombre: e.target.value }))}
                         style={{ background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", color: TEXT1, fontFamily: FONT }} />
                       <textarea value={editDraft.descripcion ?? ""} onChange={e => setEditDraft(d => ({ ...d, descripcion: e.target.value }))}
@@ -122,6 +125,17 @@ export default function SugerenciasChefPage() {
                     </div>
                   ) : (
                     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                      <div style={{
+                        width: 74, height: 52, flexShrink: 0, borderRadius: 8, overflow: "hidden", background: SURF2,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        {p.foto ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={resolverImagen(p.foto, 220, 150)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <span style={{ color: TEXT3, fontSize: 12 }}>sin foto</span>
+                        )}
+                      </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                           <span style={{ fontWeight: 700, fontSize: 19 }}>{p.nombre}</span>

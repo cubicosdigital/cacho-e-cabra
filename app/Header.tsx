@@ -8,6 +8,7 @@ import { BORDER, TEXT1, TEXT2, AMR, FONT, TITLE } from "../lib/tokens";
 const LINKS = [
   { href: "/", label: "Inicio" },
   { href: "/carta", label: "Carta" },
+  { href: "/eventos", label: "Eventos" },
   { href: "/#ubicacion", label: "Ubicación" },
 ];
 
@@ -47,18 +48,21 @@ export default function Header() {
 
         <div style={{ display: "flex", alignItems: "center", gap: 24, marginLeft: "auto", flexWrap: "wrap" }}>
           <nav style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            {LINKS.map(l => (
-              <a key={l.href} href={l.href} style={{
-                fontFamily: FONT, fontSize: 15, fontWeight: 700, color: TEXT1,
-                textDecoration: "none", padding: "10px 16px", borderRadius: 10,
-                transition: "all 0.2s ease",
-              }}>
-                {l.label}
-              </a>
-            ))}
+            {LINKS.map(l => {
+              const isActive = pathname === l.href || (l.href !== "/" && pathname.startsWith(l.href));
+              return (
+                <a key={l.href} href={l.href} style={{
+                  fontFamily: FONT, fontSize: 15, fontWeight: isActive ? 900 : 700, color: isActive ? AMR : TEXT1,
+                  textDecoration: "none", padding: "10px 16px", borderRadius: 10,
+                  transition: "all 0.2s ease",
+                }}>
+                  {l.label}
+                </a>
+              );
+            })}
           </nav>
 
-          <a href="/carta" style={{
+          <a href="/carta" target="_blank" rel="noopener noreferrer" style={{
             display: "inline-flex", alignItems: "center", gap: 6, background: AMR, color: "#1a1200",
             borderRadius: 999, padding: "12px 28px", fontSize: 15, fontWeight: 800, textDecoration: "none", flexShrink: 0,
             transition: "all 0.2s ease", cursor: "pointer",

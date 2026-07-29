@@ -36,8 +36,9 @@ export default function PedidosPage() {
     const res = await fetch("/api/pedidos");
     if (!res.ok) return;
     const data: Pedido[] = await res.json();
-    const ahora = Date.now();
-    setPedidos(data.filter(p => p.estado !== "entregado" || ahora - new Date(p.created_at).getTime() < 30 * 60 * 1000));
+    // Los entregados quedan visibles todo el día: la columna es el registro del turno.
+    const inicioDia = new Date(); inicioDia.setHours(0, 0, 0, 0);
+    setPedidos(data.filter(p => p.estado !== "entregado" || new Date(p.created_at) >= inicioDia));
   }, []);
 
   useEffect(() => {

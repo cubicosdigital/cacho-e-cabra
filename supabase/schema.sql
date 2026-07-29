@@ -301,3 +301,38 @@ create policy "reclamos: actualizar solo admin"
   to authenticated
   using (es_admin_activo())
   with check (es_admin_activo());
+
+-- ════════════════════════════════════════════════════════════════════
+-- Fase 3 — eventos y registros
+-- ════════════════════════════════════════════════════════════════════
+
+-- ─── evento_registros ──────────────────────────────────────────────
+create table if not exists evento_registros (
+  id               uuid primary key default gen_random_uuid(),
+  nombre           text not null,
+  email            text not null,
+  telefono         text not null,
+  personas         integer not null default 1,
+  evento_id        text not null,
+  fecha_registro   timestamptz not null default now(),
+  confirmado       boolean not null default false,
+  created_at       timestamptz not null default now()
+);
+
+alter table evento_registros enable row level security;
+
+create policy "evento_registros: crear publico"
+  on evento_registros for insert
+  to anon, authenticated
+  with check (true);
+
+create policy "evento_registros: leer solo admin"
+  on evento_registros for select
+  to authenticated
+  using (es_admin_activo());
+
+create policy "evento_registros: actualizar solo admin"
+  on evento_registros for update
+  to authenticated
+  using (es_admin_activo())
+  with check (es_admin_activo());

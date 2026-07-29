@@ -1,8 +1,14 @@
 import Image from "next/image";
 import { MapPin, Clock, MessageSquareWarning } from "lucide-react";
 import { getSupabase } from "../lib/supabase";
+import { getEventos, fmtPrecio } from "../lib/eventos";
+import { getSlides } from "../lib/banner";
 import HomeBanner, { Slide } from "./HomeBanner";
+import { resolverImagen } from "../lib/imagenes";
 import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, FONT, TITLE } from "../lib/tokens";
+
+// Los eventos destacados se editan desde el CMS, así que el home no se puede cachear.
+export const dynamic = "force-dynamic";
 
 interface Producto {
   id: string; nombre: string; descripcion: string; precio: number;
@@ -24,8 +30,37 @@ function fmt(n: number) { return `$${n.toLocaleString("es-CL")}`; }
 export default async function Home() {
   const productos = await getProductosHome();
   const chef = productos.filter(p => p.categoria === "chef");
-  const destacados = productos.filter(p => p.popular).slice(0, 8);
-  const banner: Slide[] = (chef.length > 0 ? chef : destacados).slice(0, 4);
+  const destacados = productos.filter(p => p.popular && (p.categoria === "comida" || p.categoria === "tragos")).slice(0, 8);
+
+  // Solo los eventos marcados como destacados en el CMS llegan al home.
+  const eventosDestacados = (await getEventos()).filter(e => e.publicado && e.destacado);
+
+  const eventoSlides: Slide[] = eventosDestacados.slice(0, 2).map(e => ({
+    id: `evento-${e.id}`,
+    nombre: e.titulo,
+    descripcion: e.descripcion,
+    foto: e.imagen,
+    precio: e.precio,
+    tipo: 'evento',
+    botonTexto: 'Quiero ser parte',
+    botonHref: `/eventos/${e.id}`,
+  }));
+
+  // Si el admin armó slides en el CMS, esos mandan. Si no, el banner se arma solo.
+  const slidesCms = (await getSlides()).filter(s => s.activo && s.imagen);
+  const banner: Slide[] = slidesCms.length > 0
+    ? slidesCms.map(s => ({
+        id: s.id,
+        nombre: s.titulo,
+        descripcion: s.descripcion,
+        foto: s.imagen,
+        precio: 0,
+        etiqueta: s.etiqueta,
+        ocultarPrecio: true,
+        botonTexto: s.botonTexto,
+        botonHref: s.botonHref,
+      }))
+    : [...eventoSlides, ...(chef.length > 0 ? chef : destacados)].slice(0, 6);
 
   return (
     <div style={{ fontFamily: FONT, color: TEXT1, background: BG }}>
@@ -41,9 +76,9 @@ export default async function Home() {
             <div style={{ fontSize: 18, color: TEXT3, marginBottom: 28, fontWeight: 500 }}>Lo más pedido de la casa.</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
               {destacados.map(p => (
-                <a key={p.id} href="/carta" style={{ textDecoration: "none", color: TEXT1, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 18, overflow: "hidden", display: "block", transition: "all 0.3s ease", cursor: "pointer", transform: "translateY(0)", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+                <a key={p.id} href="/carta" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", color: TEXT1, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 18, overflow: "hidden", display: "block", transition: "all 0.3s ease", cursor: "pointer", transform: "translateY(0)", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`https://images.unsplash.com/${p.foto}?auto=format&fit=crop&w=400&h=260&q=85`} alt={p.nombre} style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }} />
+                  <img src={resolverImagen(p.foto, 400, 260)} alt={p.nombre} style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }} />
                   <div style={{ padding: "18px 20px" }}>
                     <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 8 }}>{p.nombre}</div>
                     <div style={{ fontSize: 17, color: AMR, fontWeight: 800 }}>{fmt(p.precio)}</div>
@@ -54,6 +89,35 @@ export default async function Home() {
           </section>
         )}
 
+        {/* EVENTOS DESTACADOS */}
+        {eventosDestacados.length > 0 && (
+          <section style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 40, background: `linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, rgba(251, 191, 36, 0.04) 100%)`, borderRadius: 20, padding: 40 }}>
+            <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900, marginBottom: 10, color: TEXT1 }}>🎉 Eventos Exclusivos</div>
+            <div style={{ fontSize: 18, color: TEXT3, marginBottom: 28, fontWeight: 500 }}>Vive experiencias únicas con nosotros.</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 24, marginBottom: 28 }}>
+              {eventosDestacados.map(e => (
+                <div key={e.id} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 24, display: "flex", flexDirection: "column" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 16 }}>
+                    <div style={{ fontSize: 56 }}>{e.emoji}</div>
+                    <div>
+                      <div style={{ fontSize: 28, fontFamily: TITLE, fontWeight: 900, color: AMR, lineHeight: 1 }}>{e.fechaCorta}</div>
+                      <div style={{ fontSize: 14, color: AMR, fontWeight: 700, letterSpacing: "0.05em" }}>{e.mes}</div>
+                    </div>
+                  </div>
+                  <h3 style={{ fontFamily: TITLE, fontWeight: 800, fontSize: 18, marginBottom: 4, color: TEXT1 }}>{e.titulo}</h3>
+                  <p style={{ fontSize: 12, color: AMR, fontWeight: 700, marginBottom: 10, letterSpacing: "0.05em" }}>{e.subtitulo}</p>
+                  <p style={{ fontSize: 13, color: TEXT2, marginBottom: 10, lineHeight: 1.5 }}>{e.descripcion}</p>
+                  <p style={{ fontSize: 12, color: TEXT3, marginBottom: 14 }}>🕐 {e.hora} hrs | 💰 {fmtPrecio(e.precio)}</p>
+                  <a href={`/eventos/${e.id}`} style={{ fontSize: 11, color: AMR, fontWeight: 700, textDecoration: "none", marginTop: "auto" }}>Ver información completa →</a>
+                </div>
+              ))}
+            </div>
+            <a href="/eventos" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: `#FBBF24`, color: "#000", padding: "14px 28px", borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: "none", transition: "all 0.3s ease" }}>
+              Ver todos los eventos →
+            </a>
+          </section>
+        )}
+
         {/* RECOMENDACIONES DEL CHEF */}
         {chef.length > 0 && (
           <section style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 40 }}>
@@ -61,9 +125,9 @@ export default async function Home() {
             <div style={{ fontSize: 18, color: TEXT3, marginBottom: 28, fontWeight: 500 }}>Las creaciones que no te puedes perder.</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 24 }}>
               {chef.map(p => (
-                <a key={p.id} href="/carta" style={{ textDecoration: "none", color: TEXT1, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 18, overflow: "hidden", display: "block", transition: "all 0.3s ease", cursor: "pointer", transform: "translateY(0)", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+                <a key={p.id} href="/carta" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", color: TEXT1, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 18, overflow: "hidden", display: "block", transition: "all 0.3s ease", cursor: "pointer", transform: "translateY(0)", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`https://images.unsplash.com/${p.foto}?auto=format&fit=crop&w=500&h=320&q=85`} alt={p.nombre} style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }} />
+                  <img src={resolverImagen(p.foto, 500, 320)} alt={p.nombre} style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }} />
                   <div style={{ padding: "18px 20px" }}>
                     <div style={{ fontFamily: TITLE, fontWeight: 800, fontSize: 20, marginBottom: 8 }}>{p.nombre}</div>
                     <div style={{ fontSize: 14, color: TEXT2, lineHeight: 1.6, marginBottom: 12 }}>{p.descripcion}</div>
@@ -90,7 +154,7 @@ export default async function Home() {
               </a>
             </div>
             <iframe style={{ width: "100%", height: 300, borderRadius: 16, border: "none" }}
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3285.1234567890123!2d-71.6096!3d-33.5901!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662c5c5c5c5c5c5%3A0x1234567890!2sPlaza%20de%20Llolleo!5e0!3m2!1ses!2scl!4v1234567890" allowFullScreen="" loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe>
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3285.1234567890123!2d-71.6096!3d-33.5901!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662c5c5c5c5c5c5%3A0x1234567890!2sPlaza%20de%20Llolleo!5e0!3m2!1ses!2scl!4v1234567890" allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe>
           </div>
         </div>
       </main>
@@ -112,7 +176,7 @@ export default async function Home() {
           <div>
             <div style={{ fontSize: 13, color: TEXT2, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 14 }}>Navegación</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <a href="/carta" style={{ fontSize: 14, color: TEXT3, textDecoration: "none" }}>Carta</a>
+              <a href="/carta" target="_blank" rel="noopener noreferrer" style={{ fontSize: 14, color: TEXT3, textDecoration: "none" }}>Carta</a>
             </div>
           </div>
 
@@ -138,7 +202,7 @@ export default async function Home() {
 
         <div style={{
           borderTop: `1px solid ${BORDER}`, padding: "18px 20px", maxWidth: 1100, margin: "0 auto",
-          display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, width: "100%", flexDirection: "column", alignItems: "flex-start",
+          display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10, width: "100%", flexDirection: "column", alignItems: "flex-start",
         }}>
           <div style={{ fontSize: 13, color: TEXT3, width: "100%" }}>
             © {new Date().getFullYear()} Cacho Cabra · Bar · Restaurante · Cafetería

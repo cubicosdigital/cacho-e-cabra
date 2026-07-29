@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
+import { resolverImagen } from "../../lib/imagenes";
 
 // ─── tipos ─────────────────────────────────────────────────────────
 type Categoria = "todo" | "chef" | "cafeteria" | "brunch" | "comida" | "tragos" | "postres";
@@ -29,13 +30,9 @@ interface CartItem {
 
 
 const CATEGORIAS: { id: Categoria; label: string; emoji: string }[] = [
-  { id:"todo",      label:"Todo",               emoji:"✦"  },
-  { id:"chef",      label:"Sugerencias del Chef",emoji:"👨‍🍳" },
-  { id:"cafeteria", label:"Cafetería",           emoji:"☕"  },
-  { id:"brunch",    label:"Brunch",              emoji:"🍳"  },
   { id:"comida",    label:"Comida",              emoji:"🍽️" },
   { id:"tragos",    label:"Tragos",              emoji:"🍹"  },
-  { id:"postres",   label:"Postres",             emoji:"🍰"  },
+  { id:"cafeteria", label:"Cafetería",           emoji:"☕"  },
 ];
 
 function fmtPrecio(n: number) {
@@ -53,11 +50,11 @@ const FONT_SCALE: Record<FontSize, number> = { normal:1, grande:1.15, extra:1.3 
 
 // ─── page ──────────────────────────────────────────────────────────
 export default function CartaPage() {
-  const [cat,      setCat]      = useState<Categoria>("todo");
+  const [cat,      setCat]      = useState<Categoria>("comida");
   const [busqueda, setBusqueda] = useState("");
   const [tema,     setTema]     = useState<Tema>("oscuro");
   const [fontSize, setFontSize] = useState<FontSize>("normal");
-  const [vista,    setVista]    = useState<Vista>("grid");
+  const [vista,    setVista]    = useState<Vista>("lista");
   const [cart,     setCart]     = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [cartBump, setCartBump] = useState(false);
@@ -70,6 +67,11 @@ export default function CartaPage() {
   const [cargando,  setCargando]  = useState(true);
   const [enviando,  setEnviando]  = useState(false);
   const [errorPedido, setErrorPedido] = useState("");
+  const [registroModal, setRegistroModal] = useState(false);
+  const [email,    setEmail]    = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [registrando, setRegistrando] = useState(false);
+  const [errorRegistro, setErrorRegistro] = useState("");
 
   useEffect(() => {
     fetch("/api/productos")
@@ -137,14 +139,39 @@ export default function CartaPage() {
       });
       if (!res.ok) throw new Error();
       setPedido(false);
-      setSuccess(true);
       setCart([]);
       setMesa(""); setNombre(""); setNotas("");
-      setTimeout(() => setSuccess(false), 6000);
+      setRegistroModal(true);
+      setEmail(""); setTelefono("");
     } catch {
       setErrorPedido("No se pudo enviar el pedido. Intenta de nuevo.");
     } finally {
       setEnviando(false);
+    }
+  }
+
+  async function hacerRegistro() {
+    if (!email.trim() || !telefono.trim() || registrando) return;
+    setRegistrando(true);
+    setErrorRegistro("");
+    try {
+      const res = await fetch("/api/clientes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: nombre.trim() || "Cliente",
+          email: email.trim(),
+          telefono: telefono.trim(),
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setRegistroModal(false);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 6000);
+    } catch {
+      setErrorRegistro("No se pudo completar el registro. Intenta de nuevo.");
+    } finally {
+      setRegistrando(false);
     }
   }
 
@@ -457,6 +484,51 @@ export default function CartaPage() {
         </div>
       )}
 
+      {/* ── MODAL REGISTRO ── */}
+      {registroModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 80, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)" }} onClick={() => setRegistroModal(false)} />
+          <div style={{ position: "relative", background: T.surface, borderRadius: 20, padding: 32, width: "100%", maxWidth: 420, border: `1px solid ${T.border}` }}>
+            <div style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: 26, fontWeight: 900, color: T.text1, marginBottom: 6 }}>
+              ¿Quieres ser cliente?
+            </div>
+            <div style={{ fontSize: 16, color: T.text3, marginBottom: 24 }}>
+              Inscríbete para recibir ofertas especiales, puntos de recompensa y acceso a contenido exclusivo.
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+              <div>
+                <label style={{ fontSize: 14, color: T.text3, display: "block", marginBottom: 5 }}>Email *</label>
+                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="tuemail@ejemplo.com" type="email"
+                  style={{ width: "100%", background: T.surf2, border: `1.5px solid ${email ? T.amr : T.border}`, borderRadius: 10, padding: "10px 14px", fontSize: 16, fontFamily: "var(--font-dm),sans-serif", color: T.text1, outline: "none", boxSizing: "border-box" }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 14, color: T.text3, display: "block", marginBottom: 5 }}>Teléfono *</label>
+                <input value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="+56 9 1234 5678"
+                  style={{ width: "100%", background: T.surf2, border: `1.5px solid ${telefono ? T.amr : T.border}`, borderRadius: 10, padding: "10px 14px", fontSize: 16, fontFamily: "var(--font-dm),sans-serif", color: T.text1, outline: "none", boxSizing: "border-box" }} />
+              </div>
+            </div>
+
+            {errorRegistro && (
+              <div style={{ marginBottom: 14, background: "#231515", border: "1px solid #6b2020", color: "#fca5a5", fontSize: 15, borderRadius: 8, padding: "10px 14px", textAlign: "center" }}>
+                {errorRegistro}
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setRegistroModal(false)}
+                style={{ flex: 1, padding: "12px 0", background: T.surf2, border: `1px solid ${T.border}`, borderRadius: 12, fontSize: 17, fontFamily: "var(--font-dm),sans-serif", color: T.text2, cursor: "pointer" }}>
+                Luego
+              </button>
+              <button onClick={hacerRegistro} disabled={!email.trim() || !telefono.trim() || registrando}
+                style={{ flex: 2, padding: "12px 0", background: (email.trim() && telefono.trim()) ? T.amr : T.surf2, border: "none", borderRadius: 12, fontSize: 18, fontWeight: 700, fontFamily: "var(--font-dm),sans-serif", color: (email.trim() && telefono.trim()) ? "#1a1200" : T.text3, cursor: (email.trim() && telefono.trim()) && !registrando ? "pointer" : "not-allowed", transition: "all 0.2s", opacity: registrando ? 0.7 : 1 }}>
+                {registrando ? "Registrando..." : "✨ Ser Cliente"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── SUCCESS TOAST ── */}
       {success && (
         <div style={{
@@ -467,8 +539,8 @@ export default function CartaPage() {
         }}>
           <span style={{ fontSize: 26 }}>✅</span>
           <div>
-            <div style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: 19, fontWeight: 800, color: "#34d399" }}>¡Pedido enviado!</div>
-            <div style={{ fontSize: 15, color: "#a7f3d0", marginTop: 2 }}>Tu mesero viene a confirmar el pedido a la mesa.</div>
+            <div style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: 19, fontWeight: 800, color: "#34d399" }}>¡Bienvenido!</div>
+            <div style={{ fontSize: 15, color: "#a7f3d0", marginTop: 2 }}>Tu pedido y registro fueron confirmados. Tu mesero viene a tu mesa.</div>
           </div>
         </div>
       )}
@@ -499,7 +571,7 @@ function ProductoRow({ p, enCart, tema: T, fs, onAdd, onRemove }: {
       <div style={{ position: "relative", width: 88, height: 88, flexShrink: 0, overflow: "hidden", background: T.surf2 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`https://images.unsplash.com/${p.foto}?auto=format&fit=crop&w=180&h=180&q=80`}
+          src={resolverImagen(p.foto, 180, 180)}
           alt={p.nombre} loading="lazy"
           style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.3s", transform: hover ? "scale(1.06)" : "scale(1)" }}
         />
@@ -580,7 +652,7 @@ function ProductoCard({ p, enCart, tema: T, fs, onAdd, onRemove }: {
       <div style={{ position: "relative", height: 200, overflow: "hidden", background: T.surf2 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`https://images.unsplash.com/${p.foto}?auto=format&fit=crop&w=500&h=400&q=85`}
+          src={resolverImagen(p.foto, 500, 400)}
           alt={p.nombre}
           loading="lazy"
           style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.4s", transform: hover ? "scale(1.05)" : "scale(1)" }}
@@ -690,7 +762,7 @@ function CartPanel({ cart, tema: T, fs, onClose, onAdd, onRemoveOne, onRemoveAll
             {cart.map(item => (
               <div key={item.producto.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 20px", borderBottom: `1px solid ${T.border}` }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`https://images.unsplash.com/${item.producto.foto}?auto=format&fit=crop&w=80&h=80&q=70`}
+                <img src={resolverImagen(item.producto.foto, 80, 80)}
                   alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: `${13 * fs}px`, fontWeight: 700, color: T.text1, lineHeight: 1.3 }}>{item.producto.nombre}</div>
