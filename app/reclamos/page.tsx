@@ -39,7 +39,7 @@ export default function ReclamosPage() {
     <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "48px 24px" }}>
       <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
         <div style={{ textAlign: "center" }}>
-          <Image src="/LogoCachoEcabra.png" alt="Cacho Cabra" width={100} height={78} style={{ margin: "0 auto 16px" }} />
+          <Image src="/LogoCachoEcabra-white.png" alt="Cacho Cabra" width={100} height={35} style={{ margin: "0 auto 16px", height: "auto" }} />
           <div style={{ fontFamily: TITLE, fontSize: 28, fontWeight: 900 }}>Reclamos y sugerencias</div>
           <div style={{ fontSize: 15, color: TEXT3, marginTop: 4 }}>Tu opinión nos ayuda a mejorar. Te leemos.</div>
         </div>

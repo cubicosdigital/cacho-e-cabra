@@ -37,7 +37,7 @@ export default function LoginPage() {
     <div style={{ minHeight: "100vh", background: BG, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: FONT }}>
       <div style={{ width: "100%", maxWidth: 400 }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <Image src="/LogoCachoEcabra.png" alt="Cacho Cabra" width={120} height={94} style={{ margin: "0 auto 12px" }} />
+          <Image src="/LogoCachoEcabra-white.png" alt="Cacho Cabra" width={120} height={42} style={{ margin: "0 auto 12px", height: "auto" }} />
           <p style={{ color: TEXT3, fontSize: 17, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700, margin: 0 }}>
             Panel de administración
           </p>
