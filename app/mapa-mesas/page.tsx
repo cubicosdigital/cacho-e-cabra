@@ -313,7 +313,7 @@ export default function MapaMesasPage() {
       {/* HEADER */}
       <header style={{ borderBottom: `1px solid ${BORDER}`, padding: "20px 24px" }}>
         <div style={{ maxWidth: 1600, margin: "0 auto", display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
-          <Image src="/LogoCachoEcabra.png" alt="Cacho Cabra" width={80} height={63} />
+          <Image src="/LogoCachoEcabra-white.png" alt="Cacho Cabra" width={80} height={28} style={{ height: "auto" }} />
           <div>
             <div style={{ fontFamily: TITLE, fontSize: 24, fontWeight: 900, color: TEXT1, letterSpacing: "-0.02em" }}>
               Mapa de Mesas

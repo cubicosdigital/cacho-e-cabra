@@ -267,7 +267,7 @@ export default function AnalisisPage() {
       <header className="ws-header" style={{ borderBottom: `1px solid ${BORDER}` }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div className="ws-header-inner" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
-            <Image src="/LogoCachoEcabra.png" alt="Cacho Cabra" width={140} height={109} loading="eager" />
+            <Image src="/LogoCachoEcabra-white.png" alt="Cacho Cabra" width={140} height={49} style={{ height: "auto" }} loading="eager" />
             <div className="ws-header-right" style={{ textAlign: "right" }}>
               <div className="ws-header-title" style={{ fontFamily: TITLE, fontSize: 30, fontWeight: 900, color: TEXT1, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
                 Plan de Marketing
