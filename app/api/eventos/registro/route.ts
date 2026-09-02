@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
-import { getRegistros, saveRegistros, type Registro } from "@/lib/registros";
+import { getRegistros, crearRegistro } from "@/lib/registros";
 
 /** Público: cualquiera puede inscribirse a un evento desde la web. */
 export async function POST(request: NextRequest) {
@@ -12,22 +12,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 });
     }
 
-    const registros = await getRegistros();
-    const ahora = new Date().toISOString();
-    const nuevo: Registro = {
-      id: Date.now().toString(),
+    await crearRegistro({
       nombre: String(nombre).trim(),
       email: String(email).trim(),
       telefono: String(telefono).trim(),
       personas: parseInt(personas, 10) || 1,
       evento_id: String(eventoId),
-      fecha_registro: ahora,
-      confirmado: false,
-      pagado: false,
-      created_at: ahora,
-    };
+    });
 
-    await saveRegistros([...registros, nuevo]);
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error("Error:", error);

@@ -4,7 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  const isAdminRoute = pathname.startsWith("/admin") && pathname !== "/admin/login";
+  const rutasPublicas = ["/admin/login", "/admin/recuperar"];
+  const isAdminRoute = pathname.startsWith("/admin") && !rutasPublicas.includes(pathname);
   if (!isAdminRoute) return NextResponse.next();
 
   // Sin credenciales de Supabase configuradas (.env.local aún no seteado), no hay

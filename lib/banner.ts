@@ -1,5 +1,4 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { leerColeccion, reemplazarColeccion, txt, num, bool } from "./coleccion";
 
 export interface SlideBanner {
   id: string;
@@ -14,29 +13,40 @@ export interface SlideBanner {
   orden: number;
 }
 
-const DB_FILE = path.join(process.cwd(), "data", "banner.json");
+const TABLA = "banner_slides";
 
-async function ensureDb() {
-  try {
-    await fs.access(DB_FILE);
-  } catch {
-    await fs.mkdir(path.dirname(DB_FILE), { recursive: true });
-    await fs.writeFile(DB_FILE, "[]", "utf-8");
-  }
+function aDominio(f: Record<string, unknown>): SlideBanner {
+  return {
+    id: String(f.id),
+    etiqueta: txt(f.etiqueta),
+    titulo: txt(f.titulo),
+    descripcion: txt(f.descripcion),
+    imagen: txt(f.imagen),
+    botonTexto: txt(f.boton_texto),
+    botonHref: txt(f.boton_href),
+    activo: bool(f.activo, true),
+    orden: num(f.orden),
+  };
+}
+
+function aFila(s: SlideBanner): Record<string, unknown> {
+  return {
+    id: s.id,
+    etiqueta: s.etiqueta,
+    titulo: s.titulo,
+    descripcion: s.descripcion,
+    imagen: s.imagen,
+    boton_texto: s.botonTexto,
+    boton_href: s.botonHref,
+    activo: s.activo,
+    orden: s.orden,
+  };
 }
 
 export async function getSlides(): Promise<SlideBanner[]> {
-  try {
-    await ensureDb();
-    const raw = await fs.readFile(DB_FILE, "utf-8");
-    const data = JSON.parse(raw) as SlideBanner[];
-    return data.sort((a, b) => a.orden - b.orden);
-  } catch {
-    return [];
-  }
+  return leerColeccion(TABLA, { columna: "orden", ascendente: true }, aDominio);
 }
 
 export async function saveSlides(slides: SlideBanner[]): Promise<void> {
-  await ensureDb();
-  await fs.writeFile(DB_FILE, JSON.stringify(slides, null, 2), "utf-8");
+  await reemplazarColeccion(TABLA, slides.map(aFila));
 }

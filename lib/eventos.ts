@@ -1,5 +1,4 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { leerColeccion, leerFila, reemplazarColeccion, txt, num, bool } from "./coleccion";
 
 export type TipoEvento = "cocina" | "cena" | "fiesta" | "aniversario" | "privado";
 export type EstadoEvento = "abierto" | "privado" | "invitacion";
@@ -53,324 +52,81 @@ export function fmtPrecio(n: number) {
   return n === 0 ? "Liberado" : `$${n.toLocaleString("es-CL")}`;
 }
 
-const SEED: Evento[] = [
-  {
-    id: "1",
-    titulo: "Show de Cocina en Vivo - Italia",
-    tipo: "cocina",
-    fecha: "Lunes 19 de agosto",
-    fechaCorta: "LUN 19",
-    mes: "AGOSTO",
-    hora: "19:00",
-    duracion: "3 horas",
-    precio: 7990,
-    cupos: 200,
-    registrados: 0,
-    emoji: "🇮🇹",
-    subtitulo: "ITALIA · RISTORANTE",
-    descripcion:
-      "Experiencia culinaria interactiva con la Chef Gaby. Viaja a Italia y cocina en vivo preparando típicas italianas en un ambiente minimalista y elegante.",
-    detalles: [
-      "Interacción directa con la Chef Gaby",
-      "Arma tu plato a gusto",
-      "Ñoquis & Fetuccini con salsas Carbonara",
-      "Ven con un motivo italiano y gana premios sorpresas",
-      "Ambiente minimalista y sofisticado",
-      "Experiencia única e inolvidable",
-    ],
-    imagen: "photo-1546069901-ba9599a7e63c",
-    estado: "abierto",
-    destacado: true,
-    publicado: true,
-    orden: 0,
-    chef: "Chef Gaby",
-    promo: { texto: "Ramazontti vs Aperol", precio: 5990 },
-    lugar: "Plaza de Llolleo, San Antonio",
-    gastronomia: "Cocina italiana tradicional e innovadora",
-    experiencia: "Interactiva - Cocina tu propio plato",
-  },
-  {
-    id: "2",
-    titulo: "Cenas Clandestinas - Viaje a Francia",
-    tipo: "cena",
-    fecha: "Lunes 19 de agosto",
-    fechaCorta: "LUN 19",
-    mes: "AGOSTO",
-    hora: "20:00",
-    duracion: "3 horas",
-    precio: 50000,
-    cupos: 20,
-    registrados: 0,
-    emoji: "🇫🇷",
-    subtitulo: "FRANCIA · BISTRO FRANCÉS",
-    descripcion:
-      "Experiencia gastronómica exclusiva basada en cinco tiempos. Un viaje culinario a Francia con técnicas de gastronomía molecular en un ambiente elegante y sofisticado.",
-    detalles: [
-      "Cinco tiempos de degustación",
-      "Preparaciones tradicionales e contemporáneas",
-      "Técnicas de gastronomía molecular premium",
-      "Espumas, esferas, gel y cocción de precisión",
-      "Espíritu del bistro francés clásico",
-      "Experiencia elegante, equilibrada y exclusiva",
-    ],
-    imagen: "photo-1567521464027-f127ff144326",
-    estado: "abierto",
-    destacado: true,
-    publicado: true,
-    orden: 1,
-    lugar: "Plaza de Llolleo, San Antonio",
-    gastronomia: "Gastronomía francesa molecular",
-    experiencia: "Degustación de 5 tiempos - Experiencia exclusiva",
-  },
-  {
-    id: "3",
-    titulo: "Evento Privado - Torta & Activación",
-    tipo: "privado",
-    fecha: "Miércoles 2 de septiembre",
-    fechaCorta: "MIÉ 2",
-    mes: "SEPTIEMBRE",
-    hora: "18:00",
-    duracion: "4 horas",
-    precio: 0,
-    cupos: 100,
-    registrados: 0,
-    emoji: "🎂",
-    subtitulo: "PUERTAS CERRADAS",
-    descripcion:
-      "Evento privado con decoración especial, torta, activaciones y sorpresas. Celebración exclusiva en Cacho Cabra.",
-    detalles: [
-      "Decoración personalizada",
-      "Torta especial",
-      "Activaciones y sorpresas",
-      "Espacio privado y exclusivo",
-      "Ambiente festivo",
-    ],
-    imagen: "photo-1464349095431-e9a21285b5f3",
-    estado: "privado",
-    destacado: false,
-    publicado: true,
-    orden: 2,
-    lugar: "Cacho Cabra, Plaza de Llolleo",
-    experiencia: "Evento privado exclusivo",
-  },
-  {
-    id: "4",
-    titulo: "Aniversario Abierto - Cacho Cabra",
-    tipo: "aniversario",
-    fecha: "Viernes 4 de septiembre",
-    fechaCorta: "VIE 4",
-    mes: "SEPTIEMBRE",
-    hora: "19:00",
-    duracion: "5 horas",
-    precio: 0,
-    cupos: 300,
-    registrados: 0,
-    emoji: "🎊",
-    subtitulo: "ANIVERSARIO · ENTRADA LIBERADA",
-    descripcion:
-      "Celebra el aniversario de Cacho Cabra. Noche especial con música en vivo, promociones y la mejor cocina de la casa.",
-    detalles: [
-      "Acceso libre al restaurante",
-      "Promociones especiales de aniversario",
-      "DJ en vivo",
-      "Activaciones durante toda la noche",
-      "Sorpresas para los clientes",
-    ],
-    imagen: "photo-1543007630-9710e4a00a20",
-    estado: "abierto",
-    destacado: true,
-    publicado: true,
-    orden: 3,
-    lugar: "Cacho Cabra, Plaza de Llolleo",
-    experiencia: "Celebración de aniversario abierta a todo público",
-  },
-  {
-    id: "5",
-    titulo: "Fiesta Privada - Sábado Noche",
-    tipo: "fiesta",
-    fecha: "Sábado 5 de septiembre",
-    fechaCorta: "SÁB 5",
-    mes: "SEPTIEMBRE",
-    hora: "21:00",
-    duracion: "6 horas",
-    precio: 20000,
-    cupos: 200,
-    registrados: 0,
-    emoji: "🤠",
-    subtitulo: "DJ · TORO MECÁNICO · ROBOT LED",
-    descripcion:
-      "Fiesta privada bailable con DJ, activaciones y concursos. Entrada general $20.000 con 3 cover incluidos. Toro mecánico y robot LED toda la noche.",
-    detalles: [
-      "Entrada general $20.000 con 3 cover incluidos",
-      "DJ y música bailable toda la noche",
-      "Toro mecánico",
-      "Robot LED",
-      "Activaciones y concursos",
-      "Dress code: no se aceptan zapatillas, jockey ni buzo",
-      "Se reserva el derecho de admisión",
-    ],
-    imagen: "photo-1514525253161-7a46d19cd819",
-    estado: "privado",
-    destacado: false,
-    publicado: true,
-    orden: 4,
-    lugar: "Cacho Cabra, Plaza de Llolleo",
-    experiencia: "Fiesta privada bailable",
-  },
-  {
-    id: "6",
-    titulo: "Puertas Cerradas - Solo Invitados",
-    tipo: "privado",
-    fecha: "Miércoles 28 de octubre",
-    fechaCorta: "MIÉ 28",
-    mes: "OCTUBRE",
-    hora: "20:00",
-    duracion: "4 horas",
-    precio: 0,
-    cupos: 150,
-    registrados: 0,
-    emoji: "✉️",
-    subtitulo: "SOLO CON INVITACIÓN",
-    descripcion:
-      "Evento exclusivo a puertas cerradas, parte de la semana de celebración del primer año en el local. Solo con invitación.",
-    detalles: [
-      "Acceso solo con invitación",
-      "Evento privado y exclusivo",
-      "Ambiente VIP",
-      "Sorpresas y entretenimiento",
-    ],
-    imagen: "photo-1459749411175-04bf5292ceea",
-    estado: "invitacion",
-    destacado: false,
-    publicado: true,
-    orden: 5,
-    lugar: "Cacho Cabra, Plaza de Llolleo",
-    experiencia: "Evento privado con invitación",
-  },
-  {
-    id: "7",
-    titulo: "Fiesta Privada - Jueves de Octubre",
-    tipo: "fiesta",
-    fecha: "Jueves 29 de octubre",
-    fechaCorta: "JUE 29",
-    mes: "OCTUBRE",
-    hora: "21:00",
-    duracion: "5 horas",
-    precio: 25000,
-    cupos: 180,
-    registrados: 0,
-    emoji: "🥂",
-    subtitulo: "SOLO CON INVITACIÓN",
-    descripcion:
-      "Segunda noche a puertas cerradas de la semana de aniversario. Fiesta privada con DJ, entretenimiento y sorpresas.",
-    detalles: [
-      "Fiesta privada y exclusiva",
-      "Acceso solo con invitación",
-      "DJ y entretenimiento",
-      "Ambiente festivo",
-      "Sorpresas especiales",
-    ],
-    imagen: "photo-1492684223066-81342ee5ff30",
-    estado: "invitacion",
-    destacado: false,
-    publicado: true,
-    orden: 6,
-    lugar: "Cacho Cabra, Plaza de Llolleo",
-    experiencia: "Fiesta privada con invitación",
-  },
-  {
-    id: "8",
-    titulo: "Nueva Casa Cacho Cabra - 1 Año",
-    tipo: "aniversario",
-    fecha: "Viernes 30 de octubre",
-    fechaCorta: "VIE 30",
-    mes: "OCTUBRE",
-    hora: "20:00",
-    duracion: "6 horas",
-    precio: 0,
-    cupos: 400,
-    registrados: 0,
-    emoji: "🎈",
-    subtitulo: "APERTURA · ENTRADA ABIERTA",
-    descripcion:
-      "Celebramos 1 año en este local con la apertura de la nueva Casa Cacho Cabra. Activaciones, tortas, DJ y globos. Evento abierto para todos.",
-    detalles: [
-      "Celebración del primer año en el local",
-      "Apertura de la nueva Casa Cacho Cabra",
-      "DJ en vivo",
-      "Activaciones especiales",
-      "Tortas y promociones",
-      "Decoración con globos de octubre",
-    ],
-    imagen: "photo-1530103862676-de8c9debad1d",
-    estado: "abierto",
-    destacado: false,
-    publicado: true,
-    orden: 7,
-    lugar: "Cacho Cabra, Plaza de Llolleo",
-    experiencia: "Apertura y aniversario",
-  },
-  {
-    id: "9",
-    titulo: "Fiesta Halloween - Noche de Máscaras",
-    tipo: "fiesta",
-    fecha: "Sábado 31 de octubre",
-    fechaCorta: "SÁB 31",
-    mes: "OCTUBRE",
-    hora: "21:00",
-    duracion: "6 horas",
-    precio: 15000,
-    cupos: 250,
-    registrados: 0,
-    emoji: "🎃",
-    subtitulo: "HALLOWEEN · MÁSCARAS",
-    descripcion:
-      "Fiesta de Halloween con disfraces y máscaras. Noche temática con DJ, concursos de disfraces, premios y sorpresas.",
-    detalles: [
-      "Temática Halloween y máscaras",
-      "Concurso de disfraces con premios",
-      "DJ en vivo",
-      "Activaciones especiales",
-      "Bailable toda la noche",
-    ],
-    imagen: "photo-1509557965875-b88c97052f0e",
-    estado: "abierto",
-    destacado: true,
-    publicado: true,
-    orden: 8,
-    lugar: "Cacho Cabra, Plaza de Llolleo",
-    experiencia: "Fiesta temática de Halloween",
-  },
-];
+// ─── Persistencia ──────────────────────────────────────────────────
+// Tabla `eventos`. El id es text para conservar los ids originales ("1".."9")
+// que ya estaban en circulación y que evento_registros.evento_id referencia.
 
-const DB_FILE = path.join(process.cwd(), "data", "eventos.json");
+const TABLA = "eventos";
 
-async function ensureDb() {
-  try {
-    await fs.access(DB_FILE);
-  } catch {
-    await fs.mkdir(path.dirname(DB_FILE), { recursive: true });
-    await fs.writeFile(DB_FILE, JSON.stringify(SEED, null, 2), "utf-8");
-  }
+function aDominio(f: Record<string, unknown>): Evento {
+  const promo = f.promo as { texto?: string; precio?: number } | null;
+  return {
+    id: String(f.id),
+    titulo: txt(f.titulo),
+    tipo: txt(f.tipo, "fiesta") as TipoEvento,
+    fecha: txt(f.fecha),
+    fechaCorta: txt(f.fecha_corta),
+    mes: txt(f.mes),
+    hora: txt(f.hora, "20:00"),
+    duracion: txt(f.duracion),
+    precio: num(f.precio),
+    cupos: num(f.cupos),
+    registrados: num(f.registrados),
+    emoji: txt(f.emoji, "🎉"),
+    subtitulo: txt(f.subtitulo),
+    descripcion: txt(f.descripcion),
+    detalles: Array.isArray(f.detalles) ? (f.detalles as string[]) : [],
+    imagen: txt(f.imagen),
+    estado: txt(f.estado, "abierto") as EstadoEvento,
+    destacado: bool(f.destacado),
+    publicado: bool(f.publicado),
+    orden: num(f.orden),
+    chef: (f.chef as string) ?? undefined,
+    promo: promo ? { texto: promo.texto ?? "", precio: Number(promo.precio) || 0 } : undefined,
+    lugar: (f.lugar as string) ?? undefined,
+    gastronomia: (f.gastronomia as string) ?? undefined,
+    experiencia: (f.experiencia as string) ?? undefined,
+  };
+}
+
+function aFila(e: Evento): Record<string, unknown> {
+  return {
+    id: e.id,
+    titulo: e.titulo,
+    tipo: e.tipo,
+    fecha: e.fecha,
+    fecha_corta: e.fechaCorta,
+    mes: e.mes,
+    hora: e.hora,
+    duracion: e.duracion,
+    precio: e.precio,
+    cupos: e.cupos,
+    registrados: e.registrados,
+    emoji: e.emoji,
+    subtitulo: e.subtitulo,
+    descripcion: e.descripcion,
+    detalles: e.detalles,
+    imagen: e.imagen,
+    estado: e.estado,
+    destacado: e.destacado,
+    publicado: e.publicado,
+    orden: e.orden,
+    chef: e.chef ?? null,
+    promo: e.promo ?? null,
+    lugar: e.lugar ?? null,
+    gastronomia: e.gastronomia ?? null,
+    experiencia: e.experiencia ?? null,
+  };
 }
 
 export async function getEventos(): Promise<Evento[]> {
-  try {
-    await ensureDb();
-    const raw = await fs.readFile(DB_FILE, "utf-8");
-    const data = JSON.parse(raw) as Evento[];
-    return data.sort((a, b) => a.orden - b.orden);
-  } catch {
-    return SEED;
-  }
+  return leerColeccion(TABLA, { columna: "orden", ascendente: true }, aDominio);
 }
 
 export async function saveEventos(eventos: Evento[]): Promise<void> {
-  await ensureDb();
-  await fs.writeFile(DB_FILE, JSON.stringify(eventos, null, 2), "utf-8");
+  await reemplazarColeccion(TABLA, eventos.map(aFila));
 }
 
 export async function getEvento(id: string): Promise<Evento | null> {
-  const eventos = await getEventos();
-  return eventos.find(e => e.id === id) ?? null;
+  return leerFila(TABLA, id, aDominio);
 }

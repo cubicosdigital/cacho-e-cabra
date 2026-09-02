@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Falta email o teléfono" }, { status: 400 });
   }
 
-  const supabase = getSupabase();
+  const supabase = await supabaseServer();
 
   const { data: cliente, error: errCliente } = await supabase
     .from("clientes")

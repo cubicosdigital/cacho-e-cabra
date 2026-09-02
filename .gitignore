@@ -51,3 +51,6 @@ next-env.d.ts
 /data/evento_registros.json
 /data/presupuestos.json
 /data/delivery.json
+
+# Material de referencia/planificación (PDFs, Excel, fotos sueltas) — no es parte de la app.
+/extras/

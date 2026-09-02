@@ -1,5 +1,4 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { leerColeccion, reemplazarColeccion, txt, num } from "./coleccion";
 
 export type EstadoDelivery = "recibido" | "preparando" | "en_camino" | "entregado" | "cancelado";
 
@@ -36,29 +35,48 @@ export function calcularTotal(items: ItemDelivery[], despacho: number) {
   return items.reduce((s, i) => s + i.cantidad * i.precio, 0) + despacho;
 }
 
-const DB_FILE = path.join(process.cwd(), "data", "delivery.json");
+// ─── Persistencia ──────────────────────────────────────────────────
 
-async function ensureDb() {
-  try {
-    await fs.access(DB_FILE);
-  } catch {
-    await fs.mkdir(path.dirname(DB_FILE), { recursive: true });
-    await fs.writeFile(DB_FILE, "[]", "utf-8");
-  }
+const TABLA = "delivery_pedidos";
+
+function aDominio(f: Record<string, unknown>): PedidoDelivery {
+  return {
+    id: String(f.id),
+    cliente: txt(f.cliente),
+    telefono: txt(f.telefono),
+    direccion: txt(f.direccion),
+    referencia: txt(f.referencia),
+    items: Array.isArray(f.items) ? (f.items as ItemDelivery[]) : [],
+    despacho: num(f.despacho),
+    notas: txt(f.notas),
+    repartidor: txt(f.repartidor),
+    estado: txt(f.estado, "recibido") as EstadoDelivery,
+    total: num(f.total),
+    created_at: txt(f.created_at),
+  };
+}
+
+function aFila(p: PedidoDelivery): Record<string, unknown> {
+  return {
+    id: p.id,
+    cliente: p.cliente,
+    telefono: p.telefono,
+    direccion: p.direccion,
+    referencia: p.referencia,
+    items: p.items,
+    despacho: p.despacho,
+    notas: p.notas,
+    repartidor: p.repartidor,
+    estado: p.estado,
+    total: p.total,
+    created_at: p.created_at,
+  };
 }
 
 export async function getDelivery(): Promise<PedidoDelivery[]> {
-  try {
-    await ensureDb();
-    const raw = await fs.readFile(DB_FILE, "utf-8");
-    const data = JSON.parse(raw) as PedidoDelivery[];
-    return data.sort((a, b) => b.created_at.localeCompare(a.created_at));
-  } catch {
-    return [];
-  }
+  return leerColeccion(TABLA, { columna: "created_at", ascendente: false }, aDominio);
 }
 
 export async function saveDelivery(lista: PedidoDelivery[]): Promise<void> {
-  await ensureDb();
-  await fs.writeFile(DB_FILE, JSON.stringify(lista, null, 2), "utf-8");
+  await reemplazarColeccion(TABLA, lista.map(aFila));
 }

@@ -1,0 +1,278 @@
+========================================================================
+                          EVENTOS CACHO CABRA                           
+                               9 eventos                                
+========================================================================
+
+------------------------------------------------------------------------
+1. SHOW DE COCINA EN VIVO - ITALIA
+   ITALIA · RISTORANTE
+------------------------------------------------------------------------
+
+  Fecha        Lunes 19 de agosto
+  Hora         19:00  (3 horas)
+  Lugar        Plaza de Llolleo, San Antonio
+  Precio       $7.990
+  Cupos        200   (registrados: 0)
+  Tipo         cocina
+  Estado       abierto
+  Publicado    Si
+  Destacado    Si
+  Chef         Chef Gaby
+  Promocion    Ramazontti vs Aperol — $5.990
+  Gastronomia  Cocina italiana tradicional e innovadora
+  Experiencia  Interactiva - Cocina tu propio plato
+
+  DESCRIPCION
+  Experiencia culinaria interactiva con la Chef Gaby. Viaja a Italia y
+  cocina en vivo preparando típicas italianas en un ambiente
+  minimalista y elegante.
+
+  INCLUYE
+    - Interacción directa con la Chef Gaby
+    - Arma tu plato a gusto
+    - Ñoquis & Fetuccini con salsas Carbonara
+    - Ven con un motivo italiano y gana premios sorpresas
+    - Ambiente minimalista y sofisticado
+    - Experiencia única e inolvidable
+
+
+------------------------------------------------------------------------
+2. CENAS CLANDESTINAS - VIAJE A FRANCIA
+   FRANCIA · BISTRO FRANCÉS
+------------------------------------------------------------------------
+
+  Fecha        Lunes 19 de agosto
+  Hora         20:00  (3 horas)
+  Lugar        Plaza de Llolleo, San Antonio
+  Precio       $50.000
+  Cupos        20   (registrados: 0)
+  Tipo         cena
+  Estado       abierto
+  Publicado    Si
+  Destacado    Si
+  Gastronomia  Gastronomía francesa molecular
+  Experiencia  Degustación de 5 tiempos - Experiencia exclusiva
+
+  DESCRIPCION
+  Experiencia gastronómica exclusiva basada en cinco tiempos. Un viaje
+  culinario a Francia con técnicas de gastronomía molecular en un
+  ambiente elegante y sofisticado.
+
+  INCLUYE
+    - Cinco tiempos de degustación
+    - Preparaciones tradicionales e contemporáneas
+    - Técnicas de gastronomía molecular premium
+    - Espumas, esferas, gel y cocción de precisión
+    - Espíritu del bistro francés clásico
+    - Experiencia elegante, equilibrada y exclusiva
+
+
+------------------------------------------------------------------------
+3. EVENTO PRIVADO - TORTA & ACTIVACIÓN
+   PUERTAS CERRADAS
+------------------------------------------------------------------------
+
+  Fecha        Miércoles 2 de septiembre
+  Hora         18:00  (4 horas)
+  Lugar        Cacho Cabra, Plaza de Llolleo
+  Precio       Liberado (entrada gratuita)
+  Cupos        100   (registrados: 0)
+  Tipo         privado
+  Estado       privado
+  Publicado    NO   ** no se ve en el sitio **
+  Destacado    No
+  Experiencia  Evento privado exclusivo
+
+  DESCRIPCION
+  Evento privado con decoración especial, torta, activaciones y
+  sorpresas. Celebración exclusiva en Cacho Cabra.
+
+  INCLUYE
+    - Decoración personalizada
+    - Torta especial
+    - Activaciones y sorpresas
+    - Espacio privado y exclusivo
+    - Ambiente festivo
+
+
+------------------------------------------------------------------------
+4. ANIVERSARIO ABIERTO - CACHO CABRA
+   ANIVERSARIO · ENTRADA LIBERADA
+------------------------------------------------------------------------
+
+  Fecha        Viernes 4 de septiembre
+  Hora         19:00  (5 horas)
+  Lugar        Cacho Cabra, Plaza de Llolleo
+  Precio       Liberado (entrada gratuita)
+  Cupos        300   (registrados: 0)
+  Tipo         aniversario
+  Estado       abierto
+  Publicado    Si
+  Destacado    Si
+  Experiencia  Celebración de aniversario abierta a todo público
+
+  DESCRIPCION
+  Celebra el aniversario de Cacho Cabra. Noche especial con música en
+  vivo, promociones y la mejor cocina de la casa.
+
+  INCLUYE
+    - Acceso libre al restaurante
+    - Promociones especiales de aniversario
+    - DJ en vivo
+    - Activaciones durante toda la noche
+    - Sorpresas para los clientes
+
+
+------------------------------------------------------------------------
+5. FIESTA PRIVADA - SÁBADO NOCHE
+   DJ · TORO MECÁNICO · ROBOT LED
+------------------------------------------------------------------------
+
+  Fecha        Sábado 5 de septiembre
+  Hora         21:00  (6 horas)
+  Lugar        Cacho Cabra, Plaza de Llolleo
+  Precio       $20.000
+  Cupos        200   (registrados: 0)
+  Tipo         fiesta
+  Estado       privado
+  Publicado    NO   ** no se ve en el sitio **
+  Destacado    No
+  Experiencia  Fiesta privada bailable
+
+  DESCRIPCION
+  Fiesta privada bailable con DJ, activaciones y concursos. Entrada
+  general $20.000 con 3 cover incluidos. Toro mecánico y robot LED
+  toda la noche.
+
+  INCLUYE
+    - Entrada general $20.000 con 3 cover incluidos
+    - DJ y música bailable toda la noche
+    - Toro mecánico
+    - Robot LED
+    - Activaciones y concursos
+    - Dress code: no se aceptan zapatillas, jockey ni buzo
+    - Se reserva el derecho de admisión
+
+
+------------------------------------------------------------------------
+6. PUERTAS CERRADAS - SOLO INVITADOS
+   SOLO CON INVITACIÓN
+------------------------------------------------------------------------
+
+  Fecha        Miércoles 28 de octubre
+  Hora         20:00  (4 horas)
+  Lugar        Cacho Cabra, Plaza de Llolleo
+  Precio       Liberado (entrada gratuita)
+  Cupos        150   (registrados: 0)
+  Tipo         privado
+  Estado       invitacion
+  Publicado    NO   ** no se ve en el sitio **
+  Destacado    No
+  Experiencia  Evento privado con invitación
+
+  DESCRIPCION
+  Evento exclusivo a puertas cerradas, parte de la semana de
+  celebración del primer año en el local. Solo con invitación.
+
+  INCLUYE
+    - Acceso solo con invitación
+    - Evento privado y exclusivo
+    - Ambiente VIP
+    - Sorpresas y entretenimiento
+
+
+------------------------------------------------------------------------
+7. FIESTA PRIVADA - JUEVES DE OCTUBRE
+   SOLO CON INVITACIÓN
+------------------------------------------------------------------------
+
+  Fecha        Jueves 29 de octubre
+  Hora         21:00  (5 horas)
+  Lugar        Cacho Cabra, Plaza de Llolleo
+  Precio       $25.000
+  Cupos        180   (registrados: 0)
+  Tipo         fiesta
+  Estado       invitacion
+  Publicado    NO   ** no se ve en el sitio **
+  Destacado    No
+  Experiencia  Fiesta privada con invitación
+
+  DESCRIPCION
+  Segunda noche a puertas cerradas de la semana de aniversario. Fiesta
+  privada con DJ, entretenimiento y sorpresas.
+
+  INCLUYE
+    - Fiesta privada y exclusiva
+    - Acceso solo con invitación
+    - DJ y entretenimiento
+    - Ambiente festivo
+    - Sorpresas especiales
+
+
+------------------------------------------------------------------------
+8. NUEVA CASA CACHO CABRA - 1 AÑO
+   APERTURA · ENTRADA ABIERTA
+------------------------------------------------------------------------
+
+  Fecha        Viernes 30 de octubre
+  Hora         20:00  (6 horas)
+  Lugar        Cacho Cabra, Plaza de Llolleo
+  Precio       Liberado (entrada gratuita)
+  Cupos        400   (registrados: 0)
+  Tipo         aniversario
+  Estado       abierto
+  Publicado    NO   ** no se ve en el sitio **
+  Destacado    No
+  Experiencia  Apertura y aniversario
+
+  DESCRIPCION
+  Celebramos 1 año en este local con la apertura de la nueva Casa
+  Cacho Cabra. Activaciones, tortas, DJ y globos. Evento abierto para
+  todos.
+
+  INCLUYE
+    - Celebración del primer año en el local
+    - Apertura de la nueva Casa Cacho Cabra
+    - DJ en vivo
+    - Activaciones especiales
+    - Tortas y promociones
+    - Decoración con globos de octubre
+
+
+------------------------------------------------------------------------
+9. FIESTA HALLOWEEN - NOCHE DE MÁSCARAS
+   HALLOWEEN · MÁSCARAS
+------------------------------------------------------------------------
+
+  Fecha        Sábado 31 de octubre
+  Hora         21:00  (6 horas)
+  Lugar        Cacho Cabra, Plaza de Llolleo
+  Precio       $15.000
+  Cupos        250   (registrados: 0)
+  Tipo         fiesta
+  Estado       abierto
+  Publicado    Si
+  Destacado    Si
+  Experiencia  Fiesta temática de Halloween
+
+  DESCRIPCION
+  Fiesta de Halloween con disfraces y máscaras. Noche temática con DJ,
+  concursos de disfraces, premios y sorpresas.
+
+  INCLUYE
+    - Temática Halloween y máscaras
+    - Concurso de disfraces con premios
+    - DJ en vivo
+    - Activaciones especiales
+    - Bailable toda la noche
+
+========================================================================
+RESUMEN
+========================================================================
+  Publicados       4  ->  1, 2, 4, 9
+  Sin publicar     5  ->  3, 5, 6, 7, 8
+  Cupos totales    1800
+  Registrados      0
+
+  Por tipo         aniversario: 2, cena: 1, cocina: 1, fiesta: 3, privado: 2
+

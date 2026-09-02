@@ -215,7 +215,7 @@ export default async function Home() {
               <MessageSquareWarning size={14} strokeWidth={2} />
               Sugerencias y reclamos
             </a>
-            <a href="/admin/login" style={{
+            <a href="/admin/login" target="_blank" rel="noopener noreferrer" style={{
               display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: TEXT1,
               textDecoration: "none", background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 999, padding: "9px 18px",
             }}>

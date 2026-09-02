@@ -30,12 +30,18 @@ export default function Header() {
 
   if (pathname.startsWith("/admin") || pathname.startsWith("/carta")) return null;
 
+  // En el home el header flota sobre la foto del hero (sin ocupar espacio en el
+  // documento), así la imagen llega de verdad hasta arriba, sin franja de fondo.
+  const esHome = pathname === "/";
+
   return (
     <>
       <header style={{
         width: "100%",
         background: "transparent",
-        position: "relative", zIndex: 10,
+        position: esHome ? "absolute" : "relative",
+        top: esHome ? 0 : undefined, left: esHome ? 0 : undefined, right: esHome ? 0 : undefined,
+        zIndex: 10,
       }}>
       <div style={{
         maxWidth: 1100, margin: "0 auto", padding: "20px 20px 8px", width: "100%",

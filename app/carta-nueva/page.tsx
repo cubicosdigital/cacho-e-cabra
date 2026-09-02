@@ -26,6 +26,14 @@ const CATEGORIAS: { id: Categoria; label: string; emoji: string; color: string; 
   { id: "tragos", label: "Tragos", emoji: "🍹", color: "#6B4C9A", bgImage: "photo-1514432324607-2e467f4af445" },
 ];
 
+/** #rrggbb → rgba(). Si la categoría todavía no resolvió, cae en negro. */
+function hexARgba(hex: string | undefined, alpha: number) {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex ?? "");
+  if (!m) return `rgba(0, 0, 0, ${alpha})`;
+  const n = parseInt(m[1], 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
 function fmt(n: number) {
   return `$${n.toLocaleString("es-CL")}`;
 }
@@ -137,7 +145,7 @@ export default function CartaNuevaPage() {
           flexDirection: "column",
           justifyContent: "flex-end",
           padding: "80px 40px",
-          background: `linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(${parseInt(catInfo?.color?.slice(1, 3), 16)}, ${parseInt(catInfo?.color?.slice(3, 5), 16)}, ${parseInt(catInfo?.color?.slice(5, 7), 16)}, 0.3) 100%)`,
+          background: `linear-gradient(135deg, rgba(0,0,0,0.6) 0%, ${hexARgba(catInfo?.color, 0.3)} 100%)`,
         }}>
           <div>
             <div style={{
@@ -225,7 +233,7 @@ export default function CartaNuevaPage() {
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
           gap: 28,
-          autoRows: "auto",
+          gridAutoRows: "auto",
         }}>
           {productosFiltrados.map((p, idx) => (
             <div

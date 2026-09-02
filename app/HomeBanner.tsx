@@ -33,7 +33,7 @@ export default function HomeBanner({ slides }: { slides: Slide[] }) {
   const slide = slides[i];
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden", marginTop: "-110px" }}>
+    <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
       {slides.map((s, idx) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img key={s.id} src={resolverImagen(s.foto, 1400, 900)} alt={s.nombre}

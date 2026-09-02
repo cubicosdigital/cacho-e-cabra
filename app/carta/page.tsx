@@ -2,14 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { ShoppingCart } from "lucide-react";
 import { resolverImagen } from "../../lib/imagenes";
 
 // ─── tipos ─────────────────────────────────────────────────────────
 type Categoria = "todo" | "chef" | "cafeteria" | "brunch" | "comida" | "tragos" | "postres";
 type Tema      = "oscuro" | "claro";
 type FontSize  = "normal" | "grande" | "extra";
-type Vista     = "grid" | "lista" | "carta";
 
 interface Producto {
   id: string;
@@ -17,6 +15,7 @@ interface Producto {
   descripcion: string;
   precio: number;
   categoria: Omit<Categoria, "todo">;
+  subcategoria?: string;
   foto: string;
   badge?: string;
   popular?: boolean;
@@ -46,7 +45,7 @@ function esFinDeSemanaChef() {
   return dia === 0 || dia === 5 || dia === 6;
 }
 
-const FONT_SCALE: Record<FontSize, number> = { normal:1, grande:1.15, extra:1.3 };
+const FONT_SCALE: Record<FontSize, number> = { normal:1.25, grande:1.4, extra:1.55 };
 
 // ─── page ──────────────────────────────────────────────────────────
 export default function CartaPage() {
@@ -54,7 +53,6 @@ export default function CartaPage() {
   const [busqueda, setBusqueda] = useState("");
   const [tema,     setTema]     = useState<Tema>("oscuro");
   const [fontSize, setFontSize] = useState<FontSize>("normal");
-  const [vista,    setVista]    = useState<Vista>("lista");
   const [cart,     setCart]     = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [cartBump, setCartBump] = useState(false);
@@ -185,12 +183,22 @@ export default function CartaPage() {
     ? porCategoria
     : porCategoria.filter(p => p.nombre.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q));
 
+  // Agrupa productos consecutivos de la misma subcategoría (ya vienen ordenados así desde la BD).
+  // Grupos con más de 3 productos llevan un banner con foto arriba.
+  const grupos: { subcategoria: string | null; items: Producto[] }[] = [];
+  for (const p of filtered) {
+    const key = p.subcategoria || null;
+    const ultimo = grupos[grupos.length - 1];
+    if (ultimo && ultimo.subcategoria === key) ultimo.items.push(p);
+    else grupos.push({ subcategoria: key, items: [p] });
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "var(--font-dm), sans-serif", color: T.text1, transition: "background 0.3s, color 0.3s" }}>
 
       {/* ── HEADER + TABS (sticky en un solo bloque, sin gap entre ambos) ── */}
       <div style={{ position: "sticky", top: 0, zIndex: 40, background: T.bg }}>
-        <header style={{ borderBottom: `1px solid ${T.border}`, padding: "18px 24px", display: "flex", alignItems: "center", gap: 16, backdropFilter: "blur(8px)" }}>
+        <header style={{ borderBottom: `1px solid ${T.border}`, padding: "18px 24px", display: "flex", alignItems: "center", gap: 16, backdropFilter: "blur(8px)", flexWrap: "wrap" }}>
 
           {/* Logo */}
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0, textDecoration: "none" }}>
@@ -201,7 +209,7 @@ export default function CartaPage() {
           </a>
 
           {/* Controles */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto", flexWrap: "wrap" }}>
 
             {/* Tema */}
             <button onClick={() => setTema(t => t === "oscuro" ? "claro" : "oscuro")}
@@ -209,25 +217,6 @@ export default function CartaPage() {
               style={{ background: T.surf2, border: `1px solid ${T.border}`, borderRadius: 10, padding: "7px 12px", cursor: "pointer", fontSize: 18, color: T.text2, display: "flex", alignItems: "center", gap: 6 }}>
               {tema === "oscuro" ? "☀️" : "🌙"}
             </button>
-
-            {/* Vista (grid / lista) */}
-            <div style={{ display: "flex", background: T.surf2, border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden" }}>
-              {([
-                { v: "grid"  as Vista, icon: "⊞", title: "Vista iconos" },
-                { v: "lista" as Vista, icon: "☰", title: "Vista lista"  },
-                { v: "carta" as Vista, icon: "📰", title: "Vista carta impresa" },
-              ]).map(({ v, icon, title }) => (
-                <button key={v} onClick={() => setVista(v)} title={title}
-                  style={{
-                    padding: "7px 14px", border: "none", cursor: "pointer",
-                    background: vista === v ? T.amr : "transparent",
-                    color: vista === v ? "#1a1200" : T.text3,
-                    fontSize: 18, transition: "all 0.15s",
-                  }}>
-                  {icon}
-                </button>
-              ))}
-            </div>
 
             {/* Font size */}
             <div style={{ display: "flex", background: T.surf2, border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden" }}>
@@ -342,25 +331,35 @@ export default function CartaPage() {
           {/* Productos */}
           {cargando ? (
             <div style={{ padding: "60px 0", textAlign: "center", color: T.text3 }}>Cargando carta…</div>
-          ) : vista === "grid" ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 20 }}>
-              {filtered.map(p => {
-                const enCart = cart.find(i => i.producto.id === p.id)?.cantidad ?? 0;
-                return (
-                  <ProductoCard key={p.id} p={p} enCart={enCart} tema={T} fs={fs}
-                    onAdd={() => addToCart(p)} onRemove={() => removeOne(p.id)} />
-                );
-              })}
-            </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {filtered.map(p => {
-                const enCart = cart.find(i => i.producto.id === p.id)?.cantidad ?? 0;
-                return (
-                  <ProductoRow key={p.id} p={p} enCart={enCart} tema={T} fs={fs}
-                    onAdd={() => addToCart(p)} onRemove={() => removeOne(p.id)} />
-                );
-              })}
+              {grupos.map((grupo, gi) => (
+                <div key={gi} style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
+                  {grupo.subcategoria && (
+                    <div style={{
+                      width: "100%", height: 150, borderRadius: 14, overflow: "hidden", position: "relative",
+                      marginTop: gi > 0 ? 10 : 0, flexShrink: 0,
+                    }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={resolverImagen(grupo.items[0].foto, 1600, 300)} alt={grupo.subcategoria}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0.05) 100%)" }} />
+                      <div style={{ position: "absolute", left: 24, top: "50%", transform: "translateY(-50%)" }}>
+                        <span style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: `${26 * fs}px`, fontWeight: 900, color: "#fff", letterSpacing: "-0.01em" }}>
+                          {grupo.subcategoria}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {grupo.items.map(p => {
+                    const enCart = cart.find(i => i.producto.id === p.id)?.cantidad ?? 0;
+                    return (
+                      <ProductoRow key={p.id} p={p} enCart={enCart} tema={T} fs={fs}
+                        onAdd={() => addToCart(p)} onRemove={() => removeOne(p.id)} />
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -370,7 +369,7 @@ export default function CartaPage() {
       {/* ── CARRITO: box flotante, ancla arriba del botón ── */}
       {cartOpen && (
         <div style={{
-          position: "fixed", bottom: 100, right: 20, zIndex: 70,
+          position: "fixed", bottom: 100, left: 20, zIndex: 70,
           width: 340, maxWidth: "calc(100vw - 40px)",
           maxHeight: "calc(100vh - 180px)",
           boxShadow: "0 20px 50px -12px rgba(0,0,0,0.5)",
@@ -382,7 +381,6 @@ export default function CartaPage() {
             onAdd={addToCart}
             onRemoveOne={removeOne}
             onRemoveAll={removeAll}
-            onPedido={() => { setCartOpen(false); setPedido(true); }}
           />
         </div>
       )}
@@ -392,31 +390,26 @@ export default function CartaPage() {
         className={cartBump ? "cart-bump" : ""}
         title="Tu Pedido"
         style={{
-          position: "fixed", bottom: 24, right: 24, zIndex: 71,
+          position: "fixed", bottom: 24, left: 24, zIndex: 71,
           height: 60, borderRadius: 999,
-          padding: "0 22px 0 18px",
+          padding: "0 24px",
           background: T.amr, border: "none", cursor: "pointer",
           display: "flex", alignItems: "center", gap: 10,
           boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
         }}>
-        <span style={{ position: "relative", display: "flex" }}>
-          <ShoppingCart size={26} strokeWidth={2.4} fill="#1a1200" fillOpacity={0.18} color="#1a1200" />
-          {totalItems > 0 && (
-            <span style={{
-              position: "absolute", top: -10, right: -10,
-              background: T.rojo, color: "#fff", borderRadius: "50%",
-              minWidth: 22, height: 22, padding: "0 5px",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontFamily: "var(--font-raleway),sans-serif", fontSize: 12, fontWeight: 900,
-              border: `2px solid ${T.amr}`,
-            }}>
-              {totalItems}
-            </span>
-          )}
-        </span>
         <span style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: 15, fontWeight: 900, color: "#1a1200", whiteSpace: "nowrap" }}>
           Tu Pedido
         </span>
+        {totalItems > 0 && (
+          <span style={{
+            background: T.rojo, color: "#fff", borderRadius: "50%",
+            minWidth: 22, height: 22, padding: "0 5px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontFamily: "var(--font-raleway),sans-serif", fontSize: 12, fontWeight: 900,
+          }}>
+            {totalItems}
+          </span>
+        )}
       </button>
 
       {/* ── MODAL PEDIDO ── */}
@@ -563,52 +556,28 @@ function ProductoRow({ p, enCart, tema: T, fs, onAdd, onRemove }: {
       onMouseLeave={() => setHover(false)}
       style={{
         background: T.surface, border: `1px solid ${hover ? T.amr : T.border}`,
-        borderRadius: 14, overflow: "hidden", display: "flex", alignItems: "center",
-        transition: "all 0.2s", gap: 0,
+        borderRadius: 14, overflow: "hidden", position: "relative",
+        boxShadow: hover ? "0 6px 20px -8px rgba(0,0,0,0.25)" : "0 1px 4px -1px rgba(0,0,0,0.1)",
+        transition: "all 0.2s",
       }}>
 
-      {/* Foto pequeña */}
-      <div style={{ position: "relative", width: 88, height: 88, flexShrink: 0, overflow: "hidden", background: T.surf2 }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={resolverImagen(p.foto, 180, 180)}
-          alt={p.nombre} loading="lazy"
-          style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.3s", transform: hover ? "scale(1.06)" : "scale(1)" }}
-        />
-        {enCart > 0 && (
-          <div style={{ position: "absolute", inset: 0, background: "rgba(251,191,36,0.85)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-raleway),sans-serif", fontWeight: 900, fontSize: 24, color: "#1a1200" }}>
-            {enCart}
-          </div>
-        )}
-      </div>
-
       {/* Info */}
-      <div style={{ flex: 1, minWidth: 0, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 3 }}>
-            <span style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: `${15 * fs}px`, fontWeight: 800, color: T.text1, lineHeight: 1.2 }}>
-              {p.nombre}
-            </span>
-            {p.popular && (
-              <span style={{ background: T.amr, color: "#1a1200", fontSize: 12, fontWeight: 800, padding: "2px 8px", borderRadius: 999 }}>★ Popular</span>
-            )}
-            {p.badge && (
-              <span style={{ background: "rgba(255,255,255,0.08)", color: T.text3, fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 999, border: `1px solid ${T.border}` }}>{p.badge}</span>
-            )}
-          </div>
-          <div style={{
-            fontSize: `${14 * fs}px`, color: T.text3, lineHeight: 1.5,
-            display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as never, overflow: "hidden",
-          }}>
-            {p.descripcion}
+      <div style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+          <span style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: `${18 * fs}px`, fontWeight: 800, color: T.text1, lineHeight: 1.2 }}>
+            {p.nombre}
+          </span>
+          <div style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: `${18 * fs}px`, fontWeight: 900, color: T.amr, letterSpacing: "-0.02em", flexShrink: 0, whiteSpace: "nowrap" }}>
+            {fmtPrecio(p.precio)}
           </div>
         </div>
 
-        {/* Precio + botones */}
-        <div style={{ display: "flex", alignItems: "center", gap: 20, flexShrink: 0 }}>
-          <div style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: `${18 * fs}px`, fontWeight: 900, color: T.amr, letterSpacing: "-0.02em" }}>
-            {fmtPrecio(p.precio)}
-          </div>
+        <div style={{ fontSize: `${14 * fs}px`, color: T.text3, lineHeight: 1.5, paddingRight: "18%" }}>
+          {p.descripcion}
+        </div>
+
+        {/* Botones */}
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
           {enCart === 0 ? (
             <button onClick={onAdd} style={{
               padding: "8px 16px", background: "transparent", border: `1px solid ${T.border}`, borderRadius: 10,
@@ -624,6 +593,18 @@ function ProductoRow({ p, enCart, tema: T, fs, onAdd, onRemove }: {
           )}
         </div>
       </div>
+
+      {/* Badges — esquina inferior izquierda */}
+      {(p.popular || p.badge) && (
+        <div style={{ position: "absolute", left: 18, bottom: 14, display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {p.popular && (
+            <span style={{ background: T.amr, color: "#1a1200", fontSize: 12, fontWeight: 800, padding: "2px 8px", borderRadius: 999 }}>★ Popular</span>
+          )}
+          {p.badge && (
+            <span style={{ background: "rgba(255,255,255,0.08)", color: T.text3, fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 999, border: `1px solid ${T.border}` }}>{p.badge}</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -727,7 +708,7 @@ function ProductoCard({ p, enCart, tema: T, fs, onAdd, onRemove }: {
 type TColor = { bg:string; surface:string; surf2:string; border:string; text1:string; text2:string; text3:string; amr:string; rojo:string; verde:string };
 function buildT(_: never): TColor { return {} as TColor; }
 
-function CartPanel({ cart, tema: T, fs, onClose, onAdd, onRemoveOne, onRemoveAll, onPedido }: {
+function CartPanel({ cart, tema: T, fs, onClose, onAdd, onRemoveOne, onRemoveAll }: {
   cart: CartItem[];
   tema: TColor;
   fs: number;
@@ -735,7 +716,6 @@ function CartPanel({ cart, tema: T, fs, onClose, onAdd, onRemoveOne, onRemoveAll
   onAdd: (p: Producto) => void;
   onRemoveOne: (id: string) => void;
   onRemoveAll: (id: string) => void;
-  onPedido: () => void;
 }) {
   const total = cart.reduce((s, i) => s + i.producto.precio * i.cantidad, 0);
   return (
@@ -743,7 +723,7 @@ function CartPanel({ cart, tema: T, fs, onClose, onAdd, onRemoveOne, onRemoveAll
       {/* Header carrito */}
       <div style={{ padding: "18px 20px 14px", borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: 20, fontWeight: 900, color: T.text1 }}>
-          🛒 Tu Pedido
+          Tu Pedido
         </div>
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: T.text3 }}>✕</button>
       </div>
@@ -792,12 +772,9 @@ function CartPanel({ cart, tema: T, fs, onClose, onAdd, onRemoveOne, onRemoveAll
             <div style={{ fontSize: 14, color: T.text3, marginBottom: 16 }}>
               El cobro se realiza al finalizar en la mesa.
             </div>
-            <button onClick={onPedido}
-              style={{ width: "100%", padding: "14px 0", background: T.amr, border: "none", borderRadius: 14, fontFamily: "var(--font-dm),sans-serif", fontSize: `${15 * fs}px`, fontWeight: 800, color: "#1a1200", cursor: "pointer", transition: "opacity 0.15s" }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = "0.85")}
-              onMouseLeave={e => (e.currentTarget.style.opacity = "1")}>
+            <div style={{ width: "100%", padding: "14px 0", textAlign: "center", background: T.surf2, border: `1px solid ${T.border}`, borderRadius: 14, fontFamily: "var(--font-dm),sans-serif", fontSize: `${15 * fs}px`, fontWeight: 800, color: T.text2, boxSizing: "border-box" }}>
               🔔 Hacer Pedido — Llamar al Mesero
-            </button>
+            </div>
           </div>
         </>
       )}

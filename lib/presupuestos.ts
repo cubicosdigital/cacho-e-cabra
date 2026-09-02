@@ -1,5 +1,4 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { leerColeccion, leerFila, reemplazarColeccion, txt, num } from "./coleccion";
 
 export type EstadoPresupuesto = "borrador" | "enviado" | "aceptado" | "rechazado";
 
@@ -79,34 +78,54 @@ export function fmtPeso(n: number) {
   return `$${n.toLocaleString("es-CL")}`;
 }
 
-const DB_FILE = path.join(process.cwd(), "data", "presupuestos.json");
+// ─── Persistencia ──────────────────────────────────────────────────
+// Tabla `presupuestos`. El id es uuid: el presupuesto se comparte por link
+// público en /presupuesto/[id], así que no debe poder adivinarse.
 
-async function ensureDb() {
-  try {
-    await fs.access(DB_FILE);
-  } catch {
-    await fs.mkdir(path.dirname(DB_FILE), { recursive: true });
-    await fs.writeFile(DB_FILE, "[]", "utf-8");
-  }
+const TABLA = "presupuestos";
+
+function aDominio(f: Record<string, unknown>): Presupuesto {
+  return {
+    id: String(f.id),
+    referencia: txt(f.referencia),
+    cliente: txt(f.cliente),
+    telefono: txt(f.telefono),
+    email: txt(f.email),
+    precioPorPersona: num(f.precio_por_persona),
+    personas: num(f.personas),
+    intro: txt(f.intro),
+    bloques: Array.isArray(f.bloques) ? (f.bloques as Bloque[]) : [],
+    notas: txt(f.notas),
+    estado: txt(f.estado, "borrador") as EstadoPresupuesto,
+    creadoEn: txt(f.creado_en),
+  };
+}
+
+function aFila(p: Presupuesto): Record<string, unknown> {
+  return {
+    id: p.id,
+    referencia: p.referencia,
+    cliente: p.cliente,
+    telefono: p.telefono,
+    email: p.email,
+    precio_por_persona: p.precioPorPersona,
+    personas: p.personas,
+    intro: p.intro,
+    bloques: p.bloques,
+    notas: p.notas,
+    estado: p.estado,
+    creado_en: p.creadoEn,
+  };
 }
 
 export async function getPresupuestos(): Promise<Presupuesto[]> {
-  try {
-    await ensureDb();
-    const raw = await fs.readFile(DB_FILE, "utf-8");
-    const data = JSON.parse(raw) as Presupuesto[];
-    return data.sort((a, b) => b.creadoEn.localeCompare(a.creadoEn));
-  } catch {
-    return [];
-  }
+  return leerColeccion(TABLA, { columna: "creado_en", ascendente: false }, aDominio);
 }
 
 export async function savePresupuestos(lista: Presupuesto[]): Promise<void> {
-  await ensureDb();
-  await fs.writeFile(DB_FILE, JSON.stringify(lista, null, 2), "utf-8");
+  await reemplazarColeccion(TABLA, lista.map(aFila));
 }
 
 export async function getPresupuesto(id: string): Promise<Presupuesto | null> {
-  const lista = await getPresupuestos();
-  return lista.find(p => p.id === id) ?? null;
+  return leerFila(TABLA, id, aDominio);
 }

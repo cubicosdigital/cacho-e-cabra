@@ -71,6 +71,12 @@ export default function LoginPage() {
             {loading ? "Entrando..." : "Entrar"}
           </button>
         </div>
+
+        <p style={{ textAlign: "center", marginTop: 20 }}>
+          <a href="/admin/recuperar" style={{ color: TEXT3, fontSize: 14, textDecoration: "none" }}>
+            ¿Olvidaste tu contraseña?
+          </a>
+        </p>
       </div>
     </div>
   );
