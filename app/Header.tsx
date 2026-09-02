@@ -44,12 +44,14 @@ export default function Header() {
         .header-links { display: flex; align-items: center; gap: 8px; }
         .header-burger { display: none; }
         .header-mobile-cta { display: none; }
+        .header-logo-link { margin-left: -30px; }
         .header-logo { width: 224px; height: 179px; }
         @media (max-width: 760px) {
           .header-links { display: none; }
           .header-burger { display: flex; }
           .header-cta { display: none !important; }
           .header-mobile-cta { display: inline-flex; }
+          .header-logo-link { margin-left: 0; }
           .header-logo { width: 108px; height: 86px; }
         }
       `}</style>
@@ -66,7 +68,7 @@ export default function Header() {
         display: "flex", alignItems: "center",
         minHeight: 60, gap: 28, flexWrap: "wrap",
       }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", flexShrink: 0, marginLeft: "-30px" }}>
+        <a href="/" className="header-logo-link" style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", flexShrink: 0 }}>
           <Image className="header-logo" src="/LogoCachoEcabra-white.png" alt="Cacho Cabra" width={224} height={179} />
         </a>
 
