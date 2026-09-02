@@ -43,10 +43,14 @@ export default function Header() {
       <style>{`
         .header-links { display: flex; align-items: center; gap: 8px; }
         .header-burger { display: none; }
+        .header-mobile-cta { display: none; }
+        .header-logo { width: 224px; height: 179px; }
         @media (max-width: 760px) {
           .header-links { display: none; }
           .header-burger { display: flex; }
-          .header-cta { padding: 8px 16px !important; font-size: 13px !important; }
+          .header-cta { display: none !important; }
+          .header-mobile-cta { display: inline-flex; }
+          .header-logo { width: 108px; height: 86px; }
         }
       `}</style>
 
@@ -63,7 +67,7 @@ export default function Header() {
         minHeight: 60, gap: 28, flexWrap: "wrap",
       }}>
         <a href="/" style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", flexShrink: 0, marginLeft: "-30px" }}>
-          <Image src="/LogoCachoEcabra-white.png" alt="Cacho Cabra" width={224} height={179} />
+          <Image className="header-logo" src="/LogoCachoEcabra-white.png" alt="Cacho Cabra" width={224} height={179} />
         </a>
 
         <div style={{ display: "flex", alignItems: "center", gap: 24, marginLeft: "auto", flexWrap: "wrap" }}>
@@ -86,6 +90,14 @@ export default function Header() {
             display: "inline-flex", alignItems: "center", gap: 6, background: AMR, color: "#1a1200",
             borderRadius: 999, padding: "12px 28px", fontSize: 15, fontWeight: 800, textDecoration: "none", flexShrink: 0,
             transition: "all 0.2s ease", cursor: "pointer",
+          }}>
+            Ver la carta
+          </a>
+
+          <a href="/carta" target="_blank" rel="noopener noreferrer" className="header-mobile-cta" style={{
+            alignItems: "center", justifyContent: "center", gap: 6, flexShrink: 0,
+            background: AMR, color: "#1a1200", borderRadius: 999, padding: "8px 16px",
+            fontSize: 13, fontWeight: 800, textDecoration: "none", whiteSpace: "nowrap",
           }}>
             Ver la carta
           </a>
