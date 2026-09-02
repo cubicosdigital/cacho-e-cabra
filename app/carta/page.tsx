@@ -190,9 +190,10 @@ export default function CartaPage() {
       ? productos.filter(p => p.categoria === "brunch" || p.categoria === "cafeteria" || p.categoria === "postres")
       : productos.filter(p => p.categoria === cat);
   const q = busqueda.trim().toLowerCase();
+  // Con texto en el buscador, se busca en TODA la carta (no solo en la pestaña activa).
   const filtered = q === ""
     ? porCategoria
-    : porCategoria.filter(p => p.nombre.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q));
+    : productos.filter(p => p.nombre.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q));
 
   // Agrupa productos consecutivos de la misma subcategoría (ya vienen ordenados así desde la BD).
   // Grupos con más de 3 productos llevan un banner con foto arriba.
