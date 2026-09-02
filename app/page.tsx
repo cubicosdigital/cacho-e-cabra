@@ -145,16 +145,16 @@ export default async function Home() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28, alignItems: "start" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div style={{ fontSize: 17, color: TEXT1, lineHeight: 1.8 }}>
-                <div style={{ fontWeight: 700, marginBottom: 8 }}>Plaza de Llolleo</div>
-                San Antonio, Chile
+                <div style={{ fontWeight: 700, marginBottom: 8 }}>Del Canelo N° 439</div>
+                Llolleo, San Antonio, Chile
               </div>
-              <a href="https://maps.google.com/?q=Plaza+de+Llolleo,+San+Antonio,+Chile" target="_blank" rel="noopener noreferrer"
+              <a href="https://maps.google.com/?q=Del+Canelo+439,+Llolleo,+San+Antonio,+Chile" target="_blank" rel="noopener noreferrer"
                  style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 15, fontWeight: 700, color: AMR, textDecoration: "none" }}>
                 Cómo llegar →
               </a>
             </div>
             <iframe style={{ width: "100%", height: 300, borderRadius: 16, border: "none" }}
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3285.1234567890123!2d-71.6096!3d-33.5901!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662c5c5c5c5c5c5%3A0x1234567890!2sPlaza%20de%20Llolleo!5e0!3m2!1ses!2scl!4v1234567890" allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe>
+              src="https://www.google.com/maps?q=Del+Canelo+439,+Llolleo,+San+Antonio,+Chile&output=embed" allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe>
           </div>
         </div>
       </main>
@@ -183,10 +183,10 @@ export default async function Home() {
           <div>
             <div style={{ fontSize: 13, color: TEXT2, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 14 }}>Visítanos</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <a href="https://maps.google.com/?q=Plaza+de+Llolleo,+San+Antonio,+Chile" target="_blank" rel="noopener noreferrer"
+              <a href="https://maps.google.com/?q=Del+Canelo+439,+Llolleo,+San+Antonio,+Chile" target="_blank" rel="noopener noreferrer"
                  style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: TEXT3, textDecoration: "none", lineHeight: 1.5 }}>
                 <MapPin size={16} strokeWidth={2} color={AMR} style={{ flexShrink: 0, marginTop: 2 }} />
-                Plaza de Llolleo, San Antonio, Chile
+                Del Canelo N° 439, Llolleo, San Antonio, Chile
               </a>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: TEXT3, lineHeight: 1.6 }}>
                 <Clock size={16} strokeWidth={2} color={AMR} style={{ flexShrink: 0, marginTop: 2 }} />
