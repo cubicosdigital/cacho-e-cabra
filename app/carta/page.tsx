@@ -38,6 +38,10 @@ function fmtPrecio(n: number) {
   return `$${n.toLocaleString("es-CL")}`;
 }
 
+function slugify(s: string) {
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
 // Las sugerencias del chef son un especial de fin de semana: solo se
 // muestran viernes, sábado y domingo, y solo si el admin las publicó.
 function esFinDeSemanaChef() {
@@ -200,11 +204,19 @@ export default function CartaPage() {
     else grupos.push({ subcategoria: key, items: [p] });
   }
 
+  // Subcategorías únicas de la categoría activa, en el orden en que aparecen, para el selector de salto rápido.
+  const subcategoriasDisponibles = [...new Set(porCategoria.map(p => p.subcategoria).filter(Boolean))] as string[];
+
+  function irASubcategoria(sub: string) {
+    const el = document.getElementById(`grupo-${slugify(sub)}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "var(--font-dm), sans-serif", color: T.text1, transition: "background 0.3s, color 0.3s" }}>
 
-      {/* ── HEADER + TABS (sticky en un solo bloque, sin gap entre ambos) ── */}
-      <div style={{ position: "sticky", top: 0, zIndex: 40, background: T.bg }}>
+      {/* ── HEADER: scrollea normal, no se queda pegado ── */}
+      <div>
         <header style={{ borderBottom: `1px solid ${T.border}`, padding: "18px 24px", display: "flex", alignItems: "center", gap: 16, backdropFilter: "blur(8px)", flexWrap: "wrap" }}>
 
           {/* Logo */}
@@ -244,26 +256,70 @@ export default function CartaPage() {
           </div>
         </header>
 
-        {/* Category tabs */}
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "10px 20px 0" }}>
-          <div style={{
-            display: "flex", gap: 18, overflowX: "auto", overflowY: "hidden",
-            paddingBottom: 12, borderBottom: `1px solid ${T.border}`,
-            WebkitOverflowScrolling: "touch" as never,
-          }}>
-            {categoriasVisibles.map(c => (
-              <button key={c.id} onClick={() => setCat(c.id)}
-                style={{
-                  padding: "10px 2px", background: "none", cursor: "pointer", whiteSpace: "nowrap",
-                  border: "none", borderBottom: `2px solid ${cat === c.id ? T.amr : "transparent"}`,
-                  fontFamily: "var(--font-dm), sans-serif", fontSize: `${14 * fs}px`,
-                  fontWeight: cat === c.id ? 800 : 600,
-                  color: cat === c.id ? T.amr : T.text3,
-                  transition: "all 0.15s", marginBottom: -1,
-                }}>
-                {c.label}
+      </div>
+
+      {/* ── BUSCADOR + TABS: esto sí se queda pegado arriba al hacer scroll ── */}
+      <div style={{ position: "sticky", top: 0, zIndex: 40, background: T.bg, borderBottom: `1px solid ${T.border}` }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "14px 20px 0" }}>
+          {/* Buscador */}
+          <div style={{ position: "relative", marginBottom: 14 }}>
+            <span style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", fontSize: 16, color: T.text3 }}>🔍</span>
+            <input
+              value={busqueda}
+              onChange={e => setBusqueda(e.target.value)}
+              placeholder="Buscar en la carta…"
+              style={{
+                width: "100%", boxSizing: "border-box",
+                padding: "12px 16px 12px 42px", borderRadius: 12,
+                background: T.surf2, border: `1px solid ${T.border}`, color: T.text1,
+                fontFamily: "var(--font-dm), sans-serif", fontSize: `${14 * fs}px`, outline: "none",
+              }}
+            />
+            {busqueda && (
+              <button onClick={() => setBusqueda("")}
+                style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: T.text3, cursor: "pointer", fontSize: 16 }}>
+                ✕
               </button>
-            ))}
+            )}
+          </div>
+
+          {/* Category tabs + salto directo a subcategoría */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 12 }}>
+            <div style={{
+              display: "flex", gap: 18, overflowX: "auto", overflowY: "hidden",
+              flex: 1, minWidth: 0,
+              WebkitOverflowScrolling: "touch" as never,
+            }}>
+              {categoriasVisibles.map(c => (
+                <button key={c.id} onClick={() => setCat(c.id)}
+                  style={{
+                    padding: "10px 2px", background: "none", cursor: "pointer", whiteSpace: "nowrap",
+                    border: "none", borderBottom: `2px solid ${cat === c.id ? T.amr : "transparent"}`,
+                    fontFamily: "var(--font-dm), sans-serif", fontSize: `${14 * fs}px`,
+                    fontWeight: cat === c.id ? 800 : 600,
+                    color: cat === c.id ? T.amr : T.text3,
+                    transition: "all 0.15s", marginBottom: -1,
+                  }}>
+                  {c.label}
+                </button>
+              ))}
+            </div>
+
+            {subcategoriasDisponibles.length > 0 && (
+              <select
+                value=""
+                onChange={e => { if (e.target.value) irASubcategoria(e.target.value); }}
+                style={{
+                  flexShrink: 0, maxWidth: 150, background: T.surf2, border: `1px solid ${T.border}`,
+                  color: T.text2, borderRadius: 10, padding: "8px 10px",
+                  fontFamily: "var(--font-dm), sans-serif", fontSize: `${13 * fs}px`, cursor: "pointer", outline: "none",
+                }}>
+                <option value="">Ir a…</option>
+                {subcategoriasDisponibles.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
       </div>
@@ -308,28 +364,6 @@ export default function CartaPage() {
             </div>
           )}
 
-          {/* Buscador */}
-          <div style={{ position: "relative", marginBottom: 18 }}>
-            <span style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", fontSize: 16, color: T.text3 }}>🔍</span>
-            <input
-              value={busqueda}
-              onChange={e => setBusqueda(e.target.value)}
-              placeholder="Buscar en la carta…"
-              style={{
-                width: "100%", boxSizing: "border-box",
-                padding: "12px 16px 12px 42px", borderRadius: 12,
-                background: T.surf2, border: `1px solid ${T.border}`, color: T.text1,
-                fontFamily: "var(--font-dm), sans-serif", fontSize: `${14 * fs}px`, outline: "none",
-              }}
-            />
-            {busqueda && (
-              <button onClick={() => setBusqueda("")}
-                style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: T.text3, cursor: "pointer", fontSize: 16 }}>
-                ✕
-              </button>
-            )}
-          </div>
-
           {/* Contador */}
           <div style={{ fontSize: 14, color: T.text3, letterSpacing: "0.04em", marginBottom: 20 }}>
             {filtered.length} productos
@@ -343,9 +377,9 @@ export default function CartaPage() {
               {grupos.map((grupo, gi) => (
                 <div key={gi} style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
                   {grupo.subcategoria && (
-                    <div style={{
+                    <div id={`grupo-${slugify(grupo.subcategoria)}`} style={{
                       width: "100%", height: 150, borderRadius: 14, overflow: "hidden", position: "relative",
-                      marginTop: gi > 0 ? 10 : 0, flexShrink: 0,
+                      marginTop: gi > 0 ? 10 : 0, flexShrink: 0, scrollMarginTop: 140,
                     }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={resolverImagen(grupo.items[0].foto, 1600, 300)} alt={grupo.subcategoria}
@@ -375,21 +409,25 @@ export default function CartaPage() {
 
       {/* ── CARRITO: box flotante, ancla arriba del botón ── */}
       {cartOpen && (
-        <div style={{
-          position: "fixed", bottom: 100, left: 20, zIndex: 70,
-          width: 340, maxWidth: "calc(100vw - 40px)",
-          maxHeight: "calc(100vh - 180px)",
-          boxShadow: "0 20px 50px -12px rgba(0,0,0,0.5)",
-          borderRadius: 16,
-        }}>
-          <CartPanel
-            cart={cart} tema={T} fs={fs}
-            onClose={() => setCartOpen(false)}
-            onAdd={addToCart}
-            onRemoveOne={removeOne}
-            onRemoveAll={removeAll}
-          />
-        </div>
+        <>
+          <div onClick={() => setCartOpen(false)}
+            style={{ position: "fixed", inset: 0, zIndex: 69, background: "rgba(0,0,0,0.9)" }} />
+          <div style={{
+            position: "fixed", bottom: 100, left: 20, zIndex: 70,
+            width: 340, maxWidth: "calc(100vw - 40px)",
+            maxHeight: "calc(100vh - 180px)",
+            boxShadow: "0 20px 50px -12px rgba(0,0,0,0.5)",
+            borderRadius: 16,
+          }}>
+            <CartPanel
+              cart={cart} tema={T} fs={fs}
+              onClose={() => setCartOpen(false)}
+              onAdd={addToCart}
+              onRemoveOne={removeOne}
+              onRemoveAll={removeAll}
+            />
+          </div>
+        </>
       )}
 
       {/* ── BOTÓN FLOTANTE DEL CARRITO ── */}

@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { MapPin, Phone } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { BORDER, TEXT1, TEXT2, AMR, FONT, TITLE } from "../lib/tokens";
 
@@ -16,6 +16,7 @@ export default function Header() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(true);
   const [lastScroll, setLastScroll] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,6 +29,9 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScroll]);
 
+  // Cierra el menú mobile al cambiar de página.
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
+
   if (pathname.startsWith("/admin") || pathname.startsWith("/carta")) return null;
 
   // En el home el header flota sobre la foto del hero (sin ocupar espacio en el
@@ -36,12 +40,21 @@ export default function Header() {
 
   return (
     <>
+      <style>{`
+        .header-links { display: flex; align-items: center; gap: 8px; }
+        .header-burger { display: none; }
+        @media (max-width: 760px) {
+          .header-links { display: none; }
+          .header-burger { display: flex; }
+        }
+      `}</style>
+
       <header style={{
         width: "100%",
         background: "transparent",
         position: esHome ? "absolute" : "relative",
         top: esHome ? 0 : undefined, left: esHome ? 0 : undefined, right: esHome ? 0 : undefined,
-        zIndex: 10,
+        zIndex: 30,
       }}>
       <div style={{
         maxWidth: 1100, margin: "0 auto", padding: "20px 20px 8px", width: "100%",
@@ -53,7 +66,7 @@ export default function Header() {
         </a>
 
         <div style={{ display: "flex", alignItems: "center", gap: 24, marginLeft: "auto", flexWrap: "wrap" }}>
-          <nav style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <nav className="header-links">
             {LINKS.map(l => {
               const isActive = pathname === l.href || (l.href !== "/" && pathname.startsWith(l.href));
               return (
@@ -75,8 +88,40 @@ export default function Header() {
           }}>
             Ver la carta
           </a>
+
+          <button
+            className="header-burger"
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+            style={{
+              alignItems: "center", justifyContent: "center", flexShrink: 0,
+              width: 44, height: 44, borderRadius: 10, border: `1px solid ${BORDER}`,
+              background: "rgba(0,0,0,0.35)", color: TEXT1, cursor: "pointer",
+            }}>
+            {menuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
       </div>
+
+      {menuOpen && (
+        <nav style={{
+          display: "flex", flexDirection: "column",
+          background: "rgba(20,18,16,0.97)", borderTop: `1px solid ${BORDER}`,
+          padding: "10px 20px 16px",
+        }}>
+          {LINKS.map(l => {
+            const isActive = pathname === l.href || (l.href !== "/" && pathname.startsWith(l.href));
+            return (
+              <a key={l.href} href={l.href} style={{
+                fontFamily: FONT, fontSize: 17, fontWeight: isActive ? 900 : 700, color: isActive ? AMR : TEXT1,
+                textDecoration: "none", padding: "14px 8px", borderBottom: `1px solid ${BORDER}`,
+              }}>
+                {l.label}
+              </a>
+            );
+          })}
+        </nav>
+      )}
       </header>
     </>
   );
