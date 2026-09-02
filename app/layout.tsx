@@ -16,8 +16,22 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Cacho Cabra — Workspace",
-  description: "Plan de marketing, desarrollo y medios",
+  metadataBase: new URL("https://cachocabrabar.cl"),
+  title: "Cacho Cabra",
+  description: "Café de día, bar de noche. Cafetería, brunch, comida y tragos en el corazón de la Plaza de Llolleo, San Antonio.",
+  openGraph: {
+    title: "Cacho Cabra",
+    description: "Café de día, bar de noche. Cafetería, brunch, comida y tragos en el corazón de la Plaza de Llolleo, San Antonio.",
+    url: "https://cachocabrabar.cl",
+    siteName: "Cacho Cabra",
+    locale: "es_CL",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Cacho Cabra",
+    description: "Café de día, bar de noche. Cafetería, brunch, comida y tragos en el corazón de la Plaza de Llolleo, San Antonio.",
+  },
 };
 
 export default function RootLayout({

@@ -177,7 +177,14 @@ export default function CartaPage() {
   const mostrarChef = esFinDeSemanaChef() && chefProductos.length > 0;
   const categoriasVisibles = CATEGORIAS.filter(c => c.id !== "chef" || mostrarChef);
 
-  const porCategoria = cat === "todo" ? productos : productos.filter(p => p.categoria === cat);
+  // La pestaña "Cafetería" agrupa el menú completo de esa carta impresa:
+  // bebidas (categoria=cafeteria), salados de brunch (categoria=brunch) y
+  // pastelería/postres (categoria=postres).
+  const porCategoria = cat === "todo"
+    ? productos
+    : cat === "cafeteria"
+      ? productos.filter(p => p.categoria === "brunch" || p.categoria === "cafeteria" || p.categoria === "postres")
+      : productos.filter(p => p.categoria === cat);
   const q = busqueda.trim().toLowerCase();
   const filtered = q === ""
     ? porCategoria
