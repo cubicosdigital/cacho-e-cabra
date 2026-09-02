@@ -46,6 +46,7 @@ export default function Header() {
         @media (max-width: 760px) {
           .header-links { display: none; }
           .header-burger { display: flex; }
+          .header-cta { padding: 8px 16px !important; font-size: 13px !important; }
         }
       `}</style>
 
@@ -81,7 +82,7 @@ export default function Header() {
             })}
           </nav>
 
-          <a href="/carta" target="_blank" rel="noopener noreferrer" style={{
+          <a href="/carta" target="_blank" rel="noopener noreferrer" className="header-cta" style={{
             display: "inline-flex", alignItems: "center", gap: 6, background: AMR, color: "#1a1200",
             borderRadius: 999, padding: "12px 28px", fontSize: 15, fontWeight: 800, textDecoration: "none", flexShrink: 0,
             transition: "all 0.2s ease", cursor: "pointer",

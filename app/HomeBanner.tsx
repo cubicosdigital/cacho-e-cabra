@@ -34,6 +34,11 @@ export default function HomeBanner({ slides }: { slides: Slide[] }) {
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
+      <style>{`
+        @media (max-width: 760px) {
+          .banner-text-block { padding-bottom: clamp(72px, 14vh, 110px) !important; }
+        }
+      `}</style>
       {slides.map((s, idx) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img key={s.id} src={resolverImagen(s.foto, 1400, 900)} alt={s.nombre}
@@ -41,7 +46,7 @@ export default function HomeBanner({ slides }: { slides: Slide[] }) {
       ))}
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.65) 100%)" }} />
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "68%", background: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.26) 35%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.7) 100%)", pointerEvents: "none" }} />
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "clamp(32px, 6vw, 60px) clamp(20px, 5vw, 60px)", maxWidth: 1100, margin: "0 auto", width: "100%" }}>
+      <div className="banner-text-block" style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "clamp(32px, 6vw, 60px) clamp(20px, 5vw, 60px)", maxWidth: 1100, margin: "0 auto", width: "100%" }}>
         <div style={{ fontSize: "clamp(10px, 1.1vw, 13px)", color: AMR, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>
           {slide.etiqueta || (slide.tipo === 'evento' ? '🎉 Evento Exclusivo' : 'Sugerencia del chef')}
         </div>
