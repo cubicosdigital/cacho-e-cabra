@@ -30,7 +30,11 @@ function fmt(n: number) { return `$${n.toLocaleString("es-CL")}`; }
 export default async function Home() {
   const productos = await getProductosHome();
   const chef = productos.filter(p => p.categoria === "chef");
-  const destacados = productos.filter(p => p.popular && (p.categoria === "comida" || p.categoria === "tragos")).slice(0, 8);
+  // Slide de tendencias del bar: siempre visible, con etiqueta propia (no depende del orden de "populares").
+  const tendencia = productos.find(p => p.nombre === "Tropical Gin" && p.popular);
+  const destacados = productos
+    .filter(p => p.popular && (p.categoria === "comida" || p.categoria === "tragos") && p.id !== tendencia?.id)
+    .slice(0, 8);
 
   // Solo los eventos marcados como destacados en el CMS llegan al home.
   const eventosDestacados = (await getEventos()).filter(e => e.publicado && e.destacado);
@@ -60,7 +64,11 @@ export default async function Home() {
         botonTexto: s.botonTexto,
         botonHref: s.botonHref,
       }))
-    : [...eventoSlides, ...(chef.length > 0 ? chef : destacados)].slice(0, 6);
+    : [
+        ...eventoSlides,
+        ...(tendencia ? [{ ...tendencia, nombre: "Tragos en Tendencia", etiqueta: "🍹 Tragos en Tendencia" }] : []),
+        ...(chef.length > 0 ? chef : destacados),
+      ].slice(0, 6);
 
   return (
     <div style={{ fontFamily: FONT, color: TEXT1, background: BG }}>
