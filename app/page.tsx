@@ -30,10 +30,20 @@ function fmt(n: number) { return `$${n.toLocaleString("es-CL")}`; }
 export default async function Home() {
   const productos = await getProductosHome();
   const chef = productos.filter(p => p.categoria === "chef");
-  // Slide de tendencias del bar: siempre visible, con etiqueta propia (no depende del orden de "populares").
-  const tendencia = productos.find(p => p.nombre === "Tropical Gin" && p.popular);
+  // Slides fijos del banner: siempre visibles, con etiqueta propia (no dependen del orden de "populares").
+  const FIJOS: { nombre: string; nombreSlide: string; etiqueta: string }[] = [
+    { nombre: "Tropical Gin", nombreSlide: "Tragos en Tendencia", etiqueta: "🍹 Tragos en Tendencia" },
+    { nombre: "Cabra Chica", nombreSlide: "Cabra Chica", etiqueta: "🍔 Nuestra Clásica" },
+  ];
+  const slidesFijos = FIJOS
+    .map(f => {
+      const p = productos.find(p => p.nombre === f.nombre && p.popular);
+      return p ? { ...p, nombre: f.nombreSlide, etiqueta: f.etiqueta } : null;
+    })
+    .filter((s): s is NonNullable<typeof s> => s !== null);
+  const idsFijos = new Set(slidesFijos.map(s => s.id));
   const destacados = productos
-    .filter(p => p.popular && (p.categoria === "comida" || p.categoria === "tragos") && p.id !== tendencia?.id)
+    .filter(p => p.popular && (p.categoria === "comida" || p.categoria === "tragos") && !idsFijos.has(p.id))
     .slice(0, 8);
 
   // Solo los eventos marcados como destacados en el CMS llegan al home.
@@ -66,7 +76,7 @@ export default async function Home() {
       }))
     : [
         ...eventoSlides,
-        ...(tendencia ? [{ ...tendencia, nombre: "Tragos en Tendencia", etiqueta: "🍹 Tragos en Tendencia" }] : []),
+        ...slidesFijos,
         ...(chef.length > 0 ? chef : destacados),
       ].slice(0, 6);
 
