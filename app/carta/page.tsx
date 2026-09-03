@@ -285,7 +285,15 @@ export default function CartaPage() {
           </div>
 
           {/* Category tabs + salto directo a subcategoría */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 12 }}>
+          <style>{`
+            .carta-tabs-row { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; }
+            .carta-ir-a { flex-shrink: 0; max-width: 150px; }
+            @media (max-width: 560px) {
+              .carta-tabs-row { flex-wrap: wrap; padding-bottom: 8px; }
+              .carta-ir-a { max-width: none; width: 100%; order: 3; margin-top: 4px; }
+            }
+          `}</style>
+          <div className="carta-tabs-row">
             <div style={{
               display: "flex", gap: 18, overflowX: "auto", overflowY: "hidden",
               flex: 1, minWidth: 0,
@@ -308,11 +316,12 @@ export default function CartaPage() {
 
             {subcategoriasDisponibles.length > 0 && (
               <select
+                className="carta-ir-a"
                 value=""
                 onChange={e => { if (e.target.value) irASubcategoria(e.target.value); }}
                 style={{
-                  flexShrink: 0, maxWidth: 150, background: T.surf2, border: `1px solid ${T.border}`,
-                  color: T.text2, borderRadius: 10, padding: "8px 10px",
+                  background: T.surf2, border: `1px solid ${T.border}`,
+                  color: T.text2, borderRadius: 10, padding: "8px 10px", boxSizing: "border-box",
                   fontFamily: "var(--font-dm), sans-serif", fontSize: `${13 * fs}px`, cursor: "pointer", outline: "none",
                 }}>
                 <option value="">Ir a…</option>
