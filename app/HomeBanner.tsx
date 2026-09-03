@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AMR, TEXT1, TITLE } from "../lib/tokens";
 import { resolverImagen } from "../lib/imagenes";
 
@@ -22,12 +23,36 @@ function fmt(n: number) { return `$${n.toLocaleString("es-CL")}`; }
 
 export default function HomeBanner({ slides }: { slides: Slide[] }) {
   const [i, setI] = useState(0);
+  const [pausado, setPausado] = useState(false);
+  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (slides.length <= 1) return;
+    if (slides.length <= 1 || pausado) return;
     const id = setInterval(() => setI(prev => (prev + 1) % slides.length), 5000);
     return () => clearInterval(id);
-  }, [slides.length]);
+  }, [slides.length, pausado]);
+
+  // Al navegar manualmente, pausa el avance automático 10s y luego lo reanuda.
+  function pausarTemporalmente() {
+    setPausado(true);
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    resumeTimer.current = setTimeout(() => setPausado(false), 10000);
+  }
+
+  useEffect(() => () => { if (resumeTimer.current) clearTimeout(resumeTimer.current); }, []);
+
+  function anterior() {
+    setI(prev => (prev - 1 + slides.length) % slides.length);
+    pausarTemporalmente();
+  }
+  function siguiente() {
+    setI(prev => (prev + 1) % slides.length);
+    pausarTemporalmente();
+  }
+  function irA(idx: number) {
+    setI(idx);
+    pausarTemporalmente();
+  }
 
   if (slides.length === 0) return null;
   const slide = slides[i];
@@ -35,8 +60,10 @@ export default function HomeBanner({ slides }: { slides: Slide[] }) {
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
       <style>{`
+        .banner-arrow:hover { background: rgba(0,0,0,0.55) !important; transform: translateY(-50%) scale(1.06); }
         @media (max-width: 760px) {
           .banner-text-block { padding-bottom: clamp(72px, 14vh, 110px) !important; }
+          .banner-arrow { width: 38px !important; height: 38px !important; }
         }
       `}</style>
       {slides.map((s, idx) => (
@@ -62,12 +89,31 @@ export default function HomeBanner({ slides }: { slides: Slide[] }) {
         </div>
       </div>
       {slides.length > 1 && (
-        <div style={{ position: "absolute", right: "clamp(20px, 5vw, 40px)", bottom: "clamp(30px, 6vw, 60px)", display: "flex", gap: 8 }}>
-          {slides.map((s, idx) => (
-            <button key={s.id} onClick={() => setI(idx)} aria-label={`Slide ${idx + 1}`}
-              style={{ width: idx === i ? 28 : 10, height: 10, borderRadius: 99, background: idx === i ? AMR : "rgba(255,255,255,0.5)", border: "none", cursor: "pointer", transition: "all 0.3s ease" }} />
-          ))}
-        </div>
+        <>
+          <button onClick={anterior} aria-label="Anterior" className="banner-arrow banner-arrow-left" style={{
+            position: "absolute", left: "clamp(12px, 3vw, 28px)", top: "50%", transform: "translateY(-50%)",
+            width: 46, height: 46, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.25)",
+            background: "rgba(0,0,0,0.35)", color: TEXT1, display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", backdropFilter: "blur(4px)", transition: "background 0.2s ease, transform 0.2s ease", zIndex: 2,
+          }}>
+            <ChevronLeft size={24} />
+          </button>
+          <button onClick={siguiente} aria-label="Siguiente" className="banner-arrow banner-arrow-right" style={{
+            position: "absolute", right: "clamp(12px, 3vw, 28px)", top: "50%", transform: "translateY(-50%)",
+            width: 46, height: 46, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.25)",
+            background: "rgba(0,0,0,0.35)", color: TEXT1, display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", backdropFilter: "blur(4px)", transition: "background 0.2s ease, transform 0.2s ease", zIndex: 2,
+          }}>
+            <ChevronRight size={24} />
+          </button>
+
+          <div style={{ position: "absolute", right: "clamp(20px, 5vw, 40px)", bottom: "clamp(30px, 6vw, 60px)", display: "flex", gap: 8 }}>
+            {slides.map((s, idx) => (
+              <button key={s.id} onClick={() => irA(idx)} aria-label={`Slide ${idx + 1}`}
+                style={{ width: idx === i ? 28 : 10, height: 10, borderRadius: 99, background: idx === i ? AMR : "rgba(255,255,255,0.5)", border: "none", cursor: "pointer", transition: "all 0.3s ease" }} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
