@@ -125,7 +125,8 @@ export default async function Home() {
                   <h3 style={{ fontFamily: TITLE, fontWeight: 800, fontSize: 18, marginBottom: 4, color: TEXT1 }}>{e.titulo}</h3>
                   <p style={{ fontSize: 12, color: AMR, fontWeight: 700, marginBottom: 10, letterSpacing: "0.05em" }}>{e.subtitulo}</p>
                   <p style={{ fontSize: 13, color: TEXT2, marginBottom: 10, lineHeight: 1.5 }}>{e.descripcion}</p>
-                  <p style={{ fontSize: 12, color: TEXT3, marginBottom: 14 }}>🕐 {e.hora} hrs | 💰 {fmtPrecio(e.precio)}</p>
+                  <p style={{ fontSize: 12, color: TEXT3, marginBottom: 6 }}>🕐 {e.hora} hrs | 💰 {fmtPrecio(e.precio)}</p>
+                  <p style={{ fontSize: 12, color: TEXT3, marginBottom: 14 }}>👥 {e.registrados} inscrito{e.registrados === 1 ? "" : "s"}</p>
                   <a href={`/eventos/${e.id}`} style={{ fontSize: 11, color: AMR, fontWeight: 700, textDecoration: "none", marginTop: "auto" }}>Ver información completa →</a>
                 </div>
               ))}
