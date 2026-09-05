@@ -605,61 +605,75 @@ function ProductoRow({ p, enCart, tema: T, fs, onAdd, onRemove }: {
   onRemove: () => void;
 }) {
   const [hover, setHover] = useState(false);
+  const [abierto, setAbierto] = useState(false);
   return (
     <div
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        background: T.surface, border: `1px solid ${hover ? T.amr : T.border}`,
+        background: T.surface, border: `1px solid ${hover || abierto ? T.amr : T.border}`,
         borderRadius: 14, overflow: "hidden", position: "relative",
         boxShadow: hover ? "0 6px 20px -8px rgba(0,0,0,0.25)" : "0 1px 4px -1px rgba(0,0,0,0.1)",
         transition: "all 0.2s",
       }}>
 
-      {/* Info */}
-      <div style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
+      {/* Encabezado — siempre visible, hace click para expandir */}
+      <div
+        onClick={() => setAbierto(o => !o)}
+        style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8, cursor: "pointer" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
           <span style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: `${18 * fs}px`, fontWeight: 800, color: T.text1, lineHeight: 1.2 }}>
             {p.nombre}
           </span>
-          <div style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: `${18 * fs}px`, fontWeight: 900, color: T.amr, letterSpacing: "-0.02em", flexShrink: 0, whiteSpace: "nowrap" }}>
-            {fmtPrecio(p.precio)}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            <div style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: `${18 * fs}px`, fontWeight: 900, color: T.amr, letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>
+              {fmtPrecio(p.precio)}
+            </div>
+            <span style={{
+              display: "inline-flex", width: 20, height: 20, alignItems: "center", justifyContent: "center",
+              color: T.text3, transform: abierto ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s",
+            }}>▾</span>
           </div>
         </div>
 
-        <div style={{ fontSize: `${14 * fs}px`, color: T.text3, lineHeight: 1.5, paddingRight: "18%" }}>
-          {p.descripcion}
-        </div>
-
-        {/* Botones */}
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          {enCart === 0 ? (
-            <button onClick={onAdd} style={{
-              padding: "8px 16px", background: "transparent", border: `1px solid ${T.border}`, borderRadius: 10,
-              fontFamily: "var(--font-dm),sans-serif", fontSize: `${13 * fs}px`, fontWeight: 700, color: T.text2,
-              cursor: "pointer", whiteSpace: "nowrap",
-            }}>+ Agregar</button>
-          ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <button onClick={onRemove} style={{ width: 32, height: 32, background: T.surf2, border: `1px solid ${T.border}`, borderRadius: 8, fontSize: 18, color: T.text1, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>−</button>
-              <span style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: `${15 * fs}px`, fontWeight: 900, color: T.amr, minWidth: 18, textAlign: "center" }}>{enCart}</span>
-              <button onClick={onAdd} style={{ width: 32, height: 32, background: T.amr, border: "none", borderRadius: 8, fontSize: 18, color: "#1a1200", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900 }}>+</button>
-            </div>
-          )}
-        </div>
+        {(p.popular || p.badge) && (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {p.popular && (
+              <span style={{ background: T.amr, color: "#1a1200", fontSize: 12, fontWeight: 800, padding: "2px 8px", borderRadius: 999 }}>★ Popular</span>
+            )}
+            {p.badge && (
+              <span style={{ background: "rgba(255,255,255,0.08)", color: T.text3, fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 999, border: `1px solid ${T.border}` }}>{p.badge}</span>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Badges — esquina inferior izquierda */}
-      {(p.popular || p.badge) && (
-        <div style={{ position: "absolute", left: 18, bottom: 14, display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {p.popular && (
-            <span style={{ background: T.amr, color: "#1a1200", fontSize: 12, fontWeight: 800, padding: "2px 8px", borderRadius: 999 }}>★ Popular</span>
+      {/* Detalle — descripción y botón, solo si está expandido */}
+      <div style={{ maxHeight: abierto ? 200 : 0, overflow: "hidden", transition: "max-height 0.25s ease" }}>
+        <div style={{ padding: "0 18px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+          {p.descripcion && (
+            <div style={{ fontSize: `${14 * fs}px`, color: T.text3, lineHeight: 1.5 }}>
+              {p.descripcion}
+            </div>
           )}
-          {p.badge && (
-            <span style={{ background: "rgba(255,255,255,0.08)", color: T.text3, fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 999, border: `1px solid ${T.border}` }}>{p.badge}</span>
-          )}
+
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            {enCart === 0 ? (
+              <button onClick={(e) => { e.stopPropagation(); onAdd(); }} style={{
+                padding: "8px 16px", background: "transparent", border: `1px solid ${T.border}`, borderRadius: 10,
+                fontFamily: "var(--font-dm),sans-serif", fontSize: `${13 * fs}px`, fontWeight: 700, color: T.text2,
+                cursor: "pointer", whiteSpace: "nowrap",
+              }}>+ Agregar</button>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <button onClick={(e) => { e.stopPropagation(); onRemove(); }} style={{ width: 32, height: 32, background: T.surf2, border: `1px solid ${T.border}`, borderRadius: 8, fontSize: 18, color: T.text1, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>−</button>
+                <span style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: `${15 * fs}px`, fontWeight: 900, color: T.amr, minWidth: 18, textAlign: "center" }}>{enCart}</span>
+                <button onClick={(e) => { e.stopPropagation(); onAdd(); }} style={{ width: 32, height: 32, background: T.amr, border: "none", borderRadius: 8, fontSize: 18, color: "#1a1200", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900 }}>+</button>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
