@@ -10,4 +10,5 @@ export interface GaleriaItem {
   url: string;
   activo: boolean;
   orden: number;
+  likes: number;
 }
