@@ -16,7 +16,7 @@ function leerLikesGuardados(): Set<string> {
   }
 }
 
-export default function GaleriaClient({ items: itemsIniciales }: { items: GaleriaItem[] }) {
+export default function GaleriaClient({ items: itemsIniciales, categoriasAdmin }: { items: GaleriaItem[]; categoriasAdmin: string[] }) {
   const [items, setItems] = useState(itemsIniciales);
   const [tab, setTab] = useState<TipoGaleria>("imagen");
   const [catSel, setCatSel] = useState<string>("todas");
@@ -26,12 +26,15 @@ export default function GaleriaClient({ items: itemsIniciales }: { items: Galeri
   useEffect(() => { setYaLiked(leerLikesGuardados()); }, []);
 
   const delTab = useMemo(() => items.filter(i => i.tipo === tab), [items, tab]);
+  // El submenú muestra las categorías creadas en el admin (aunque aún no tengan fotos)
+  // más cualquier categoría "suelta" que ya tenga contenido pero no esté en esa lista.
   const categorias = useMemo(() => {
-    const orden: string[] = [];
+    const orden = [...categoriasAdmin];
     for (const it of delTab) if (!orden.includes(it.categoria)) orden.push(it.categoria);
     return orden;
-  }, [delTab]);
-  const categoriasAMostrar = catSel === "todas" ? categorias : categorias.filter(c => c === catSel);
+  }, [delTab, categoriasAdmin]);
+  const categoriasConContenido = useMemo(() => categorias.filter(c => delTab.some(i => i.categoria === c)), [categorias, delTab]);
+  const categoriasAMostrar = catSel === "todas" ? categoriasConContenido : categorias.filter(c => c === catSel);
 
   // Si al cambiar de pestaña (fotos/videos) la categoría elegida no existe ahí, mostramos todas.
   useEffect(() => {
@@ -143,15 +146,22 @@ export default function GaleriaClient({ items: itemsIniciales }: { items: Galeri
           </div>
         )}
 
-        {delTab.length === 0 && (
+        {catSel === "todas" && delTab.length === 0 && (
           <div style={{ color: TEXT3, fontSize: 17, padding: "40px 0" }}>Muy pronto vamos a subir contenido acá.</div>
         )}
 
-        {categoriasAMostrar.map(cat => (
+        {categoriasAMostrar.map(cat => {
+          const itemsCat = delTab.filter(i => i.categoria === cat);
+          return (
           <div key={cat} style={{ marginBottom: 44 }}>
-            <h2 style={{ fontFamily: TITLE, fontSize: 24, fontWeight: 800, marginBottom: 16, color: TEXT1 }}>{cat}</h2>
+            {catSel === "todas" && <h2 style={{ fontFamily: TITLE, fontSize: 24, fontWeight: 800, marginBottom: 16, color: TEXT1 }}>{cat}</h2>}
+            {itemsCat.length === 0 ? (
+              <div style={{ color: TEXT3, fontSize: 16, padding: "20px 0" }}>
+                Todavía no hay {tab === "video" ? "videos" : "fotos"} en "{cat}".
+              </div>
+            ) : (
             <div className="gal-grid">
-              {delTab.filter(i => i.categoria === cat).map((it, idx) => (
+              {itemsCat.map((it, idx) => (
                 <div key={it.id} className={`gal-card${idx % 7 === 0 ? " big" : ""}`} onClick={() => setAbierto(it)}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -181,8 +191,10 @@ export default function GaleriaClient({ items: itemsIniciales }: { items: Galeri
                 </div>
               ))}
             </div>
+            )}
           </div>
-        ))}
+          );
+        })}
       </main>
 
       {abierto && (

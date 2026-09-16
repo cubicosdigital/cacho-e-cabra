@@ -1,5 +1,6 @@
 import { getSupabase } from "../../lib/supabase";
 import type { GaleriaItem } from "../../lib/galeria";
+import type { GaleriaCategoria } from "../../lib/galeriaCategorias";
 import GaleriaClient from "./GaleriaClient";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +22,17 @@ async function getGaleria(): Promise<GaleriaItem[]> {
   return data as GaleriaItem[];
 }
 
+async function getCategorias(): Promise<GaleriaCategoria[]> {
+  const { data, error } = await getSupabase()
+    .from("galeria_categorias")
+    .select("*")
+    .eq("activo", true)
+    .order("orden", { ascending: true });
+  if (error || !data) return [];
+  return data as GaleriaCategoria[];
+}
+
 export default async function GaleriaPage() {
-  const items = await getGaleria();
-  return <GaleriaClient items={items} />;
+  const [items, categorias] = await Promise.all([getGaleria(), getCategorias()]);
+  return <GaleriaClient items={items} categoriasAdmin={categorias.map(c => c.nombre)} />;
 }
