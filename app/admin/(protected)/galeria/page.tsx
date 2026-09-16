@@ -1,6 +1,6 @@
 "use client";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { Film, Image as ImageIcon } from "lucide-react";
+import { Film, Image as ImageIcon, List, LayoutGrid, GripVertical } from "lucide-react";
 import type { GaleriaItem, TipoGaleria } from "../../../../lib/galeria";
 import { resolverImagen } from "../../../../lib/imagenes";
 import { youtubeThumbnail, extraerYoutubeId } from "../../../../lib/youtube";
@@ -17,13 +17,15 @@ export default function GaleriaAdminPage() {
   const [items, setItems] = useState<GaleriaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<TipoGaleria>("video");
+  const [tab, setTab] = useState<TipoGaleria>("imagen");
   const [subiendo, setSubiendo] = useState<string | null>(null);
   const [nuevo, setNuevo] = useState({ titulo: "", categoria: "", url: "" });
   const inputsArchivo = useRef<Record<string, HTMLInputElement | null>>({});
   const inputArchivoNuevo = useRef<HTMLInputElement | null>(null);
   const [subiendoNuevo, setSubiendoNuevo] = useState(false);
   const [progreso, setProgreso] = useState<{ actual: number; total: number } | null>(null);
+  const [vista, setVista] = useState<"lista" | "cuadricula">("cuadricula");
+  const [arrastrando, setArrastrando] = useState<string | null>(null);
 
   async function cargar() {
     const res = await fetch("/api/galeria?todos=1");
@@ -160,6 +162,28 @@ export default function GaleriaAdminPage() {
     ));
   }
 
+  async function reordenarPorDrag(idArrastrado: string, idDestino: string) {
+    if (idArrastrado === idDestino) return;
+    const grupo = items.filter(i => i.tipo === tab);
+    const i = grupo.findIndex(x => x.id === idArrastrado);
+    const j = grupo.findIndex(x => x.id === idDestino);
+    if (i === -1 || j === -1) return;
+
+    const copia = [...grupo];
+    const [movido] = copia.splice(i, 1);
+    copia.splice(j, 0, movido);
+    const reordenado = copia.map((x, k) => ({ ...x, orden: k }));
+
+    setItems(prev => prev.map(x => reordenado.find(r => r.id === x.id) ?? x));
+    const cambiados = reordenado.filter((x, k) => grupo.find(g => g.id === x.id)?.orden !== k);
+    await Promise.all(cambiados.map(x =>
+      fetch(`/api/galeria/${x.id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orden: x.orden }),
+      })
+    ));
+  }
+
   const delTab = useMemo(() => items.filter(i => i.tipo === tab), [items, tab]);
   const categorias = useMemo(() => {
     const set = new Set(delTab.map(i => i.categoria));
@@ -179,7 +203,7 @@ export default function GaleriaAdminPage() {
         </div>
 
         <div style={{ display: "flex", gap: 8 }}>
-          {(["video", "imagen"] as TipoGaleria[]).map(t => (
+          {(["imagen", "video"] as TipoGaleria[]).map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               display: "flex", alignItems: "center", gap: 8,
               padding: "9px 20px", borderRadius: 999, border: `1px solid ${BORDER}`, cursor: "pointer",
@@ -195,7 +219,30 @@ export default function GaleriaAdminPage() {
           <div style={{ display: "flex", alignItems: "center", color: TEXT3, fontSize: 15, marginLeft: 8 }}>
             {activos} de {delTab.length} activos
           </div>
+
+          <div style={{ display: "flex", gap: 4, marginLeft: "auto", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 3 }}>
+            <button onClick={() => setVista("lista")} title="Vista lista" style={{
+              display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 8, border: "none", cursor: "pointer",
+              fontFamily: FONT, fontSize: 14, fontWeight: 700,
+              background: vista === "lista" ? AMR : "transparent", color: vista === "lista" ? "#1a1200" : TEXT2,
+            }}>
+              <List size={16} />
+            </button>
+            <button onClick={() => setVista("cuadricula")} title="Vista cuadrícula" style={{
+              display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 8, border: "none", cursor: "pointer",
+              fontFamily: FONT, fontSize: 14, fontWeight: 700,
+              background: vista === "cuadricula" ? AMR : "transparent", color: vista === "cuadricula" ? "#1a1200" : TEXT2,
+            }}>
+              <LayoutGrid size={16} />
+            </button>
+          </div>
         </div>
+
+        {delTab.length > 1 && (
+          <div style={{ fontSize: 14, color: TEXT3, marginTop: -12 }}>
+            Arrastra {vista === "cuadricula" ? "una foto" : "un ítem"} para reordenar.
+          </div>
+        )}
 
         {error && (
           <div style={{ background: "#2a1212", border: "1px solid #5c2626", color: "#fca5a5", borderRadius: 10, padding: "10px 16px", fontSize: 16 }}>
@@ -205,18 +252,68 @@ export default function GaleriaAdminPage() {
 
         {loading ? (
           <div style={{ color: TEXT3 }}>Cargando…</div>
+        ) : delTab.length === 0 ? (
+          <div style={{ color: TEXT3, fontSize: 16, padding: "20px 0" }}>
+            Todavía no hay {tab === "video" ? "videos" : "fotos"}. Agrega el primero abajo.
+          </div>
+        ) : vista === "cuadricula" ? (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 14 }}>
+            {delTab.map(it => (
+              <div
+                key={it.id}
+                draggable
+                onDragStart={() => setArrastrando(it.id)}
+                onDragOver={e => e.preventDefault()}
+                onDrop={e => { e.preventDefault(); if (arrastrando) reordenarPorDrag(arrastrando, it.id); setArrastrando(null); }}
+                onDragEnd={() => setArrastrando(null)}
+                style={{
+                  background: SURFACE, border: `1px solid ${arrastrando === it.id ? AMR : BORDER}`, borderRadius: 12,
+                  overflow: "hidden", opacity: it.activo ? 1 : 0.5, cursor: "grab",
+                }}
+              >
+                <div style={{ width: "100%", height: 120, background: SURF2, position: "relative" }}>
+                  {it.tipo === "video" ? (
+                    it.url && extraerYoutubeId(it.url) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={youtubeThumbnail(it.url)} alt={it.titulo} style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
+                    ) : <div style={{ color: TEXT3, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>Sin link</div>
+                  ) : it.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={resolverImagen(it.url, 300, 220)} alt={it.titulo} style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
+                  ) : <div style={{ color: TEXT3, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>Sin imagen</div>}
+                  <div style={{ position: "absolute", top: 6, left: 6, background: "rgba(0,0,0,0.55)", borderRadius: 6, padding: "3px 5px", display: "flex" }}>
+                    <GripVertical size={14} color="#fff" />
+                  </div>
+                </div>
+                <div style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: TEXT1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={it.titulo}>
+                    {it.titulo || "Sin título"}
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => patch(it.id, { activo: !it.activo })} style={{
+                      flex: 1, fontSize: 12, fontWeight: 700, borderRadius: 6, padding: "5px 0", border: "none", cursor: "pointer", fontFamily: FONT,
+                      background: it.activo ? "#1a2e1a" : SURF2, color: it.activo ? VERDE : TEXT3,
+                    }}>{it.activo ? "Activo" : "Oculto"}</button>
+                    <button onClick={() => eliminar(it.id, it.titulo)} style={{ background: "none", border: `1px solid ${BORDER}`, borderRadius: 6, color: "#fca5a5", cursor: "pointer", fontSize: 14, padding: "0 8px" }}>🗑</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {delTab.length === 0 && (
-              <div style={{ color: TEXT3, fontSize: 16, padding: "20px 0" }}>
-                Todavía no hay {tab === "video" ? "videos" : "fotos"}. Agrega el primero abajo.
-              </div>
-            )}
             {delTab.map((it, i) => (
-              <div key={it.id} style={{
-                background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16,
-                padding: 16, display: "flex", gap: 16, flexWrap: "wrap", opacity: it.activo ? 1 : 0.6,
-              }}>
+              <div
+                key={it.id}
+                draggable
+                onDragStart={() => setArrastrando(it.id)}
+                onDragOver={e => e.preventDefault()}
+                onDrop={e => { e.preventDefault(); if (arrastrando) reordenarPorDrag(arrastrando, it.id); setArrastrando(null); }}
+                onDragEnd={() => setArrastrando(null)}
+                style={{
+                  background: SURFACE, border: `1px solid ${arrastrando === it.id ? AMR : BORDER}`, borderRadius: 16,
+                  padding: 16, display: "flex", gap: 16, flexWrap: "wrap", opacity: it.activo ? 1 : 0.6, cursor: "grab",
+                }}>
                 <div style={{ width: 220, flexShrink: 0 }}>
                   <div style={{ width: "100%", height: 130, borderRadius: 10, overflow: "hidden", background: SURF2, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                     {it.tipo === "video" ? (

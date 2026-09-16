@@ -7,7 +7,7 @@ import { youtubeThumbnail, youtubeEmbedUrl } from "../../lib/youtube";
 import { BG, SURFACE, BORDER, TEXT1, TEXT3, AMR, FONT, TITLE } from "../../lib/tokens";
 
 export default function GaleriaClient({ items }: { items: GaleriaItem[] }) {
-  const [tab, setTab] = useState<TipoGaleria>("video");
+  const [tab, setTab] = useState<TipoGaleria>("imagen");
   const [abierto, setAbierto] = useState<GaleriaItem | null>(null);
 
   const delTab = useMemo(() => items.filter(i => i.tipo === tab), [items, tab]);
@@ -42,7 +42,7 @@ export default function GaleriaClient({ items }: { items: GaleriaItem[] }) {
 
         {hayVideos && hayFotos && (
           <div style={{ display: "flex", gap: 8, marginBottom: 32 }}>
-            {(["video", "imagen"] as TipoGaleria[]).map(t => {
+            {(["imagen", "video"] as TipoGaleria[]).map(t => {
               const Icon = t === "video" ? Film : ImageIcon;
               const color = tab === t ? "#1a1200" : TEXT1;
               return (
