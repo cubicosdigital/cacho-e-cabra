@@ -2,6 +2,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Film, Image as ImageIcon, List, LayoutGrid, GripVertical } from "lucide-react";
 import type { GaleriaItem, TipoGaleria } from "../../../../lib/galeria";
+import type { GaleriaCategoria } from "../../../../lib/galeriaCategorias";
 import { resolverImagen } from "../../../../lib/imagenes";
 import { youtubeThumbnail, extraerYoutubeId } from "../../../../lib/youtube";
 import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, FONT, TITLE } from "../../../../lib/tokens";
@@ -11,10 +12,14 @@ const inputBase: React.CSSProperties = {
   padding: "9px 12px", color: TEXT1, fontFamily: FONT, fontSize: 16,
 };
 
-const CATEGORIAS_SUGERIDAS = ["Aniversario", "Carta", "Local", "Eventos"];
+const selectBase: React.CSSProperties = {
+  ...inputBase,
+  appearance: "auto",
+};
 
 export default function GaleriaAdminPage() {
   const [items, setItems] = useState<GaleriaItem[]>([]);
+  const [categorias, setCategorias] = useState<GaleriaCategoria[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<TipoGaleria>("imagen");
@@ -28,8 +33,16 @@ export default function GaleriaAdminPage() {
   const [arrastrando, setArrastrando] = useState<string | null>(null);
 
   async function cargar() {
-    const res = await fetch("/api/galeria?todos=1");
-    if (res.ok) setItems(await res.json());
+    const [resItems, resCats] = await Promise.all([
+      fetch("/api/galeria?todos=1"),
+      fetch("/api/galeria-categorias?todos=1"),
+    ]);
+    if (resItems.ok) setItems(await resItems.json());
+    if (resCats.ok) {
+      const cats: GaleriaCategoria[] = await resCats.json();
+      setCategorias(cats);
+      setNuevo(n => ({ ...n, categoria: n.categoria || cats.find(c => c.activo)?.nombre || "" }));
+    }
     setLoading(false);
   }
 
@@ -185,11 +198,8 @@ export default function GaleriaAdminPage() {
   }
 
   const delTab = useMemo(() => items.filter(i => i.tipo === tab), [items, tab]);
-  const categorias = useMemo(() => {
-    const set = new Set(delTab.map(i => i.categoria));
-    return Array.from(set);
-  }, [delTab]);
   const activos = delTab.filter(i => i.activo).length;
+  const opcionesCategoria = categorias.filter(c => c.activo).map(c => c.nombre);
 
   return (
     <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
@@ -353,9 +363,12 @@ export default function GaleriaAdminPage() {
                   <input value={it.titulo} placeholder="Título"
                     onChange={e => setItems(prev => prev.map(x => x.id === it.id ? { ...x, titulo: e.target.value } : x))}
                     onBlur={e => patch(it.id, { titulo: e.target.value })} style={{ ...inputBase, fontWeight: 700 }} />
-                  <input value={it.categoria} placeholder="Categoría (ej: Aniversario, Carta)" list="categorias-sugeridas"
-                    onChange={e => setItems(prev => prev.map(x => x.id === it.id ? { ...x, categoria: e.target.value } : x))}
-                    onBlur={e => patch(it.id, { categoria: e.target.value })} style={inputBase} />
+                  <select value={it.categoria}
+                    onChange={e => { setItems(prev => prev.map(x => x.id === it.id ? { ...x, categoria: e.target.value } : x)); patch(it.id, { categoria: e.target.value }); }}
+                    style={selectBase}>
+                    {!opcionesCategoria.includes(it.categoria) && <option value={it.categoria}>{it.categoria} (sin categoría activa)</option>}
+                    {opcionesCategoria.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
                   <textarea value={it.descripcion} placeholder="Descripción (opcional)"
                     onChange={e => setItems(prev => prev.map(x => x.id === it.id ? { ...x, descripcion: e.target.value } : x))}
                     onBlur={e => patch(it.id, { descripcion: e.target.value })} style={{ ...inputBase, minHeight: 50 }} />
@@ -377,13 +390,14 @@ export default function GaleriaAdminPage() {
           </div>
         )}
 
-        <datalist id="categorias-sugeridas">
-          {Array.from(new Set([...CATEGORIAS_SUGERIDAS, ...categorias])).map(c => <option key={c} value={c} />)}
-        </datalist>
-
         <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20 }}>
-          <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 6 }}>
-            + Agregar {tab === "video" ? "video" : "foto"}
+          <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
+            <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900 }}>
+              + Agregar {tab === "video" ? "video" : "foto"}
+            </div>
+            <a href="/admin/galeria/categorias" style={{ color: AMR, fontSize: 14, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap" }}>
+              Administrar categorías →
+            </a>
           </div>
           <div style={{ fontSize: 15, color: TEXT3, marginBottom: 14 }}>
             {tab === "video"
@@ -392,7 +406,15 @@ export default function GaleriaAdminPage() {
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <input placeholder="Título" value={nuevo.titulo ?? ""} onChange={e => setNuevo(n => ({ ...n, titulo: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 200 }} />
-            <input placeholder="Categoría" list="categorias-sugeridas" value={nuevo.categoria ?? ""} onChange={e => setNuevo(n => ({ ...n, categoria: e.target.value }))} style={{ ...inputBase, flex: 1, minWidth: 160 }} />
+            {opcionesCategoria.length > 0 ? (
+              <select value={nuevo.categoria ?? ""} onChange={e => setNuevo(n => ({ ...n, categoria: e.target.value }))} style={{ ...selectBase, flex: 1, minWidth: 160 }}>
+                {opcionesCategoria.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            ) : (
+              <div style={{ ...inputBase, flex: 1, minWidth: 160, color: TEXT3 }}>
+                <a href="/admin/galeria/categorias" style={{ color: AMR }}>Crea una categoría primero →</a>
+              </div>
+            )}
             {tab === "video" ? (
               <Fragment key="form-video">
                 <input placeholder="Link de YouTube" value={nuevo.url ?? ""} onChange={e => setNuevo(n => ({ ...n, url: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 220 }} />

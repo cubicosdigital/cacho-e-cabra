@@ -19,6 +19,7 @@ function leerLikesGuardados(): Set<string> {
 export default function GaleriaClient({ items: itemsIniciales }: { items: GaleriaItem[] }) {
   const [items, setItems] = useState(itemsIniciales);
   const [tab, setTab] = useState<TipoGaleria>("imagen");
+  const [catSel, setCatSel] = useState<string>("todas");
   const [abierto, setAbierto] = useState<GaleriaItem | null>(null);
   const [yaLiked, setYaLiked] = useState<Set<string>>(new Set());
 
@@ -30,6 +31,12 @@ export default function GaleriaClient({ items: itemsIniciales }: { items: Galeri
     for (const it of delTab) if (!orden.includes(it.categoria)) orden.push(it.categoria);
     return orden;
   }, [delTab]);
+  const categoriasAMostrar = catSel === "todas" ? categorias : categorias.filter(c => c === catSel);
+
+  // Si al cambiar de pestaña (fotos/videos) la categoría elegida no existe ahí, mostramos todas.
+  useEffect(() => {
+    if (catSel !== "todas" && !categorias.includes(catSel)) setCatSel("todas");
+  }, [categorias, catSel]);
 
   const hayVideos = items.some(i => i.tipo === "video");
   const hayFotos = items.some(i => i.tipo === "imagen");
@@ -115,11 +122,32 @@ export default function GaleriaClient({ items: itemsIniciales }: { items: Galeri
           </div>
         )}
 
+        {categorias.length > 1 && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 28 }}>
+            <button onClick={() => setCatSel("todas")} style={{
+              padding: "7px 18px", borderRadius: 999, border: `1px solid ${BORDER}`, cursor: "pointer",
+              fontFamily: FONT, fontSize: 14, fontWeight: 700,
+              background: catSel === "todas" ? TEXT1 : "transparent", color: catSel === "todas" ? BG : TEXT3,
+            }}>
+              Todas
+            </button>
+            {categorias.map(cat => (
+              <button key={cat} onClick={() => setCatSel(cat)} style={{
+                padding: "7px 18px", borderRadius: 999, border: `1px solid ${BORDER}`, cursor: "pointer",
+                fontFamily: FONT, fontSize: 14, fontWeight: 700,
+                background: catSel === cat ? TEXT1 : "transparent", color: catSel === cat ? BG : TEXT3,
+              }}>
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+
         {delTab.length === 0 && (
           <div style={{ color: TEXT3, fontSize: 17, padding: "40px 0" }}>Muy pronto vamos a subir contenido acá.</div>
         )}
 
-        {categorias.map(cat => (
+        {categoriasAMostrar.map(cat => (
           <div key={cat} style={{ marginBottom: 44 }}>
             <h2 style={{ fontFamily: TITLE, fontSize: 24, fontWeight: 800, marginBottom: 16, color: TEXT1 }}>{cat}</h2>
             <div className="gal-grid">
