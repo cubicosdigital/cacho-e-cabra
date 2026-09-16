@@ -23,6 +23,7 @@ export default function GaleriaAdminPage() {
   const inputsArchivo = useRef<Record<string, HTMLInputElement | null>>({});
   const inputArchivoNuevo = useRef<HTMLInputElement | null>(null);
   const [subiendoNuevo, setSubiendoNuevo] = useState(false);
+  const [progreso, setProgreso] = useState<{ actual: number; total: number } | null>(null);
 
   async function cargar() {
     const res = await fetch("/api/galeria?todos=1");
@@ -88,38 +89,50 @@ export default function GaleriaAdminPage() {
     }
   }
 
-  async function subirFotoNueva(archivo: File) {
+  async function subirFotosNuevas(archivos: FileList) {
     if (!nuevo.titulo.trim() || !nuevo.categoria.trim()) {
       setError("Ponle título y categoría antes de subir la foto");
       return;
     }
+    const lista = Array.from(archivos);
+    const esGaleria = lista.length > 1;
     setSubiendoNuevo(true);
+    setProgreso({ actual: 0, total: lista.length });
     setError(null);
-    const fd = new FormData();
-    fd.append("archivo", archivo);
-    const resUp = await fetch("/api/upload", { method: "POST", body: fd });
-    if (!resUp.ok) {
-      setSubiendoNuevo(false);
-      const d = await resUp.json().catch(() => ({}));
-      setError(d.error || "No se pudo subir la imagen");
-      return;
+
+    const creados: GaleriaItem[] = [];
+    let orden = items.filter(i => i.tipo === "imagen").length;
+
+    for (let i = 0; i < lista.length; i++) {
+      const fd = new FormData();
+      fd.append("archivo", lista[i]);
+      const resUp = await fetch("/api/upload", { method: "POST", body: fd });
+      if (!resUp.ok) {
+        const d = await resUp.json().catch(() => ({}));
+        setError(d.error || `No se pudo subir la foto ${i + 1} de ${lista.length}`);
+        continue;
+      }
+      const { url } = await resUp.json();
+      // Con varias fotos a la vez arman una galería: mismo título/categoría, numeradas.
+      const titulo = esGaleria ? `${nuevo.titulo.trim()} ${i + 1}` : nuevo.titulo.trim();
+      const res = await fetch("/api/galeria", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipo: "imagen", titulo, categoria: nuevo.categoria.trim(),
+          url, descripcion: "", activo: true, orden: orden++,
+        }),
+      });
+      if (res.ok) creados.push(await res.json());
+      else setError(`No se pudo crear el ítem de la foto ${i + 1}`);
+
+      setProgreso({ actual: i + 1, total: lista.length });
     }
-    const { url } = await resUp.json();
-    const delMismoTipo = items.filter(i => i.tipo === "imagen");
-    const res = await fetch("/api/galeria", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        tipo: "imagen", titulo: nuevo.titulo.trim(), categoria: nuevo.categoria.trim(),
-        url, descripcion: "", activo: true, orden: delMismoTipo.length,
-      }),
-    });
+
     setSubiendoNuevo(false);
-    if (res.ok) {
-      const creado: GaleriaItem = await res.json();
-      setItems(prev => [...prev, creado]);
+    setProgreso(null);
+    if (creados.length) {
+      setItems(prev => [...prev, ...creados]);
       setNuevo({ titulo: "", categoria: "", url: "" });
-    } else {
-      setError("No se pudo crear el ítem");
     }
   }
 
@@ -278,7 +291,7 @@ export default function GaleriaAdminPage() {
           <div style={{ fontSize: 15, color: TEXT3, marginBottom: 14 }}>
             {tab === "video"
               ? "Pega el link de YouTube y elige la categoría."
-              : "Ponle título y categoría, y sube el archivo."}
+              : "Ponle título y categoría, y sube el archivo. Si eliges varias fotos a la vez, se agrupan como una galería dentro de esa categoría."}
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <input placeholder="Título" value={nuevo.titulo ?? ""} onChange={e => setNuevo(n => ({ ...n, titulo: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 200 }} />
@@ -292,15 +305,30 @@ export default function GaleriaAdminPage() {
               <Fragment key="form-imagen">
                 <input
                   ref={inputArchivoNuevo}
-                  type="file" accept="image/jpeg,image/png,image/webp,image/avif" style={{ display: "none" }}
-                  onChange={e => { const f = e.target.files?.[0]; if (f) subirFotoNueva(f); e.target.value = ""; }}
+                  type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" multiple style={{ display: "none" }}
+                  onChange={e => { const fs = e.target.files; if (fs && fs.length) subirFotosNuevas(fs); e.target.value = ""; }}
                 />
                 <button onClick={() => inputArchivoNuevo.current?.click()} disabled={subiendoNuevo} style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
-                  {subiendoNuevo ? "Subiendo…" : "Subir foto"}
+                  {progreso ? `Subiendo ${progreso.actual} de ${progreso.total}…` : "Subir foto(s)"}
                 </button>
               </Fragment>
             )}
           </div>
+
+          {progreso && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: TEXT3, marginBottom: 6 }}>
+                <span>Subiendo foto {progreso.actual} de {progreso.total}</span>
+                <span>{Math.round((progreso.actual / progreso.total) * 100)}%</span>
+              </div>
+              <div style={{ width: "100%", height: 8, borderRadius: 999, background: SURF2, overflow: "hidden" }}>
+                <div style={{
+                  width: `${(progreso.actual / progreso.total) * 100}%`, height: "100%", background: AMR,
+                  borderRadius: 999, transition: "width 0.25s ease",
+                }} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
