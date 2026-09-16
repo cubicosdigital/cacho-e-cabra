@@ -32,6 +32,7 @@ export default function GaleriaAdminPage() {
   const [vista, setVista] = useState<"lista" | "cuadricula">("cuadricula");
   const [arrastrando, setArrastrando] = useState<string | null>(null);
   const [editando, setEditando] = useState<GaleriaItem | null>(null);
+  const [catSelAdmin, setCatSelAdmin] = useState<string>("todas");
 
   async function cargar() {
     const [resItems, resCats] = await Promise.all([
@@ -160,7 +161,7 @@ export default function GaleriaAdminPage() {
   }
 
   async function mover(id: string, delta: number) {
-    const grupo = items.filter(i => i.tipo === tab);
+    const grupo = items.filter(i => i.tipo === tab && (catSelAdmin === "todas" || i.categoria === catSelAdmin));
     const i = grupo.findIndex(x => x.id === id);
     const j = i + delta;
     if (i === -1 || j < 0 || j >= grupo.length) return;
@@ -178,7 +179,7 @@ export default function GaleriaAdminPage() {
 
   async function reordenarPorDrag(idArrastrado: string, idDestino: string) {
     if (idArrastrado === idDestino) return;
-    const grupo = items.filter(i => i.tipo === tab);
+    const grupo = items.filter(i => i.tipo === tab && (catSelAdmin === "todas" || i.categoria === catSelAdmin));
     const i = grupo.findIndex(x => x.id === idArrastrado);
     const j = grupo.findIndex(x => x.id === idDestino);
     if (i === -1 || j === -1) return;
@@ -201,6 +202,19 @@ export default function GaleriaAdminPage() {
   const delTab = useMemo(() => items.filter(i => i.tipo === tab), [items, tab]);
   const activos = delTab.filter(i => i.activo).length;
   const opcionesCategoria = categorias.filter(c => c.activo).map(c => c.nombre);
+  // Categorías a mostrar como tabs: las creadas en el admin + cualquier "suelta" que ya tenga contenido.
+  const categoriasTab = useMemo(() => {
+    const orden = [...opcionesCategoria];
+    for (const it of delTab) if (!orden.includes(it.categoria)) orden.push(it.categoria);
+    return orden;
+  }, [delTab, opcionesCategoria]);
+  useEffect(() => {
+    if (catSelAdmin !== "todas" && !categoriasTab.includes(catSelAdmin)) setCatSelAdmin("todas");
+  }, [categoriasTab, catSelAdmin]);
+  const delTabCat = useMemo(
+    () => catSelAdmin === "todas" ? delTab : delTab.filter(i => i.categoria === catSelAdmin),
+    [delTab, catSelAdmin]
+  );
 
   return (
     <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
@@ -249,7 +263,28 @@ export default function GaleriaAdminPage() {
           </div>
         </div>
 
-        {delTab.length > 1 && (
+        {categoriasTab.length > 1 && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: -8 }}>
+            <button onClick={() => setCatSelAdmin("todas")} style={{
+              padding: "6px 16px", borderRadius: 999, border: `1px solid ${BORDER}`, cursor: "pointer",
+              fontFamily: FONT, fontSize: 14, fontWeight: 700,
+              background: catSelAdmin === "todas" ? TEXT1 : "transparent", color: catSelAdmin === "todas" ? BG : TEXT3,
+            }}>
+              Todas
+            </button>
+            {categoriasTab.map(cat => (
+              <button key={cat} onClick={() => setCatSelAdmin(cat)} style={{
+                padding: "6px 16px", borderRadius: 999, border: `1px solid ${BORDER}`, cursor: "pointer",
+                fontFamily: FONT, fontSize: 14, fontWeight: 700,
+                background: catSelAdmin === cat ? TEXT1 : "transparent", color: catSelAdmin === cat ? BG : TEXT3,
+              }}>
+                {cat} <span style={{ opacity: 0.6 }}>({delTab.filter(i => i.categoria === cat).length})</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {delTabCat.length > 1 && (
           <div style={{ fontSize: 14, color: TEXT3, marginTop: -12 }}>
             Arrastra {vista === "cuadricula" ? "una foto" : "un ítem"} para reordenar.
           </div>
@@ -263,13 +298,13 @@ export default function GaleriaAdminPage() {
 
         {loading ? (
           <div style={{ color: TEXT3 }}>Cargando…</div>
-        ) : delTab.length === 0 ? (
+        ) : delTabCat.length === 0 ? (
           <div style={{ color: TEXT3, fontSize: 16, padding: "20px 0" }}>
             Todavía no hay {tab === "video" ? "videos" : "fotos"}. Agrega el primero abajo.
           </div>
         ) : vista === "cuadricula" ? (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 14 }}>
-            {delTab.map(it => (
+            {delTabCat.map(it => (
               <div
                 key={it.id}
                 draggable
@@ -319,7 +354,7 @@ export default function GaleriaAdminPage() {
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {delTab.map((it, i) => (
+            {delTabCat.map((it, i) => (
               <div
                 key={it.id}
                 draggable
@@ -382,7 +417,7 @@ export default function GaleriaAdminPage() {
                   }}>{it.activo ? "Activo" : "Oculto"}</button>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => mover(it.id, -1)} disabled={i === 0} style={{ flex: 1, background: "none", border: `1px solid ${BORDER}`, color: TEXT2, borderRadius: 8, padding: "6px 0", cursor: i === 0 ? "default" : "pointer", opacity: i === 0 ? 0.4 : 1 }}>↑</button>
-                    <button onClick={() => mover(it.id, 1)} disabled={i === delTab.length - 1} style={{ flex: 1, background: "none", border: `1px solid ${BORDER}`, color: TEXT2, borderRadius: 8, padding: "6px 0", cursor: i === delTab.length - 1 ? "default" : "pointer", opacity: i === delTab.length - 1 ? 0.4 : 1 }}>↓</button>
+                    <button onClick={() => mover(it.id, 1)} disabled={i === delTabCat.length - 1} style={{ flex: 1, background: "none", border: `1px solid ${BORDER}`, color: TEXT2, borderRadius: 8, padding: "6px 0", cursor: i === delTabCat.length - 1 ? "default" : "pointer", opacity: i === delTabCat.length - 1 ? 0.4 : 1 }}>↓</button>
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => setEditando(it)} style={{ flex: 1, background: "none", border: `1px solid ${BORDER}`, borderRadius: 8, color: TEXT2, cursor: "pointer", padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>
