@@ -6,7 +6,7 @@ import Image from "next/image";
 import {
   Receipt, Bike, TrendingUp, FileText, Table2, UtensilsCrossed, ChefHat,
   AlertTriangle, Inbox, MessageSquare, CalendarClock, CalendarDays, Users,
-  Image as ImageIcon, PartyPopper, ClipboardList, ListChecks, Megaphone, HandPlatter,
+  Image as ImageIcon, PartyPopper, ClipboardList, ListChecks, Megaphone, HandPlatter, Film,
   type LucideIcon,
 } from "lucide-react";
 import { SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, FONT } from "../../../lib/tokens";
@@ -59,6 +59,7 @@ const GRUPOS: { titulo: string; items: Item[] }[] = [
     titulo: "Contenido",
     items: [
       { href: "/admin/banner", label: "Banner principal", icon: ImageIcon, roles: ["admin"] },
+      { href: "/admin/galeria", label: "Galería", icon: Film, roles: ["admin"] },
       { href: "/admin/eventos", label: "Eventos", icon: PartyPopper, roles: ["admin"] },
       { href: "/admin/invitados", label: "Invitados por evento", icon: ClipboardList, roles: ["admin"] },
     ],

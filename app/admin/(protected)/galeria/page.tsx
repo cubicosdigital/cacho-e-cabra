@@ -1,0 +1,303 @@
+"use client";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { GaleriaItem, TipoGaleria } from "../../../../lib/galeria";
+import { resolverImagen } from "../../../../lib/imagenes";
+import { youtubeThumbnail, extraerYoutubeId } from "../../../../lib/youtube";
+import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, FONT, TITLE } from "../../../../lib/tokens";
+
+const inputBase: React.CSSProperties = {
+  background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8,
+  padding: "9px 12px", color: TEXT1, fontFamily: FONT, fontSize: 16,
+};
+
+const CATEGORIAS_SUGERIDAS = ["Aniversario", "Carta", "Local", "Eventos"];
+
+export default function GaleriaAdminPage() {
+  const [items, setItems] = useState<GaleriaItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<TipoGaleria>("video");
+  const [subiendo, setSubiendo] = useState<string | null>(null);
+  const [nuevo, setNuevo] = useState({ titulo: "", categoria: "", url: "" });
+  const inputsArchivo = useRef<Record<string, HTMLInputElement | null>>({});
+  const inputArchivoNuevo = useRef<HTMLInputElement | null>(null);
+  const [subiendoNuevo, setSubiendoNuevo] = useState(false);
+
+  async function cargar() {
+    const res = await fetch("/api/galeria?todos=1");
+    if (res.ok) setItems(await res.json());
+    setLoading(false);
+  }
+
+  useEffect(() => { cargar(); }, []);
+
+  async function patch(id: string, body: Partial<GaleriaItem>) {
+    setError(null);
+    const previo = items;
+    setItems(prev => prev.map(i => i.id === id ? { ...i, ...body } : i));
+    const res = await fetch(`/api/galeria/${id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) { setItems(previo); setError("No se pudo guardar el cambio"); }
+  }
+
+  async function subirFoto(id: string, archivo: File) {
+    setError(null);
+    setSubiendo(id);
+    const fd = new FormData();
+    fd.append("archivo", archivo);
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    setSubiendo(null);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setError(d.error || "No se pudo subir la imagen");
+      return;
+    }
+    const { url } = await res.json();
+    await patch(id, { url });
+  }
+
+  async function crear() {
+    if (!nuevo.titulo.trim() || !nuevo.categoria.trim()) return;
+    if (tab === "video" && !extraerYoutubeId(nuevo.url)) {
+      setError("Pega un link válido de YouTube");
+      return;
+    }
+    setError(null);
+    const delMismoTipo = items.filter(i => i.tipo === tab);
+    const res = await fetch("/api/galeria", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tipo: tab,
+        titulo: nuevo.titulo.trim(),
+        categoria: nuevo.categoria.trim(),
+        url: nuevo.url.trim(),
+        descripcion: "",
+        activo: tab === "video", // una foto recién subida se activa después de subir el archivo
+        orden: delMismoTipo.length,
+      }),
+    });
+    if (res.ok) {
+      const creado: GaleriaItem = await res.json();
+      setItems(prev => [...prev, creado]);
+      setNuevo({ titulo: "", categoria: "", url: "" });
+    } else {
+      setError("No se pudo crear el ítem");
+    }
+  }
+
+  async function subirFotoNueva(archivo: File) {
+    if (!nuevo.titulo.trim() || !nuevo.categoria.trim()) {
+      setError("Ponle título y categoría antes de subir la foto");
+      return;
+    }
+    setSubiendoNuevo(true);
+    setError(null);
+    const fd = new FormData();
+    fd.append("archivo", archivo);
+    const resUp = await fetch("/api/upload", { method: "POST", body: fd });
+    if (!resUp.ok) {
+      setSubiendoNuevo(false);
+      const d = await resUp.json().catch(() => ({}));
+      setError(d.error || "No se pudo subir la imagen");
+      return;
+    }
+    const { url } = await resUp.json();
+    const delMismoTipo = items.filter(i => i.tipo === "imagen");
+    const res = await fetch("/api/galeria", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tipo: "imagen", titulo: nuevo.titulo.trim(), categoria: nuevo.categoria.trim(),
+        url, descripcion: "", activo: true, orden: delMismoTipo.length,
+      }),
+    });
+    setSubiendoNuevo(false);
+    if (res.ok) {
+      const creado: GaleriaItem = await res.json();
+      setItems(prev => [...prev, creado]);
+      setNuevo({ titulo: "", categoria: "", url: "" });
+    } else {
+      setError("No se pudo crear el ítem");
+    }
+  }
+
+  async function eliminar(id: string, titulo: string) {
+    if (!confirm(`¿Eliminar "${titulo}" de la galería?`)) return;
+    const res = await fetch(`/api/galeria/${id}`, { method: "DELETE" });
+    if (res.ok) setItems(prev => prev.filter(i => i.id !== id));
+    else setError("No se pudo eliminar");
+  }
+
+  async function mover(id: string, delta: number) {
+    const grupo = items.filter(i => i.tipo === tab);
+    const i = grupo.findIndex(x => x.id === id);
+    const j = i + delta;
+    if (i === -1 || j < 0 || j >= grupo.length) return;
+    const copia = [...grupo];
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+    const reordenado = copia.map((x, k) => ({ ...x, orden: k }));
+    setItems(prev => prev.map(x => reordenado.find(r => r.id === x.id) ?? x));
+    await Promise.all(reordenado.map(x =>
+      fetch(`/api/galeria/${x.id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orden: x.orden }),
+      })
+    ));
+  }
+
+  const delTab = useMemo(() => items.filter(i => i.tipo === tab), [items, tab]);
+  const categorias = useMemo(() => {
+    const set = new Set(delTab.map(i => i.categoria));
+    return Array.from(set);
+  }, [delTab]);
+  const activos = delTab.filter(i => i.activo).length;
+
+  return (
+    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
+
+        <div>
+          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Galería</div>
+          <div style={{ fontSize: 17, color: TEXT3 }}>
+            Videos de YouTube y fotografías, agrupados por categoría (Aniversario, Carta, etc.) para la página pública /galeria.
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          {(["video", "imagen"] as TipoGaleria[]).map(t => (
+            <button key={t} onClick={() => setTab(t)} style={{
+              padding: "9px 20px", borderRadius: 999, border: `1px solid ${BORDER}`, cursor: "pointer",
+              fontFamily: FONT, fontSize: 16, fontWeight: 700,
+              background: tab === t ? AMR : SURFACE, color: tab === t ? "#1a1200" : TEXT2,
+            }}>
+              {t === "video" ? "🎬 Videos" : "🖼️ Fotos"}
+            </button>
+          ))}
+          <div style={{ display: "flex", alignItems: "center", color: TEXT3, fontSize: 15, marginLeft: 8 }}>
+            {activos} de {delTab.length} activos
+          </div>
+        </div>
+
+        {error && (
+          <div style={{ background: "#2a1212", border: "1px solid #5c2626", color: "#fca5a5", borderRadius: 10, padding: "10px 16px", fontSize: 16 }}>
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div style={{ color: TEXT3 }}>Cargando…</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {delTab.length === 0 && (
+              <div style={{ color: TEXT3, fontSize: 16, padding: "20px 0" }}>
+                Todavía no hay {tab === "video" ? "videos" : "fotos"}. Agrega el primero abajo.
+              </div>
+            )}
+            {delTab.map((it, i) => (
+              <div key={it.id} style={{
+                background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16,
+                padding: 16, display: "flex", gap: 16, flexWrap: "wrap", opacity: it.activo ? 1 : 0.6,
+              }}>
+                <div style={{ width: 220, flexShrink: 0 }}>
+                  <div style={{ width: "100%", height: 130, borderRadius: 10, overflow: "hidden", background: SURF2, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                    {it.tipo === "video" ? (
+                      it.url && extraerYoutubeId(it.url) ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={youtubeThumbnail(it.url)} alt={it.titulo} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : <span style={{ color: TEXT3, fontSize: 15 }}>Sin link</span>
+                    ) : it.url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={resolverImagen(it.url, 440, 260)} alt={it.titulo} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : <span style={{ color: TEXT3, fontSize: 15 }}>Sin imagen</span>}
+                  </div>
+
+                  {it.tipo === "imagen" ? (
+                    <>
+                      <input
+                        ref={el => { inputsArchivo.current[it.id] = el; }}
+                        type="file" accept="image/jpeg,image/png,image/webp,image/avif" style={{ display: "none" }}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) subirFoto(it.id, f); e.target.value = ""; }}
+                      />
+                      <button onClick={() => inputsArchivo.current[it.id]?.click()} disabled={subiendo === it.id} style={{
+                        width: "100%", marginTop: 8, background: SURF2, border: `1px solid ${BORDER}`, color: TEXT1,
+                        borderRadius: 8, padding: "8px 0", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: FONT,
+                      }}>
+                        {subiendo === it.id ? "Subiendo…" : "Subir nueva foto"}
+                      </button>
+                    </>
+                  ) : (
+                    <input value={it.url} placeholder="Link de YouTube"
+                      onChange={e => setItems(prev => prev.map(x => x.id === it.id ? { ...x, url: e.target.value } : x))}
+                      onBlur={e => patch(it.id, { url: e.target.value })}
+                      style={{ ...inputBase, width: "100%", marginTop: 6, fontSize: 14 }} />
+                  )}
+                </div>
+
+                <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <input value={it.titulo} placeholder="Título"
+                    onChange={e => setItems(prev => prev.map(x => x.id === it.id ? { ...x, titulo: e.target.value } : x))}
+                    onBlur={e => patch(it.id, { titulo: e.target.value })} style={{ ...inputBase, fontWeight: 700 }} />
+                  <input value={it.categoria} placeholder="Categoría (ej: Aniversario, Carta)" list="categorias-sugeridas"
+                    onChange={e => setItems(prev => prev.map(x => x.id === it.id ? { ...x, categoria: e.target.value } : x))}
+                    onBlur={e => patch(it.id, { categoria: e.target.value })} style={inputBase} />
+                  <textarea value={it.descripcion} placeholder="Descripción (opcional)"
+                    onChange={e => setItems(prev => prev.map(x => x.id === it.id ? { ...x, descripcion: e.target.value } : x))}
+                    onBlur={e => patch(it.id, { descripcion: e.target.value })} style={{ ...inputBase, minHeight: 50 }} />
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+                  <button onClick={() => patch(it.id, { activo: !it.activo })} style={{
+                    fontSize: 15, fontWeight: 700, borderRadius: 8, padding: "8px 14px", border: "none", cursor: "pointer", fontFamily: FONT,
+                    background: it.activo ? "#1a2e1a" : SURF2, color: it.activo ? VERDE : TEXT3,
+                  }}>{it.activo ? "Activo" : "Oculto"}</button>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => mover(it.id, -1)} disabled={i === 0} style={{ flex: 1, background: "none", border: `1px solid ${BORDER}`, color: TEXT2, borderRadius: 8, padding: "6px 0", cursor: i === 0 ? "default" : "pointer", opacity: i === 0 ? 0.4 : 1 }}>↑</button>
+                    <button onClick={() => mover(it.id, 1)} disabled={i === delTab.length - 1} style={{ flex: 1, background: "none", border: `1px solid ${BORDER}`, color: TEXT2, borderRadius: 8, padding: "6px 0", cursor: i === delTab.length - 1 ? "default" : "pointer", opacity: i === delTab.length - 1 ? 0.4 : 1 }}>↓</button>
+                  </div>
+                  <button onClick={() => eliminar(it.id, it.titulo)} style={{ background: "none", border: "none", color: "#fca5a5", cursor: "pointer", fontSize: 19 }}>🗑</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <datalist id="categorias-sugeridas">
+          {Array.from(new Set([...CATEGORIAS_SUGERIDAS, ...categorias])).map(c => <option key={c} value={c} />)}
+        </datalist>
+
+        <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20 }}>
+          <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 6 }}>
+            + Agregar {tab === "video" ? "video" : "foto"}
+          </div>
+          <div style={{ fontSize: 15, color: TEXT3, marginBottom: 14 }}>
+            {tab === "video"
+              ? "Pega el link de YouTube y elige la categoría."
+              : "Ponle título y categoría, y sube el archivo."}
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <input placeholder="Título" value={nuevo.titulo} onChange={e => setNuevo(n => ({ ...n, titulo: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 200 }} />
+            <input placeholder="Categoría" list="categorias-sugeridas" value={nuevo.categoria} onChange={e => setNuevo(n => ({ ...n, categoria: e.target.value }))} style={{ ...inputBase, flex: 1, minWidth: 160 }} />
+            {tab === "video" ? (
+              <>
+                <input placeholder="Link de YouTube" value={nuevo.url} onChange={e => setNuevo(n => ({ ...n, url: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 220 }} />
+                <button onClick={crear} style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Agregar</button>
+              </>
+            ) : (
+              <>
+                <input
+                  ref={inputArchivoNuevo}
+                  type="file" accept="image/jpeg,image/png,image/webp,image/avif" style={{ display: "none" }}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) subirFotoNueva(f); e.target.value = ""; }}
+                />
+                <button onClick={() => inputArchivoNuevo.current?.click()} disabled={subiendoNuevo} style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
+                  {subiendoNuevo ? "Subiendo…" : "Subir foto"}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
