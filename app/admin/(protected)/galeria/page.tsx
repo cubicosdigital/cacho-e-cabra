@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Film, Image as ImageIcon } from "lucide-react";
 import type { GaleriaItem, TipoGaleria } from "../../../../lib/galeria";
 import { resolverImagen } from "../../../../lib/imagenes";
 import { youtubeThumbnail, extraerYoutubeId } from "../../../../lib/youtube";
@@ -167,11 +168,15 @@ export default function GaleriaAdminPage() {
         <div style={{ display: "flex", gap: 8 }}>
           {(["video", "imagen"] as TipoGaleria[]).map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
+              display: "flex", alignItems: "center", gap: 8,
               padding: "9px 20px", borderRadius: 999, border: `1px solid ${BORDER}`, cursor: "pointer",
               fontFamily: FONT, fontSize: 16, fontWeight: 700,
               background: tab === t ? AMR : SURFACE, color: tab === t ? "#1a1200" : TEXT2,
             }}>
-              {t === "video" ? "🎬 Videos" : "🖼️ Fotos"}
+              {t === "video"
+                ? <Film size={18} strokeWidth={2} fill={tab === t ? "#1a1200" : TEXT2} color={tab === t ? "#1a1200" : TEXT2} />
+                : <ImageIcon size={18} strokeWidth={2} fill={tab === t ? "#1a1200" : TEXT2} color={tab === t ? "#1a1200" : TEXT2} />}
+              {t === "video" ? "Videos" : "Fotos"}
             </button>
           ))}
           <div style={{ display: "flex", alignItems: "center", color: TEXT3, fontSize: 15, marginLeft: 8 }}>
@@ -276,15 +281,15 @@ export default function GaleriaAdminPage() {
               : "Ponle título y categoría, y sube el archivo."}
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <input placeholder="Título" value={nuevo.titulo} onChange={e => setNuevo(n => ({ ...n, titulo: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 200 }} />
-            <input placeholder="Categoría" list="categorias-sugeridas" value={nuevo.categoria} onChange={e => setNuevo(n => ({ ...n, categoria: e.target.value }))} style={{ ...inputBase, flex: 1, minWidth: 160 }} />
+            <input placeholder="Título" value={nuevo.titulo ?? ""} onChange={e => setNuevo(n => ({ ...n, titulo: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 200 }} />
+            <input placeholder="Categoría" list="categorias-sugeridas" value={nuevo.categoria ?? ""} onChange={e => setNuevo(n => ({ ...n, categoria: e.target.value }))} style={{ ...inputBase, flex: 1, minWidth: 160 }} />
             {tab === "video" ? (
-              <>
-                <input placeholder="Link de YouTube" value={nuevo.url} onChange={e => setNuevo(n => ({ ...n, url: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 220 }} />
+              <Fragment key="form-video">
+                <input placeholder="Link de YouTube" value={nuevo.url ?? ""} onChange={e => setNuevo(n => ({ ...n, url: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 220 }} />
                 <button onClick={crear} style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Agregar</button>
-              </>
+              </Fragment>
             ) : (
-              <>
+              <Fragment key="form-imagen">
                 <input
                   ref={inputArchivoNuevo}
                   type="file" accept="image/jpeg,image/png,image/webp,image/avif" style={{ display: "none" }}
@@ -293,7 +298,7 @@ export default function GaleriaAdminPage() {
                 <button onClick={() => inputArchivoNuevo.current?.click()} disabled={subiendoNuevo} style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
                   {subiendoNuevo ? "Subiendo…" : "Subir foto"}
                 </button>
-              </>
+              </Fragment>
             )}
           </div>
         </div>

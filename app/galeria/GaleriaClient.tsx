@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import { X, Play } from "lucide-react";
+import { X, Play, Film, Image as ImageIcon } from "lucide-react";
 import type { GaleriaItem, TipoGaleria } from "../../lib/galeria";
 import { resolverImagen } from "../../lib/imagenes";
 import { youtubeThumbnail, youtubeEmbedUrl } from "../../lib/youtube";
@@ -42,15 +42,21 @@ export default function GaleriaClient({ items }: { items: GaleriaItem[] }) {
 
         {hayVideos && hayFotos && (
           <div style={{ display: "flex", gap: 8, marginBottom: 32 }}>
-            {(["video", "imagen"] as TipoGaleria[]).map(t => (
-              <button key={t} onClick={() => setTab(t)} style={{
-                padding: "9px 22px", borderRadius: 999, border: `1px solid ${BORDER}`, cursor: "pointer",
-                fontFamily: FONT, fontSize: 16, fontWeight: 700,
-                background: tab === t ? AMR : SURFACE, color: tab === t ? "#1a1200" : TEXT1,
-              }}>
-                {t === "video" ? "🎬 Videos" : "🖼️ Fotos"}
-              </button>
-            ))}
+            {(["video", "imagen"] as TipoGaleria[]).map(t => {
+              const Icon = t === "video" ? Film : ImageIcon;
+              const color = tab === t ? "#1a1200" : TEXT1;
+              return (
+                <button key={t} onClick={() => setTab(t)} style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "9px 22px", borderRadius: 999, border: `1px solid ${BORDER}`, cursor: "pointer",
+                  fontFamily: FONT, fontSize: 16, fontWeight: 700,
+                  background: tab === t ? AMR : SURFACE, color,
+                }}>
+                  <Icon size={18} strokeWidth={2} fill={color} color={color} />
+                  {t === "video" ? "Videos" : "Fotos"}
+                </button>
+              );
+            })}
           </div>
         )}
 
