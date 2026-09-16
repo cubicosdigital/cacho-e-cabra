@@ -1,6 +1,6 @@
 "use client";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { Film, Image as ImageIcon, List, LayoutGrid, GripVertical } from "lucide-react";
+import { Film, Image as ImageIcon, List, LayoutGrid, GripVertical, Pencil, X } from "lucide-react";
 import type { GaleriaItem, TipoGaleria } from "../../../../lib/galeria";
 import type { GaleriaCategoria } from "../../../../lib/galeriaCategorias";
 import { resolverImagen } from "../../../../lib/imagenes";
@@ -31,6 +31,7 @@ export default function GaleriaAdminPage() {
   const [progreso, setProgreso] = useState<{ actual: number; total: number } | null>(null);
   const [vista, setVista] = useState<"lista" | "cuadricula">("cuadricula");
   const [arrastrando, setArrastrando] = useState<string | null>(null);
+  const [editando, setEditando] = useState<GaleriaItem | null>(null);
 
   async function cargar() {
     const [resItems, resCats] = await Promise.all([
@@ -296,14 +297,20 @@ export default function GaleriaAdminPage() {
                   </div>
                 </div>
                 <div style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: TEXT1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={it.titulo}>
-                    {it.titulo || "Sin título"}
-                  </div>
+                  <select value={it.categoria}
+                    onChange={e => { setItems(prev => prev.map(x => x.id === it.id ? { ...x, categoria: e.target.value } : x)); patch(it.id, { categoria: e.target.value }); }}
+                    style={{ ...selectBase, fontSize: 13, padding: "6px 8px" }}>
+                    {!opcionesCategoria.includes(it.categoria) && <option value={it.categoria}>{it.categoria} (sin categoría activa)</option>}
+                    {opcionesCategoria.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => patch(it.id, { activo: !it.activo })} style={{
                       flex: 1, fontSize: 12, fontWeight: 700, borderRadius: 6, padding: "5px 0", border: "none", cursor: "pointer", fontFamily: FONT,
                       background: it.activo ? "#1a2e1a" : SURF2, color: it.activo ? VERDE : TEXT3,
                     }}>{it.activo ? "Activo" : "Oculto"}</button>
+                    <button onClick={() => setEditando(it)} style={{ background: "none", border: `1px solid ${BORDER}`, borderRadius: 6, color: TEXT2, cursor: "pointer", fontSize: 13, padding: "0 8px", display: "flex", alignItems: "center" }}>
+                      <Pencil size={13} />
+                    </button>
                     <button onClick={() => eliminar(it.id, it.titulo)} style={{ background: "none", border: `1px solid ${BORDER}`, borderRadius: 6, color: "#fca5a5", cursor: "pointer", fontSize: 14, padding: "0 8px" }}>🗑</button>
                   </div>
                 </div>
@@ -359,19 +366,13 @@ export default function GaleriaAdminPage() {
                   )}
                 </div>
 
-                <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", gap: 8 }}>
-                  <input value={it.titulo} placeholder="Título"
-                    onChange={e => setItems(prev => prev.map(x => x.id === it.id ? { ...x, titulo: e.target.value } : x))}
-                    onBlur={e => patch(it.id, { titulo: e.target.value })} style={{ ...inputBase, fontWeight: 700 }} />
+                <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", gap: 8, justifyContent: "center" }}>
                   <select value={it.categoria}
                     onChange={e => { setItems(prev => prev.map(x => x.id === it.id ? { ...x, categoria: e.target.value } : x)); patch(it.id, { categoria: e.target.value }); }}
                     style={selectBase}>
                     {!opcionesCategoria.includes(it.categoria) && <option value={it.categoria}>{it.categoria} (sin categoría activa)</option>}
                     {opcionesCategoria.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
-                  <textarea value={it.descripcion} placeholder="Descripción (opcional)"
-                    onChange={e => setItems(prev => prev.map(x => x.id === it.id ? { ...x, descripcion: e.target.value } : x))}
-                    onBlur={e => patch(it.id, { descripcion: e.target.value })} style={{ ...inputBase, minHeight: 50 }} />
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
@@ -383,7 +384,12 @@ export default function GaleriaAdminPage() {
                     <button onClick={() => mover(it.id, -1)} disabled={i === 0} style={{ flex: 1, background: "none", border: `1px solid ${BORDER}`, color: TEXT2, borderRadius: 8, padding: "6px 0", cursor: i === 0 ? "default" : "pointer", opacity: i === 0 ? 0.4 : 1 }}>↑</button>
                     <button onClick={() => mover(it.id, 1)} disabled={i === delTab.length - 1} style={{ flex: 1, background: "none", border: `1px solid ${BORDER}`, color: TEXT2, borderRadius: 8, padding: "6px 0", cursor: i === delTab.length - 1 ? "default" : "pointer", opacity: i === delTab.length - 1 ? 0.4 : 1 }}>↓</button>
                   </div>
-                  <button onClick={() => eliminar(it.id, it.titulo)} style={{ background: "none", border: "none", color: "#fca5a5", cursor: "pointer", fontSize: 19 }}>🗑</button>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => setEditando(it)} style={{ flex: 1, background: "none", border: `1px solid ${BORDER}`, borderRadius: 8, color: TEXT2, cursor: "pointer", padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Pencil size={15} />
+                    </button>
+                    <button onClick={() => eliminar(it.id, it.titulo)} style={{ flex: 1, background: "none", border: `1px solid ${BORDER}`, borderRadius: 8, color: "#fca5a5", cursor: "pointer", fontSize: 17 }}>🗑</button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -450,6 +456,50 @@ export default function GaleriaAdminPage() {
           )}
         </div>
       </div>
+
+      {editando && (
+        <div
+          onClick={() => setEditando(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+        >
+          <div onClick={e => e.stopPropagation()} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 24, width: "100%", maxWidth: 440, display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900 }}>Editar {editando.tipo === "video" ? "video" : "foto"}</div>
+              <button onClick={() => setEditando(null)} style={{ background: "none", border: "none", color: TEXT3, cursor: "pointer" }}><X size={20} /></button>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, color: TEXT3, marginBottom: 4 }}>Título</div>
+              <input
+                value={editando.titulo}
+                onChange={e => setEditando({ ...editando, titulo: e.target.value })}
+                style={{ ...inputBase, width: "100%" }}
+              />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, color: TEXT3, marginBottom: 4 }}>Descripción</div>
+              <textarea
+                value={editando.descripcion}
+                onChange={e => setEditando({ ...editando, descripcion: e.target.value })}
+                style={{ ...inputBase, width: "100%", minHeight: 80 }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 4 }}>
+              <button onClick={() => setEditando(null)} style={{ background: "none", border: `1px solid ${BORDER}`, color: TEXT2, borderRadius: 8, padding: "9px 18px", cursor: "pointer", fontFamily: FONT, fontWeight: 700 }}>
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  await patch(editando.id, { titulo: editando.titulo, descripcion: editando.descripcion });
+                  setEditando(null);
+                }}
+                style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "9px 18px", cursor: "pointer", fontFamily: FONT, fontWeight: 700 }}
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
