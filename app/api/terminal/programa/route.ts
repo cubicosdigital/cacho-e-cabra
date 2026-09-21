@@ -11,9 +11,11 @@ export async function GET(req: Request) {
   const token = process.env.TERMINAL_BRIDGE_TOKEN;
   if (!token) return NextResponse.json({ error: "Falta TERMINAL_BRIDGE_TOKEN en el servidor" }, { status: 500 });
 
+  // SITE_URL (en el servidor) manda; solo si falta se deduce de la petición.
   const url = new URL(req.url);
   const proto = req.headers.get("x-forwarded-proto") ?? url.protocol.replace(":", "");
   const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? url.host;
+  const appUrl = (process.env.SITE_URL ?? `${proto}://${host}`).replace(/\/$/, "");
 
   const script = `#!/bin/sh
 # Programa de conexión con el terminal de huellas de Cacho Cabra.
@@ -30,7 +32,7 @@ cat > "$DIR/puente.py" <<'PUENTE_PY_FIN'
 ${PUENTE_PY}PUENTE_PY_FIN
 
 cat > "$DIR/.env" <<'ENV_FIN'
-APP_URL=${proto}://${host}
+APP_URL=${appUrl}
 BRIDGE_TOKEN=${token}
 ENV_FIN
 chmod 600 "$DIR/.env"

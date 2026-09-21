@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import sharp from "sharp";
-import { supabaseServer } from "@/lib/supabase-server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 const MAX_BYTES_ENTRADA = 25 * 1024 * 1024;
 const MAX_BYTES_SALIDA = 400 * 1024;
@@ -30,9 +30,8 @@ async function procesarImagen(buffer: Buffer): Promise<Buffer> {
 }
 
 export async function POST(req: NextRequest) {
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   const form = await req.formData();
   const archivo = form.get("archivo");

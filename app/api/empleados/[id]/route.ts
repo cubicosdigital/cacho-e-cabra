@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
+import { EMPLEADO_COLUMNAS } from "@/lib/empleados";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -11,7 +12,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!yo || yo.rol !== "admin" || !yo.activo) return NextResponse.json({ error: "Solo admin puede editar empleados" }, { status: 403 });
 
   const body = await req.json();
-  const { data, error } = await db.from("empleados").update(body).eq("id", id).select().single();
+  const { data, error } = await db.from("empleados").update(body).eq("id", id).select(EMPLEADO_COLUMNAS).single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 403 });
   return NextResponse.json(data);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
+import { EMPLEADO_COLUMNAS } from "@/lib/empleados";
 
 export async function GET() {
   const db = await supabaseServer();
@@ -8,7 +9,7 @@ export async function GET() {
 
   const { data, error } = await db
     .from("empleados")
-    .select("*, usuarios_admin(email, nombre)")
+    .select(`${EMPLEADO_COLUMNAS}, usuarios_admin(email, nombre)`)
     .order("departamento", { ascending: true })
     .order("nombre", { ascending: true });
 
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
   if (!yo || yo.rol !== "admin" || !yo.activo) return NextResponse.json({ error: "Solo admin puede crear empleados" }, { status: 403 });
 
   const body = await req.json();
-  const { data, error } = await db.from("empleados").insert(body).select().single();
+  const { data, error } = await db.from("empleados").insert(body).select(EMPLEADO_COLUMNAS).single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 403 });
   return NextResponse.json(data);

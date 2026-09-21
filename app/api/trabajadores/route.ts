@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
+import { getSupabase } from "@/lib/supabase";
 import { contratoCompleto, type EstadoTrabajador, type Ficha } from "@/lib/fichas";
 
 interface Invitacion { id: string; telefono: string | null; expira_en: string; usada_en: string | null; created_at: string }
 
 export async function GET() {
-  const { db, error } = await requireAdmin();
+  const { error } = await requireAdmin();
   if (error) return error;
+  const db = getSupabase();
 
   const { data, error: err } = await db
     .from("empleados")

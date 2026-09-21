@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
+import { EMPLEADO_COLUMNAS } from "@/lib/empleados";
 
 export async function GET() {
   const db = await supabaseServer();
@@ -9,7 +10,7 @@ export async function GET() {
   const { data: usuarioAdmin } = await db.from("usuarios_admin").select("id").eq("email", user.email!).maybeSingle();
   if (!usuarioAdmin) return NextResponse.json({ empleado: null, turnos: [] });
 
-  const { data: empleado } = await db.from("empleados").select("*").eq("usuario_admin_id", usuarioAdmin.id).maybeSingle();
+  const { data: empleado } = await db.from("empleados").select(EMPLEADO_COLUMNAS).eq("usuario_admin_id", usuarioAdmin.id).maybeSingle();
   if (!empleado) return NextResponse.json({ empleado: null, turnos: [] });
 
   const { data: turnos, error } = await db
