@@ -115,3 +115,24 @@ body {
   100% { transform: scale(1.25); }
 }
 .banner-ken-burns { animation: ken-burns 25s ease-in-out infinite alternate; }
+
+/* Sin flechas nativas en inputs numéricos */
+@layer base {
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 1;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+  }
+}

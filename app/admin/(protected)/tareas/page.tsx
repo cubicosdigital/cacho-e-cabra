@@ -4,7 +4,7 @@ import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, ROJO, VERDE, FONT
 
 type Estado = "pendiente" | "en_progreso" | "completada" | "bloqueada";
 type Prioridad = "baja" | "media" | "alta" | "urgente";
-type Rol = "admin" | "mesero" | "cocina" | "barra" | "caja";
+import { ROL_LABEL, TODOS_LOS_ROLES, type Rol } from "../../../../lib/roles";
 
 interface Tarea {
   id: string; titulo: string; descripcion: string; asignado_a: string | null; rol_destino: Rol | null;
@@ -20,7 +20,7 @@ const ESTADOS: { value: Estado; label: string; color: string }[] = [
   { value: "bloqueada", label: "Bloqueada", color: ROJO },
 ];
 const PRIORIDADES: Prioridad[] = ["baja", "media", "alta", "urgente"];
-const ROLES: Rol[] = ["admin", "mesero", "cocina", "barra", "caja"];
+const ROLES: Rol[] = TODOS_LOS_ROLES;
 
 export default function TareasPage() {
   const [tareas, setTareas] = useState<Tarea[]>([]);
@@ -106,7 +106,7 @@ export default function TareasPage() {
                       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 4 }}>
                         <span style={{ fontWeight: 700, fontSize: 19 }}>{t.titulo}</span>
                         <span style={{ fontSize: 16, color: TEXT3, background: SURF2, borderRadius: 6, padding: "2px 8px" }}>{t.prioridad}</span>
-                        {t.rol_destino && <span style={{ fontSize: 16, color: TEXT3, background: SURF2, borderRadius: 6, padding: "2px 8px" }}>rol: {t.rol_destino}</span>}
+                        {t.rol_destino && <span style={{ fontSize: 16, color: TEXT3, background: SURF2, borderRadius: 6, padding: "2px 8px" }}>rol: {ROL_LABEL[t.rol_destino] ?? t.rol_destino}</span>}
                         {t.empleados?.nombre && <span style={{ fontSize: 16, color: TEXT3, background: SURF2, borderRadius: 6, padding: "2px 8px" }}>{t.empleados.nombre}</span>}
                         {vencida && <span style={{ fontSize: 16, color: "#fca5a5", background: "#2a1212", borderRadius: 6, padding: "2px 8px" }}>vencida</span>}
                       </div>
@@ -143,7 +143,7 @@ export default function TareasPage() {
                 </select>
                 <select value={nueva.rol_destino} onChange={e => setNueva(n => ({ ...n, rol_destino: e.target.value, asignado_a: e.target.value ? "" : n.asignado_a }))} style={inp}>
                   <option value="">…o asignar a todo un rol</option>
-                  {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                  {ROLES.map(r => <option key={r} value={r}>{ROL_LABEL[r]}</option>)}
                 </select>
                 <select value={nueva.prioridad} onChange={e => setNueva(n => ({ ...n, prioridad: e.target.value as Prioridad }))} style={inp}>
                   {PRIORIDADES.map(p => <option key={p} value={p}>{p}</option>)}

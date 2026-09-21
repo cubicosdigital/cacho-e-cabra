@@ -16,14 +16,12 @@ interface Turno {
   id: string; empleado_id: string; dia_semana: string;
   hora_entrada: string | null; hora_salida: string | null; horas: number; nota: string | null;
 }
-interface Cuenta { id: string; email: string; nombre: string; rol: string }
 
 type DiaDraft = { entrada: string; salida: string; horas: string; nota: string };
 
 export default function TurnosPage() {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [turnos, setTurnos] = useState<Turno[]>([]);
-  const [cuentas, setCuentas] = useState<Cuenta[]>([]);
   const [loading, setLoading] = useState(true);
   const [abierto, setAbierto] = useState<string | null>(null);
   const [draft, setDraft] = useState<Record<string, DiaDraft>>({});
@@ -31,12 +29,9 @@ export default function TurnosPage() {
   const [nuevo, setNuevo] = useState({ nombre: "", departamento: "cocina", tipo_contrato: "full_time" });
 
   async function cargar() {
-    const [eRes, tRes, cRes] = await Promise.all([
-      fetch("/api/empleados"), fetch("/api/turnos"), fetch("/api/usuarios-admin"),
-    ]);
+    const [eRes, tRes] = await Promise.all([fetch("/api/empleados"), fetch("/api/turnos")]);
     if (eRes.ok) setEmpleados(await eRes.json());
     if (tRes.ok) setTurnos(await tRes.json());
-    if (cRes.ok) setCuentas(await cRes.json());
     setLoading(false);
   }
 
@@ -73,14 +68,6 @@ export default function TurnosPage() {
     });
     setGuardando(false);
     if (res.ok) { await cargar(); setAbierto(null); }
-  }
-
-  async function vincularCuenta(empId: string, usuarioAdminId: string) {
-    await fetch(`/api/empleados/${empId}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ usuario_admin_id: usuarioAdminId || null }),
-    });
-    await cargar();
   }
 
   async function crearEmpleado() {
@@ -120,13 +107,8 @@ export default function TurnosPage() {
                           <div style={{ fontWeight: 700, fontSize: 19 }}>{emp.nombre}</div>
                           <div style={{ fontSize: 16, color: TEXT3 }}>
                             {emp.tipo_contrato === "part_time" ? "Part time" : "Full time"} · {total}h/semana
-                            {emp.usuarios_admin && <> · vinculado a {emp.usuarios_admin.email}</>}
                           </div>
                         </div>
-                        <select value={emp.usuario_admin_id ?? ""} onChange={e => vincularCuenta(emp.id, e.target.value)} style={inp}>
-                          <option value="">Sin cuenta vinculada</option>
-                          {cuentas.map(c => <option key={c.id} value={c.id}>{c.nombre} ({c.rol})</option>)}
-                        </select>
                         <button onClick={() => abrir(emp)} style={{ background: open ? AMR : SURF2, color: open ? "#1a1200" : TEXT2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 16px", fontSize: 17, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
                           {open ? "Cerrar" : "Ver semana"}
                         </button>
