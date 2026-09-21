@@ -33,7 +33,7 @@ export default function Header() {
   // Cierra el menú mobile al cambiar de página.
   useEffect(() => { setMenuOpen(false); }, [pathname]);
 
-  if (pathname.startsWith("/admin") || pathname.startsWith("/carta")) return null;
+  if (pathname.startsWith("/admin") || pathname.startsWith("/carta") || pathname.startsWith("/registro")) return null;
 
   // En el home el header flota sobre la foto del hero (sin ocupar espacio en el
   // documento), así la imagen llega de verdad hasta arriba, sin franja de fondo.
