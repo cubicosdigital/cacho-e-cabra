@@ -14,7 +14,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   const { data: existente } = await getSupabase().from("usuarios_admin").select("id").eq("email", correo).maybeSingle();
   if (existente) return NextResponse.json({ error: "Ese correo ya está registrado en el sistema." }, { status: 409 });
 
-  const { error } = await supabaseAnonSinSesion().auth.signInWithOtp({ email: correo, options: { shouldCreateUser: true } });
+  // La cuenta se crea aquí, en el servidor. Así Supabase puede tener el registro abierto DESACTIVADO
+  // y ningún desconocido logra crearse una cuenta por su cuenta.
+  const { error: errCrear } = await getSupabase().auth.admin.createUser({ email: correo, email_confirm: true });
+  if (errCrear && !/already|registered|exists/i.test(errCrear.message)) {
+    return NextResponse.json({ error: "No se pudo preparar tu cuenta. Inténtalo de nuevo." }, { status: 500 });
+  }
+
+  const { error } = await supabaseAnonSinSesion().auth.signInWithOtp({ email: correo, options: { shouldCreateUser: false } });
   if (error) return NextResponse.json({ error: "No se pudo enviar el código. Espera un minuto e inténtalo de nuevo." }, { status: 429 });
 
   return NextResponse.json({ ok: true });
