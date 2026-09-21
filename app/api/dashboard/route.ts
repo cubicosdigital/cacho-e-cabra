@@ -4,6 +4,7 @@ import { getSupabase } from "@/lib/supabase";
 import { HORA_ENTRADA_ESPERADA, TOLERANCIA_MIN, minutos, resumirDias, type Marca } from "@/lib/asistencia";
 import { contratoCompleto, type Ficha } from "@/lib/fichas";
 import { LATIDO_VIGENCIA_S } from "@/lib/terminal";
+import { MINUTOS_ALERTA, detalles } from "@/lib/pos";
 
 const TZ = "America/Santiago";
 const DIAS_HISTORIAL = 180;
@@ -175,6 +176,19 @@ export async function GET() {
     const porConfirmar = eventosPub.reduce((s, e) => s + e.porConfirmar, 0);
     if (porConfirmar > 0) avisos.push({ nivel: "info", texto: `${porConfirmar} inscripción${porConfirmar > 1 ? "es" : ""} a eventos por confirmar`, href: "/admin/invitados" });
     if (nNotifs > 0) avisos.push({ nivel: "info", texto: `${nNotifs} notificación${nNotifs > 1 ? "es" : ""} sin leer`, href: "/admin/notificaciones" });
+
+    // POS: cuentas que llevan mucho rato abiertas sin pagarse completas, o que se cerraron con deuda.
+    // (Si las tablas del POS aún no existen, el dashboard sigue funcionando sin este aviso.)
+    try {
+      const hace30 = new Date(ahora.getTime() - 30 * 86400_000).toISOString();
+      const { data: cts } = await db.from("cuentas").select("*").in("estado", ["abierta", "con_deuda"]).gte("abierta_at", hace30);
+      const det = await detalles(db, cts ?? []);
+      const atrasadas = det.filter(c => c.estado === "abierta" && c.saldo > 0 && c.minutos >= MINUTOS_ALERTA);
+      const conDeuda = det.filter(c => c.estado === "con_deuda" && c.saldo > 0);
+      const plata = (n: number) => `$${n.toLocaleString("es-CL")}`;
+      if (conDeuda.length) avisos.push({ nivel: "rojo", texto: `${conDeuda.length} cuenta${conDeuda.length > 1 ? "s" : ""} cerrada${conDeuda.length > 1 ? "s" : ""} con deuda: faltan ${plata(conDeuda.reduce((s, c) => s + c.saldo, 0))} por cobrar`, href: "/admin/pos" });
+      if (atrasadas.length) avisos.push({ nivel: "ambar", texto: `${atrasadas.length} cuenta${atrasadas.length > 1 ? "s" : ""} abierta${atrasadas.length > 1 ? "s" : ""} hace más de ${Math.round(MINUTOS_ALERTA / 60 * 10) / 10} h sin pagarse completa${atrasadas.length > 1 ? "s" : ""} (${atrasadas.map(c => `mesa ${c.mesa}`).join(", ")})`, href: "/admin/pos" });
+    } catch { /* tablas del POS pendientes de crear */ }
 
     return NextResponse.json({
       ahora: ahora.toISOString(), hoy, hora: hora(ahora).slice(0, 5),

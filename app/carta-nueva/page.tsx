@@ -1,5 +1,6 @@
 "use client";
 
+import { TextoRico } from "../../lib/texto-rico";
 import { useState, useEffect } from "react";
 
 type Categoria = "cafeteria" | "brunch" | "comida" | "tragos" | "postres";
@@ -324,7 +325,7 @@ export default function CartaNuevaPage() {
                   lineHeight: 1.5,
                   margin: 0,
                 }}>
-                  {p.descripcion}
+                  <TextoRico texto={p.descripcion} />
                 </p>
 
                 {hoveredId === p.id && (

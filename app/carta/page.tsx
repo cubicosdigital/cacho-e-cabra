@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { resolverImagen } from "../../lib/imagenes";
+import { TextoRico, sinFormato } from "../../lib/texto-rico";
 
 // ─── tipos ─────────────────────────────────────────────────────────
 type Categoria = "todo" | "chef" | "cafeteria" | "brunch" | "comida" | "tragos" | "postres";
@@ -193,7 +194,7 @@ export default function CartaPage() {
   // Con texto en el buscador, se busca en TODA la carta (no solo en la pestaña activa).
   const filtered = q === ""
     ? porCategoria
-    : productos.filter(p => p.nombre.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q));
+    : productos.filter(p => p.nombre.toLowerCase().includes(q) || sinFormato(p.descripcion).toLowerCase().includes(q));
 
   // Agrupa productos consecutivos de la misma subcategoría (ya vienen ordenados así desde la BD).
   // Grupos con más de 3 productos llevan un banner con foto arriba.
@@ -649,11 +650,11 @@ function ProductoRow({ p, enCart, tema: T, fs, onAdd, onRemove }: {
       </div>
 
       {/* Detalle — descripción y botón, solo si está expandido */}
-      <div style={{ maxHeight: abierto ? 200 : 0, overflow: "hidden", transition: "max-height 0.25s ease" }}>
+      <div style={{ maxHeight: abierto ? 700 : 0, overflow: "hidden", transition: "max-height 0.25s ease" }}>
         <div style={{ padding: "0 18px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
           {p.descripcion && (
-            <div style={{ fontSize: `${14 * fs}px`, color: T.text3, lineHeight: 1.5 }}>
-              {p.descripcion}
+            <div style={{ fontSize: `${14 * fs}px`, color: T.text3, lineHeight: 1.5, whiteSpace: "pre-line" }}>
+              <TextoRico texto={p.descripcion} />
             </div>
           )}
 
@@ -739,8 +740,8 @@ function ProductoCard({ p, enCart, tema: T, fs, onAdd, onRemove }: {
           </div>
         </div>
 
-        <p style={{ fontSize: `${13 * fs}px`, color: T.text3, lineHeight: 1.65, margin: "0 0 16px", minHeight: `${13 * fs * 1.65 * 2}px` }}>
-          {p.descripcion}
+        <p style={{ fontSize: `${13 * fs}px`, color: T.text3, lineHeight: 1.65, margin: "0 0 16px", whiteSpace: "pre-line", minHeight: `${13 * fs * 1.65 * 2}px` }}>
+          <TextoRico texto={p.descripcion} />
         </p>
 
         {/* Botones */}

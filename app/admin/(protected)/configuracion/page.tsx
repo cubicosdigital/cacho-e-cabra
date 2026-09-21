@@ -207,10 +207,6 @@ function Usuarios({ yoId }: { yoId: string }) {
               <select value={c.rol} disabled={soyYo} onChange={e => cambiar(c.id, { rol: e.target.value })} style={{ ...inp, width: 170 }}>
                 {[...new Set<Rol>([...ROLES_CREABLES, c.rol])].map(r => <option key={r} value={r}>{ROL_LABEL[r]}</option>)}
               </select>
-              <label title="Próximamente: elegir quién ve el POS en caja" style={{ display: "flex", alignItems: "center", gap: 8, color: TEXT3, fontSize: 14, cursor: "not-allowed" }}>
-                <input type="checkbox" disabled checked={!!c.permisos?.pos} style={{ width: 18, height: 18 }} /> POS en caja
-                <span style={{ fontSize: 12, fontWeight: 700, background: SURF2, color: TEXT3, borderRadius: 999, padding: "2px 8px" }}>pronto</span>
-              </label>
               <button disabled={soyYo} onClick={() => cambiar(c.id, { activo: !c.activo })} style={{ ...boton(!soyYo, false), padding: "8px 16px", color: c.activo ? TEXT2 : VERDE }}>{c.activo ? "Desactivar" : "Activar"}</button>
             </div>
           );
@@ -249,9 +245,6 @@ function Usuarios({ yoId }: { yoId: string }) {
         )}
       </div>
 
-      <div style={{ ...tarjeta, borderStyle: "dashed", color: TEXT3, fontSize: 15 }}>
-        <strong style={{ color: TEXT2 }}>POS en caja — próximamente.</strong> Cuando esté listo el módulo de cobro, aquí podrás elegir qué usuarios ven el POS en caja (la casilla de cada usuario ya está reservada).
-      </div>
     </div>
   );
 }
@@ -354,10 +347,6 @@ function PermisosTab() {
               })}
             </div>
           ))}
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(200px, 1fr) 1fr", alignItems: "center", padding: "12px 22px", borderTop: `1px solid ${BORDER}`, color: TEXT3 }}>
-            <div style={{ fontSize: 16, fontWeight: 600 }}>POS en caja</div>
-            <div style={{ fontSize: 14 }}><span style={{ fontSize: 12, fontWeight: 700, background: SURF2, borderRadius: 999, padding: "2px 8px", marginRight: 8 }}>pronto</span>Se podrá asignar cuando esté listo el módulo de cobro.</div>
-          </div>
           <div style={{ padding: "12px 22px", fontSize: 14, color: TEXT3, borderTop: `1px solid ${BORDER}` }}>
             Al marcar Crear, Editar o Borrar se marca también Ver. Todo el mundo puede ver su propio horario y cambiar su contraseña.
           </div>

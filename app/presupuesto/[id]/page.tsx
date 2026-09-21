@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { getPresupuesto, fmtPeso } from "../../../lib/presupuestos";
+import { getPresupuesto, fmtPeso, totalPresupuesto } from "../../../lib/presupuestos";
 
 // Se edita desde el CMS, así que no se puede cachear.
 export const dynamic = "force-dynamic";
@@ -20,7 +20,10 @@ export default async function PresupuestoPage({ params }: { params: Promise<{ id
   const p = await getPresupuesto(id);
   if (!p) notFound();
 
-  const total = p.personas > 0 ? p.precioPorPersona * p.personas : 0;
+  const servicio = p.personas > 0 ? p.precioPorPersona * p.personas : 0;
+  const items = p.items ?? [];
+  const total = totalPresupuesto({ precioPorPersona: p.precioPorPersona, personas: p.personas, items });
+  const lineas = (servicio > 0 ? 1 : 0) + items.length;
 
   return (
     <div style={{ background: "#e8e6e2", minHeight: "100vh", padding: "32px 16px" }}>
@@ -58,12 +61,14 @@ export default async function PresupuestoPage({ params }: { params: Promise<{ id
           <h1 style={{ fontFamily: "var(--font-raleway), sans-serif", fontSize: 40, fontWeight: 900, color: VINO, margin: 0 }}>
             Presupuesto
           </h1>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontFamily: "var(--font-raleway), sans-serif", fontSize: 38, fontWeight: 900, color: VINO, lineHeight: 1 }}>
-              {fmtPeso(p.precioPorPersona)}
+          {(p.precioPorPersona > 0 || total > 0) && (
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontFamily: "var(--font-raleway), sans-serif", fontSize: 38, fontWeight: 900, color: VINO, lineHeight: 1 }}>
+                {fmtPeso(p.precioPorPersona > 0 ? p.precioPorPersona : total)}
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: VINO, letterSpacing: "0.02em" }}>{p.precioPorPersona > 0 ? "por persona" : "total"}</div>
             </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: VINO, letterSpacing: "0.02em" }}>por persona</div>
-          </div>
+          )}
         </div>
 
         <p style={{ fontSize: 16, lineHeight: 1.75, color: TINTA, marginBottom: 40, maxWidth: 640 }}>
@@ -88,12 +93,28 @@ export default async function PresupuestoPage({ params }: { params: Promise<{ id
           </section>
         ))}
 
-        {(p.personas > 0 || p.notas) && (
+        {(lineas > 0 || p.notas) && (
           <section style={{ borderTop: "1px solid #ddd", paddingTop: 24, marginBottom: 32 }}>
-            {p.personas > 0 && (
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 17, marginBottom: 8 }}>
-                <span style={{ color: TINTA }}>{p.personas} personas × {fmtPeso(p.precioPorPersona)}</span>
-                <strong style={{ color: VINO, fontSize: 20 }}>{fmtPeso(total)}</strong>
+            {lineas > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {servicio > 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 16, fontSize: 16 }}>
+                    <span style={{ color: TINTA }}>{p.personas} personas × {fmtPeso(p.precioPorPersona)}</span>
+                    <span style={{ color: TINTA, fontWeight: 700 }}>{fmtPeso(servicio)}</span>
+                  </div>
+                )}
+                {items.map((it, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 16, fontSize: 16 }}>
+                    <span style={{ color: TINTA }}>{it.descripcion}{it.cantidad !== 1 && <span style={{ color: TINTA2 }}> · {it.cantidad} × {fmtPeso(it.precio)}</span>}</span>
+                    <span style={{ color: TINTA, fontWeight: 700 }}>{fmtPeso(it.cantidad * it.precio)}</span>
+                  </div>
+                ))}
+                {lineas > 1 && (
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 17, borderTop: "1px solid #ddd", paddingTop: 10, marginTop: 4 }}>
+                    <span style={{ color: TINTA, fontWeight: 800 }}>Total</span>
+                    <strong style={{ color: VINO, fontSize: 22 }}>{fmtPeso(total)}</strong>
+                  </div>
+                )}
               </div>
             )}
             {p.notas && (

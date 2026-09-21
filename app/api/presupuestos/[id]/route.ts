@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPresupuestos, savePresupuestos } from "@/lib/presupuestos";
+import { getPresupuestos, savePresupuestos, limpiarItems } from "@/lib/presupuestos";
 import { requirePermiso } from "@/lib/admin-auth";
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -13,6 +13,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   if (idx === -1) return NextResponse.json({ error: "Presupuesto no encontrado" }, { status: 404 });
 
   const actualizado = { ...lista[idx], ...patch, id, creadoEn: lista[idx].creadoEn };
+  if ("items" in patch) actualizado.items = limpiarItems(patch.items);
   lista[idx] = actualizado;
   await savePresupuestos(lista);
   return NextResponse.json(actualizado);

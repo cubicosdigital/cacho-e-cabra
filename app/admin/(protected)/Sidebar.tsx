@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
   Receipt, Bike, TrendingUp, FileText, Table2, UtensilsCrossed, ChefHat,
   AlertTriangle, Inbox, MessageSquare, CalendarClock, CalendarDays, Users,
-  Image as ImageIcon, PartyPopper, ClipboardList, ListChecks, Megaphone, HandPlatter, Film, Fingerprint, Bell, Settings2, LayoutDashboard, SlidersHorizontal,
+  Image as ImageIcon, PartyPopper, ClipboardList, ListChecks, Megaphone, HandPlatter, Film, Fingerprint, Bell, Settings2, LayoutDashboard, SlidersHorizontal, CreditCard,
   type LucideIcon,
 } from "lucide-react";
 import { SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, FONT } from "../../../lib/tokens";
@@ -41,6 +41,7 @@ const GRUPOS: { titulo: string; items: Item[] }[] = [
     items: [
       { href: "/admin/pedidos", label: "Pedidos local", icon: Receipt, acceso: ["pedidos", "r"], badge: "pedidosNuevos" },
       { href: "/admin/delivery", label: "Pedidos delivery", icon: Bike, acceso: ["delivery", "r"], badge: "deliveryNuevos" },
+      { href: "/admin/pos", label: "POS (Caja)", icon: CreditCard, acceso: ["pos", "r"] },
       { href: "/admin/ventas", label: "Resumen de ventas", icon: TrendingUp, acceso: ["ventas", "r"] },
       { href: "/admin/presupuestos", label: "Presupuestos", icon: FileText, acceso: ["presupuestos", "r"] },
     ],

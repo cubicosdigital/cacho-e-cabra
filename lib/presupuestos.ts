@@ -8,6 +8,24 @@ export interface Bloque {
   grupos: { subtitulo: string; lineas: string[] }[];
 }
 
+/** Una línea de cobro adicional: descripción, cantidad y precio unitario. */
+export interface ItemPresupuesto {
+  descripcion: string;
+  cantidad: number;
+  precio: number;
+}
+
+/** Punto de partida guardado en la base de datos para crear presupuestos. */
+export interface Plantilla {
+  id: string;
+  nombre: string;
+  intro: string;
+  bloques: Bloque[];
+  items: ItemPresupuesto[];
+  notas: string;
+  precioPorPersona: number;
+}
+
 export interface Presupuesto {
   id: string;
   /** Nombre interno para encontrarlo en el listado. */
@@ -19,6 +37,7 @@ export interface Presupuesto {
   personas: number;
   intro: string;
   bloques: Bloque[];
+  items: ItemPresupuesto[];
   notas: string;
   estado: EstadoPresupuesto;
   creadoEn: string;
@@ -33,46 +52,39 @@ export const ESTADO_META: Record<EstadoPresupuesto, { label: string; color: stri
   rechazado: { label: "Rechazado", color: "#fca5a5", bg: "#2a1212" },
 };
 
-export const INTRO_POR_DEFECTO =
-  "Estimado cliente, gracias por su interés en nuestros servicios, adjuntamos el presupuesto correspondiente a su solicitud. Si tiene alguna pregunta o necesita más información, no dude en ponerse en contacto con nosotros.";
+/** Total: servicio por persona + todas las líneas adicionales. */
+export function totalPresupuesto(p: Pick<Presupuesto, "precioPorPersona" | "personas" | "items">) {
+  return p.precioPorPersona * p.personas + subtotalItems(p.items);
+}
 
-/** Plantilla del Buffet de Asado Premium, que es el presupuesto base de la casa. */
-export const PLANTILLA_ASADO: Bloque[] = [
-  {
-    titulo: "Buffet de Asado Premium",
-    grupos: [
-      { subtitulo: "4 cortes de carne:", lineas: ["Vacuno, Malaya, Costillar, Pollo."] },
-      {
-        subtitulo: "Buffet de ensaladas",
-        lineas: [
-          "Ensalada chilena, Lechuga surtida, Ensalada de papas con mayonesa.",
-          "Coleslaw, Arroz primavera.",
-        ],
-      },
-      {
-        subtitulo: "Pan, Salsas y acompañamientos:",
-        lineas: ["Pebre, chimichurri, salsa criolla y mayonesa casera."],
-      },
-    ],
-  },
-  {
-    titulo: "El servicio incluye",
-    grupos: [
-      {
-        subtitulo: "",
-        lineas: [
-          "- Parrillero Profesional",
-          "- Montaje del buffet",
-          "- Mantención y reposición de ensaladas durante el servicio",
-        ],
-      },
-      {
-        subtitulo: "Considerar 2 tragos de la carta a elección:",
-        lineas: ["- Shop de cerveza", "- Coctelería", "- Destilado"],
-      },
-    ],
-  },
-];
+export function subtotalItems(items: ItemPresupuesto[]) {
+  return items.reduce((s, i) => s + i.cantidad * i.precio, 0);
+}
+
+/** Deja solo líneas válidas, con números enteros y texto recortado. */
+export function limpiarItems(entrada: unknown): ItemPresupuesto[] {
+  if (!Array.isArray(entrada)) return [];
+  return entrada
+    .map((i: Record<string, unknown>) => ({
+      descripcion: String(i?.descripcion ?? "").trim().slice(0, 200),
+      cantidad: Math.max(0, Math.round(Number(i?.cantidad) || 0)),
+      precio: Math.max(0, Math.round(Number(i?.precio) || 0)),
+    }))
+    .filter(i => i.descripcion)
+    .slice(0, 50);
+}
+
+/** Fila de la tabla plantillas_presupuesto a partir de lo que llega del formulario. */
+export function aFilaPlantilla(b: Record<string, unknown>) {
+  return {
+    nombre: String(b.nombre ?? "").trim().slice(0, 120),
+    intro: String(b.intro ?? ""),
+    bloques: Array.isArray(b.bloques) ? b.bloques : [],
+    items: limpiarItems(b.items),
+    notas: String(b.notas ?? ""),
+    precio_por_persona: Math.max(0, Math.round(Number(b.precioPorPersona ?? b.precio_por_persona) || 0)),
+  };
+}
 
 export function fmtPeso(n: number) {
   return `$${n.toLocaleString("es-CL")}`;
@@ -95,6 +107,7 @@ function aDominio(f: Record<string, unknown>): Presupuesto {
     personas: num(f.personas),
     intro: txt(f.intro),
     bloques: Array.isArray(f.bloques) ? (f.bloques as Bloque[]) : [],
+    items: Array.isArray(f.items) ? (f.items as ItemPresupuesto[]) : [],
     notas: txt(f.notas),
     estado: txt(f.estado, "borrador") as EstadoPresupuesto,
     creadoEn: txt(f.creado_en),
@@ -112,6 +125,7 @@ function aFila(p: Presupuesto): Record<string, unknown> {
     personas: p.personas,
     intro: p.intro,
     bloques: p.bloques,
+    items: p.items,
     notas: p.notas,
     estado: p.estado,
     creado_en: p.creadoEn,
