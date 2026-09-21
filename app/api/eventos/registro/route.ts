@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase-server";
+import { requirePermiso } from "@/lib/admin-auth";
 import { getRegistros, crearRegistro } from "@/lib/registros";
 
 /** Público: cualquiera puede inscribirse a un evento desde la web. */
@@ -29,9 +29,8 @@ export async function POST(request: NextRequest) {
 
 /** Privado: la lista trae datos de contacto de los inscritos. */
 export async function GET() {
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const g = await requirePermiso("invitados", "r");
+  if (g.error) return g.error;
 
   return NextResponse.json({ registros: await getRegistros() });
 }

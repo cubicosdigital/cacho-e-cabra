@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase-server";
+import { requirePermiso } from "@/lib/admin-auth";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const g = await requirePermiso("pedidos", "u");
+  if (g.error) return g.error;
+  const db = g.db;
 
   const { estado } = await req.json();
   const { data, error } = await db.from("pedidos").update({ estado }).eq("id", id).select().single();

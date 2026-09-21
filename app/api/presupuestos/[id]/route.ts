@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase-server";
 import { getPresupuestos, savePresupuestos } from "@/lib/presupuestos";
-
-async function requireAdmin() {
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-  return user;
-}
+import { requirePermiso } from "@/lib/admin-auth";
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const user = await requireAdmin();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const g = await requirePermiso("presupuestos", "u");
+  if (g.error) return g.error;
 
   const { id } = await ctx.params;
   const patch = await req.json();
@@ -25,8 +19,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 }
 
 export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const user = await requireAdmin();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const g = await requirePermiso("presupuestos", "d");
+  if (g.error) return g.error;
 
   const { id } = await ctx.params;
   const lista = await getPresupuestos();

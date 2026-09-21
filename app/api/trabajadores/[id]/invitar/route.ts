@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requirePermiso } from "@/lib/admin-auth";
+import { getSupabase } from "@/lib/supabase";
 import { normalizarTelefono } from "@/lib/fichas";
 
 const DIAS_VIGENCIA = 7;
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { db, error } = await requireAdmin();
-  if (error) return error;
+  const g = await requirePermiso("trabajadores", "c");
+  if (g.error) return g.error;
+  const db = getSupabase();
 
   const body = await req.json().catch(() => ({}));
   const telefono = normalizarTelefono(String(body.telefono ?? ""));

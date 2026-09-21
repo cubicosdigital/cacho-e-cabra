@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase-server";
 import { getSlides, saveSlides, type SlideBanner } from "@/lib/banner";
-
-async function requireAdmin() {
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-  return user;
-}
+import { requirePermiso } from "@/lib/admin-auth";
 
 export async function GET() {
   return NextResponse.json(await getSlides());
 }
 
 export async function POST(req: NextRequest) {
-  const user = await requireAdmin();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const g = await requirePermiso("banner", "c");
+  if (g.error) return g.error;
 
   const body = await req.json();
   if (!body.titulo?.trim()) {

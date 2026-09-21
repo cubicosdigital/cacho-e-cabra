@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { getSupabase } from "@/lib/supabase";
 import { supabaseServer } from "@/lib/supabase-server";
 import { TODOS_LOS_ROLES, type Rol } from "@/lib/roles";
+import { PERMISOS_POR_ROL, sanearPermisos } from "@/lib/permisos";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,7 +24,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     cambios.rol = b.rol;
   }
   if ("activo" in b) cambios.activo = b.activo === true;
-  if ("pos" in b) cambios.permisos = { ...(objetivo.permisos ?? {}), pos: b.pos === true };
+  // Cambiar el rol reinicia sus permisos a lo habitual de ese rol; "modulos" los fija a mano (pantalla Permisos).
+  let permisos: Record<string, unknown> = { ...(objetivo.permisos ?? {}) };
+  if (cambios.rol && cambios.rol !== objetivo.rol) permisos = { ...permisos, modulos: PERMISOS_POR_ROL[cambios.rol as Rol] };
+  if ("modulos" in b) permisos = { ...permisos, modulos: sanearPermisos(b.modulos) };
+  if ("restablecer" in b) permisos = { ...permisos, modulos: PERMISOS_POR_ROL[(cambios.rol ?? objetivo.rol) as Rol] };
+  if ("pos" in b) permisos = { ...permisos, pos: b.pos === true };
+  if (JSON.stringify(permisos) !== JSON.stringify(objetivo.permisos ?? {})) cambios.permisos = permisos;
 
   // Nadie puede quitarse a sí mismo el acceso de administrador, y siempre debe quedar al menos uno activo.
   const pierdeAdmin = objetivo.rol === "admin" && objetivo.activo && (cambios.rol && cambios.rol !== "admin" || cambios.activo === false);

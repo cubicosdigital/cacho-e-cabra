@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getSupabase } from "@/lib/supabase";
 import { ROLES_CREABLES, type Rol } from "@/lib/roles";
+import { PERMISOS_POR_ROL } from "@/lib/permisos";
 import { EMAIL_RE } from "@/lib/registro";
 
 // Lista completa de cuentas: solo admin. RLS de usuarios_admin solo deja leer el propio registro,
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
   const { error: errAuth } = await db.auth.admin.createUser({ email, email_confirm: true });
   if (errAuth && !/already|registered|exists/i.test(errAuth.message)) return NextResponse.json({ error: errAuth.message }, { status: 500 });
 
-  const { data, error: err } = await db.from("usuarios_admin").insert({ nombre, email, rol, telefono, permisos: {} }).select("id, email, nombre, rol, activo, permisos, telefono, created_at").single();
+  const { data, error: err } = await db.from("usuarios_admin").insert({ nombre, email, rol, telefono, permisos: { modulos: PERMISOS_POR_ROL[rol] } }).select("id, email, nombre, rol, activo, permisos, telefono, created_at").single();
   if (err) return NextResponse.json({ error: err.message }, { status: 500 });
 
   if (b.empleado_id) await db.from("empleados").update({ usuario_admin_id: data.id }).eq("id", b.empleado_id);

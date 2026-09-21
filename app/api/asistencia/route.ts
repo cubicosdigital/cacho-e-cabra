@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase-server";
+import { requirePermiso } from "@/lib/admin-auth";
 
 const PAGINA = 1000;
 
 export async function GET(req: Request) {
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const g = await requirePermiso();
+  if (g.error) return g.error;
+  const db = g.db;
 
   const { searchParams } = new URL(req.url);
   const desde = searchParams.get("desde");

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
-import { supabaseServer } from "@/lib/supabase-server";
+import { requirePermiso } from "@/lib/admin-auth";
 
 /** Borra el archivo subido en /uploads si el ítem era una foto propia (no un ID de Unsplash). */
 async function borrarArchivoSubido(url: string | undefined) {
@@ -16,9 +16,9 @@ async function borrarArchivoSubido(url: string | undefined) {
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const g = await requirePermiso("galeria", "u");
+  if (g.error) return g.error;
+  const db = g.db;
 
   const body = await req.json();
   const { data, error } = await db.from("galeria_items").update(body).eq("id", id).select().single();
@@ -29,9 +29,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const g = await requirePermiso("galeria", "d");
+  if (g.error) return g.error;
+  const db = g.db;
 
   const { data: item } = await db.from("galeria_items").select("url").eq("id", id).maybeSingle();
 

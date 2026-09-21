@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 import { ROL_POR_DEPARTAMENTO } from "@/lib/fichas";
+import { PERMISOS_POR_ROL } from "@/lib/permisos";
 import { EMAIL_RE, OBLIGATORIOS, cargarInvitacion, sanearFicha, supabaseAnonSinSesion } from "@/lib/registro";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
@@ -27,9 +28,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   const db = getSupabase();
   const ahora = new Date().toISOString();
 
+  const rolNuevo = ROL_POR_DEPARTAMENTO[empleado.departamento] ?? "mesero";
   const { data: cuenta, error: errCuenta } = await db
     .from("usuarios_admin")
-    .insert({ email: correo, nombre: empleado.nombre, rol: ROL_POR_DEPARTAMENTO[empleado.departamento] ?? "mesero" })
+    .insert({ email: correo, nombre: empleado.nombre, rol: rolNuevo, permisos: { modulos: PERMISOS_POR_ROL[rolNuevo] } })
     .select("id")
     .single();
   if (errCuenta) return NextResponse.json({ error: "Ese correo ya está registrado en el sistema." }, { status: 409 });

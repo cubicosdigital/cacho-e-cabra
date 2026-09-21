@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import sharp from "sharp";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requirePermiso } from "@/lib/admin-auth";
+import { puede } from "@/lib/permisos";
 
 const MAX_BYTES_ENTRADA = 25 * 1024 * 1024;
 const MAX_BYTES_SALIDA = 400 * 1024;
@@ -30,8 +31,11 @@ async function procesarImagen(buffer: Buffer): Promise<Buffer> {
 }
 
 export async function POST(req: NextRequest) {
-  const { error } = await requireAdmin();
-  if (error) return error;
+  const g = await requirePermiso();
+  if (g.error) return g.error;
+  const { rol, permisos } = g.usuario;
+  const puedeSubir = (["banner", "galeria", "menu", "eventos"] as const).some(m => puede(rol, permisos, m, "c") || puede(rol, permisos, m, "u"));
+  if (!puedeSubir) return NextResponse.json({ error: "No tienes permiso para subir imágenes" }, { status: 403 });
 
   const form = await req.formData();
   const archivo = form.get("archivo");

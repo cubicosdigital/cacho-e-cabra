@@ -4,13 +4,14 @@ import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, ROJO, FONT, TITLE } from "../../../../lib/tokens";
 import { ROL_LABEL, ROLES_CREABLES, type Rol } from "../../../../lib/roles";
+import { ACCIONES, MODULOS, PERMISOS_POR_ROL, accionesDe, permisosEfectivos, type Accion, type Permisos, type PermisosGuardados } from "../../../../lib/permisos";
 
 interface Perfil {
   id: string; email: string; nombre: string; rol: Rol; permisos: { pos?: boolean };
   telefono: string | null; rut: string | null; direccion: string | null; comuna: string | null; fecha_nacimiento: string | null;
   contacto_emergencia_nombre: string | null; contacto_emergencia_telefono: string | null;
 }
-interface Cuenta { id: string; email: string; nombre: string; rol: Rol; activo: boolean; permisos: { pos?: boolean }; telefono: string | null; empleado: string | null }
+interface Cuenta { id: string; email: string; nombre: string; rol: Rol; activo: boolean; permisos: PermisosGuardados; telefono: string | null; empleado: string | null }
 interface EmpleadoSimple { id: string; nombre: string; usuario_admin_id: string | null }
 
 const tarjeta: React.CSSProperties = { background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 22 };
@@ -255,11 +256,122 @@ function Usuarios({ yoId }: { yoId: string }) {
   );
 }
 
+
+/* ─────────── Permisos por módulo (solo administrador) ─────────── */
+function PermisosTab() {
+  const [cuentas, setCuentas] = useState<Cuenta[]>([]);
+  const [sel, setSel] = useState<string>("");
+  const [edit, setEdit] = useState<Permisos>({});
+  const [sucio, setSucio] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null);
+
+  const cargar = useCallback(async () => {
+    const res = await fetch("/api/usuarios-admin");
+    if (res.ok) setCuentas(await res.json());
+  }, []);
+  useEffect(() => { (async () => { await cargar(); })(); }, [cargar]);
+
+  const editables = cuentas.filter(c => c.rol !== "admin");
+  const cuenta = cuentas.find(c => c.id === sel);
+
+  function elegir(id: string) {
+    const c = cuentas.find(x => x.id === id);
+    setSel(id); setMsg(null); setSucio(false);
+    setEdit(c ? { ...permisosEfectivos(c.rol, c.permisos) } : {});
+  }
+
+  function alternar(modulo: (typeof MODULOS)[number]["k"], a: Accion) {
+    setSucio(true); setMsg(null);
+    setEdit(prev => {
+      const actual = new Set(prev[modulo] ?? []);
+      if (actual.has(a)) { actual.delete(a); if (a === "r") actual.clear(); }
+      else { actual.add(a); if (a !== "r" && accionesDe(modulo).includes("r")) actual.add("r"); }
+      return { ...prev, [modulo]: ACCIONES.map(x => x.k).filter(x => actual.has(x)) };
+    });
+  }
+
+  async function enviar(cuerpo: Record<string, unknown>, ok: string) {
+    if (!cuenta) return;
+    setGuardando(true); setMsg(null);
+    const res = await fetch(`/api/usuarios-admin/${cuenta.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo) });
+    const d = await res.json();
+    setGuardando(false);
+    if (!res.ok) { setMsg({ ok: false, texto: d.error }); return; }
+    await cargar();
+    setEdit({ ...permisosEfectivos(d.rol, d.permisos) }); setSucio(false); setMsg({ ok: true, texto: ok });
+  }
+
+  const grupos = [...new Set(MODULOS.map(m => m.grupo))];
+  const diferenteAlRol = cuenta ? JSON.stringify(permisosEfectivos(cuenta.rol, cuenta.permisos)) !== JSON.stringify(PERMISOS_POR_ROL[cuenta.rol]) : false;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ ...tarjeta, padding: 20 }}>
+        <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 4 }}>Permisos por usuario</div>
+        <div style={{ fontSize: 15, color: TEXT3, marginBottom: 14 }}>
+          Elige a una persona y marca qué puede hacer en cada módulo: <strong style={{ color: TEXT2 }}>Crear, Ver, Editar y Borrar</strong>. Los administradores siempre tienen acceso total. El dashboard, el terminal ZK, los usuarios y las notificaciones son solo de administradores.
+        </div>
+        <select value={sel} onChange={e => elegir(e.target.value)} style={{ ...inp, maxWidth: 420 }}>
+          <option value="">Selecciona un usuario…</option>
+          {editables.map(c => <option key={c.id} value={c.id}>{c.nombre} · {ROL_LABEL[c.rol]}{c.activo ? "" : " (inactivo)"}</option>)}
+        </select>
+        {editables.length === 0 && <div style={{ color: TEXT3, fontSize: 15, marginTop: 10 }}>Todavía no hay usuarios que no sean administradores. Créalos en la pestaña Usuarios o invítalos desde Trabajadores.</div>}
+      </div>
+
+      {cuenta && (
+        <div style={{ ...tarjeta, padding: 0, overflow: "hidden" }}>
+          <div style={{ padding: "16px 22px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 240 }}>
+              <div style={{ fontFamily: TITLE, fontSize: 19, fontWeight: 900 }}>{cuenta.nombre}</div>
+              <div style={{ fontSize: 14, color: TEXT3 }}>{cuenta.email} · rol {ROL_LABEL[cuenta.rol]}{diferenteAlRol && <span style={{ color: AMR }}> · permisos personalizados</span>}</div>
+            </div>
+            <button onClick={() => enviar({ restablecer: true }, `Permisos restablecidos a lo habitual de ${ROL_LABEL[cuenta.rol]}.`)} disabled={guardando || !diferenteAlRol} style={boton(!guardando && diferenteAlRol, false)}>Restablecer al rol</button>
+            <button onClick={() => enviar({ modulos: edit }, "Permisos guardados.")} disabled={guardando || !sucio} style={boton(!guardando && sucio)}>{guardando ? "Guardando…" : "Guardar permisos"}</button>
+          </div>
+          {msg && <div style={{ padding: "0 22px 12px" }}><Aviso {...msg} /></div>}
+
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(200px, 1fr) repeat(4, 76px)", alignItems: "center", padding: "8px 22px", borderTop: `1px solid ${BORDER}`, fontSize: 13, fontWeight: 800, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <div>Módulo</div>{ACCIONES.map(a => <div key={a.k} style={{ textAlign: "center" }}>{a.label}</div>)}
+          </div>
+          {grupos.map(g => (
+            <div key={g}>
+              <div style={{ padding: "8px 22px 4px", background: SURF2, fontSize: 13, fontWeight: 800, color: AMR, textTransform: "uppercase", letterSpacing: "0.06em" }}>{g}</div>
+              {MODULOS.filter(m => m.grupo === g).map(m => {
+                const validas = accionesDe(m.k);
+                return (
+                  <div key={m.k} style={{ display: "grid", gridTemplateColumns: "minmax(200px, 1fr) repeat(4, 76px)", alignItems: "center", padding: "10px 22px", borderTop: `1px solid ${BORDER}` }}>
+                    <div style={{ fontSize: 16, fontWeight: 600 }}>{m.label}</div>
+                    {ACCIONES.map(a => (
+                      <div key={a.k} style={{ textAlign: "center" }}>
+                        {validas.includes(a.k)
+                          ? <input type="checkbox" checked={edit[m.k]?.includes(a.k) ?? false} onChange={() => alternar(m.k, a.k)} aria-label={`${m.label}: ${a.label}`} style={{ width: 22, height: 22, accentColor: AMR, cursor: "pointer" }} />
+                          : <span style={{ color: BORDER }}>—</span>}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(200px, 1fr) 1fr", alignItems: "center", padding: "12px 22px", borderTop: `1px solid ${BORDER}`, color: TEXT3 }}>
+            <div style={{ fontSize: 16, fontWeight: 600 }}>POS en caja</div>
+            <div style={{ fontSize: 14 }}><span style={{ fontSize: 12, fontWeight: 700, background: SURF2, borderRadius: 999, padding: "2px 8px", marginRight: 8 }}>pronto</span>Se podrá asignar cuando esté listo el módulo de cobro.</div>
+          </div>
+          <div style={{ padding: "12px 22px", fontSize: 14, color: TEXT3, borderTop: `1px solid ${BORDER}` }}>
+            Al marcar Crear, Editar o Borrar se marca también Ver. Todo el mundo puede ver su propio horario y cambiar su contraseña.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─────────── Página ─────────── */
 export default function ConfiguracionPage() {
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"perfil" | "seguridad" | "usuarios">("perfil");
+  const [tab, setTab] = useState<"perfil" | "seguridad" | "usuarios" | "permisos">("perfil");
 
   useEffect(() => {
     (async () => {
@@ -271,7 +383,7 @@ export default function ConfiguracionPage() {
   if (error) return <div style={{ minHeight: "100vh", background: BG, color: ROJO, fontFamily: FONT, padding: 40 }}>{error}</div>;
   if (!perfil) return <div style={{ minHeight: "100vh", background: BG, color: TEXT3, fontFamily: FONT, padding: 40 }}>Cargando…</div>;
 
-  const tabs = [["perfil", "Mi perfil"], ["seguridad", "Seguridad"], ...(perfil.rol === "admin" ? [["usuarios", "Usuarios"]] : [])] as [typeof tab, string][];
+  const tabs = [["perfil", "Mi perfil"], ["seguridad", "Seguridad"], ...(perfil.rol === "admin" ? [["usuarios", "Usuarios"], ["permisos", "Permisos"]] : [])] as [typeof tab, string][];
 
   return (
     <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
@@ -289,6 +401,7 @@ export default function ConfiguracionPage() {
         {tab === "perfil" && <MiPerfil perfil={perfil} onGuardado={setPerfil} />}
         {tab === "seguridad" && <Seguridad correo={perfil.email} />}
         {tab === "usuarios" && perfil.rol === "admin" && <Usuarios yoId={perfil.id} />}
+        {tab === "permisos" && perfil.rol === "admin" && <PermisosTab />}
       </div>
     </div>
   );

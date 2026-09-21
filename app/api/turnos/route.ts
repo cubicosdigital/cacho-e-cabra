@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase-server";
+import { requirePermiso } from "@/lib/admin-auth";
 
 export async function GET() {
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const g = await requirePermiso();
+  if (g.error) return g.error;
+  const db = g.db;
 
   const { data, error } = await db
     .from("turnos")
@@ -17,9 +17,9 @@ export async function GET() {
 
 // Reemplaza la semana completa de un empleado para la temporada indicada.
 export async function PUT(req: NextRequest) {
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const g = await requirePermiso("turnos", "u");
+  if (g.error) return g.error;
+  const db = g.db;
 
   const { empleado_id, temporada, turnos } = await req.json();
   if (!empleado_id || !temporada || !Array.isArray(turnos)) {

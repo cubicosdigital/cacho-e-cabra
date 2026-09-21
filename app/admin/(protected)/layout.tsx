@@ -10,7 +10,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   const { data: adminUser } = await supabase
     .from("usuarios_admin")
-    .select("nombre, rol, activo")
+    .select("nombre, rol, activo, permisos")
     .eq("email", user.email!)
     .maybeSingle();
 
@@ -21,7 +21,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   return (
     <div style={{ minHeight: "100vh", background: BG, display: "flex" }}>
-      <Sidebar nombre={nombre} rol={rol} />
+      <Sidebar nombre={nombre} rol={rol} permisos={adminUser.permisos ?? {}} />
       <main style={{ flex: 1, minWidth: 0 }}>{children}</main>
     </div>
   );

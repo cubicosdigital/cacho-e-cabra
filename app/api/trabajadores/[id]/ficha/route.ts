@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requirePermiso } from "@/lib/admin-auth";
 import { getSupabase } from "@/lib/supabase";
 import { contratoCompleto, type Ficha } from "@/lib/fichas";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { error } = await requireAdmin();
-  if (error) return error;
+  const g = await requirePermiso("trabajadores", "r");
+  if (g.error) return g.error;
   const db = getSupabase();
 
   const { data: empleado } = await db.from("empleados").select("id, nombre, rut, cargo, departamento").eq("id", id).maybeSingle();
@@ -21,8 +21,9 @@ const CAMPOS_ADMIN = ["fecha_ingreso", "contrato_duracion", "fecha_termino", "jo
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { db, error } = await requireAdmin();
-  if (error) return error;
+  const g = await requirePermiso("trabajadores", "u");
+  if (g.error) return g.error;
+  const db = getSupabase();
 
   const body = await req.json();
   const cambios: Record<string, unknown> = { updated_at: new Date().toISOString() };

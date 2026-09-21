@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase-server";
 import { EMPLEADO_COLUMNAS } from "@/lib/empleados";
+import { requirePermiso } from "@/lib/admin-auth";
 
 export async function GET() {
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const g = await requirePermiso();
+  if (g.error) return g.error;
+  const db = g.db;
 
-  const { data: usuarioAdmin } = await db.from("usuarios_admin").select("id").eq("email", user.email!).maybeSingle();
-  if (!usuarioAdmin) return NextResponse.json({ empleado: null, turnos: [] });
+  const usuarioAdmin = { id: g.usuario.id };
 
   const { data: empleado } = await db.from("empleados").select(EMPLEADO_COLUMNAS).eq("usuario_admin_id", usuarioAdmin.id).maybeSingle();
   if (!empleado) return NextResponse.json({ empleado: null, turnos: [] });

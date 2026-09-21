@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
-import { supabaseServer } from "@/lib/supabase-server";
+import { requirePermiso } from "@/lib/admin-auth";
 
 export async function GET() {
   const { data, error } = await getSupabase().from("mesas").select("*").order("numero", { ascending: true });
@@ -10,9 +10,9 @@ export async function GET() {
 
 // Reemplaza el layout completo: borra todas las mesas y vuelve a insertar las recibidas.
 export async function PUT(req: NextRequest) {
-  const db = await supabaseServer();
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const g = await requirePermiso("mesas", "u");
+  if (g.error) return g.error;
+  const db = g.db;
 
   const { mesas } = await req.json();
 

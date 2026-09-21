@@ -12,16 +12,16 @@ import {
 } from "lucide-react";
 import { SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, FONT } from "../../../lib/tokens";
 
-import { ROL_LABEL, TODOS_LOS_ROLES, type Rol } from "../../../lib/roles";
+import { ROL_LABEL, type Rol } from "../../../lib/roles";
+import { puede, type Accion, type Modulo, type PermisosGuardados } from "../../../lib/permisos";
 export type { Rol };
-
-const TODOS: Rol[] = TODOS_LOS_ROLES;
 
 type Item = {
   href?: string;
   label: string;
   icon: LucideIcon;
-  roles: Rol[];
+  /** "admin": solo administrador · "todos": cualquier usuario · [módulo, acción]: según sus permisos. */
+  acceso: "admin" | "todos" | [Modulo, Accion];
   /** Módulo planificado, aún sin construir: se muestra apagado y sin link. */
   pronto?: boolean;
   /** Muestra un contador de pendientes junto al link. */
@@ -32,72 +32,79 @@ const GRUPOS: { titulo: string; items: Item[] }[] = [
   {
     titulo: "General",
     items: [
-      { href: "/admin", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"] },
-      { href: "/admin/notificaciones", label: "Notificaciones", icon: Bell, roles: ["admin"], badge: "notificaciones" },
+      { href: "/admin", label: "Dashboard", icon: LayoutDashboard, acceso: "admin" },
+      { href: "/admin/notificaciones", label: "Notificaciones", icon: Bell, acceso: "admin", badge: "notificaciones" },
     ],
   },
   {
     titulo: "Ventas",
     items: [
-      { href: "/admin/pedidos", label: "Pedidos local", icon: Receipt, roles: TODOS, badge: "pedidosNuevos" },
-      { href: "/admin/delivery", label: "Pedidos delivery", icon: Bike, roles: TODOS, badge: "deliveryNuevos" },
-      { href: "/admin/ventas", label: "Resumen de ventas", icon: TrendingUp, roles: ["admin", "caja"] },
-      { href: "/admin/presupuestos", label: "Presupuestos", icon: FileText, roles: ["admin"] },
+      { href: "/admin/pedidos", label: "Pedidos local", icon: Receipt, acceso: ["pedidos", "r"], badge: "pedidosNuevos" },
+      { href: "/admin/delivery", label: "Pedidos delivery", icon: Bike, acceso: ["delivery", "r"], badge: "deliveryNuevos" },
+      { href: "/admin/ventas", label: "Resumen de ventas", icon: TrendingUp, acceso: ["ventas", "r"] },
+      { href: "/admin/presupuestos", label: "Presupuestos", icon: FileText, acceso: ["presupuestos", "r"] },
     ],
   },
   {
     titulo: "Local",
     items: [
-      { href: "/admin/mesas", label: "Mesas", icon: Table2, roles: ["admin", "supervisor", "mesero"] },
-      { href: "/admin/menu", label: "Menú carta", icon: UtensilsCrossed, roles: ["admin"] },
-      { href: "/admin/sugerencias-chef", label: "Sugerencias Chef", icon: ChefHat, roles: ["admin"] },
-      { href: "/admin/denuncias/nueva", label: "Denunciar", icon: AlertTriangle, roles: TODOS },
-      { href: "/admin/denuncias", label: "Bandeja de entrada", icon: Inbox, roles: ["admin"] },
-      { href: "/admin/reclamos", label: "Reclamos", icon: MessageSquare, roles: ["admin"] },
+      { href: "/admin/mesas", label: "Mesas", icon: Table2, acceso: ["mesas", "r"] },
+      { href: "/admin/menu", label: "Menú carta", icon: UtensilsCrossed, acceso: ["menu", "r"] },
+      { href: "/admin/sugerencias-chef", label: "Sugerencias Chef", icon: ChefHat, acceso: ["menu", "r"] },
+      { href: "/admin/denuncias/nueva", label: "Denunciar", icon: AlertTriangle, acceso: ["denuncias", "c"] },
+      { href: "/admin/denuncias", label: "Bandeja de entrada", icon: Inbox, acceso: ["denuncias", "r"] },
+      { href: "/admin/reclamos", label: "Reclamos", icon: MessageSquare, acceso: ["reclamos", "r"] },
     ],
   },
   {
     titulo: "Turnos",
     items: [
-      { href: "/admin/trabajadores", label: "Trabajadores", icon: Users, roles: ["admin"] },
-      { href: "/admin/turnos", label: "Turnos de la semana", icon: CalendarClock, roles: ["admin"] },
-      { href: "/admin/mi-horario", label: "Mi horario", icon: CalendarDays, roles: TODOS },
-      { href: "/admin/asistencia", label: "Asistencia", icon: Fingerprint, roles: ["admin"] },
-      { href: "/admin/terminal-zk", label: "Config. Terminal ZK", icon: Settings2, roles: ["admin"] },
+      { href: "/admin/trabajadores", label: "Trabajadores", icon: Users, acceso: ["trabajadores", "r"] },
+      { href: "/admin/turnos", label: "Turnos de la semana", icon: CalendarClock, acceso: ["turnos", "u"] },
+      { href: "/admin/mi-horario", label: "Mi horario", icon: CalendarDays, acceso: "todos" },
+      { href: "/admin/asistencia", label: "Asistencia", icon: Fingerprint, acceso: ["asistencia", "r"] },
+      { href: "/admin/terminal-zk", label: "Config. Terminal ZK", icon: Settings2, acceso: "admin" },
     ],
   },
   {
     titulo: "Contenido",
     items: [
-      { href: "/admin/banner", label: "Banner principal", icon: ImageIcon, roles: ["admin"] },
-      { href: "/admin/galeria", label: "Galería", icon: Film, roles: ["admin"] },
-      { href: "/admin/eventos", label: "Eventos", icon: PartyPopper, roles: ["admin"] },
-      { href: "/admin/invitados", label: "Invitados por evento", icon: ClipboardList, roles: ["admin"] },
+      { href: "/admin/banner", label: "Banner principal", icon: ImageIcon, acceso: ["banner", "r"] },
+      { href: "/admin/galeria", label: "Galería", icon: Film, acceso: ["galeria", "r"] },
+      { href: "/admin/eventos", label: "Eventos", icon: PartyPopper, acceso: ["eventos", "r"] },
+      { href: "/admin/invitados", label: "Invitados por evento", icon: ClipboardList, acceso: ["invitados", "r"] },
     ],
   },
   {
     titulo: "Operaciones",
     items: [
-      { href: "/admin/tareas", label: "Tareas Cacho Cabra", icon: ListChecks, roles: TODOS },
-      { label: "Tareas de marketing", icon: Megaphone, roles: ["admin"], pronto: true },
+      { href: "/admin/tareas", label: "Tareas Cacho Cabra", icon: ListChecks, acceso: ["tareas", "r"] },
+      { label: "Tareas de marketing", icon: Megaphone, acceso: "admin", pronto: true },
     ],
   },
   {
     titulo: "Sistema",
     items: [
-      { href: "/admin/configuracion", label: "Configuración", icon: SlidersHorizontal, roles: TODOS },
+      { href: "/admin/configuracion", label: "Configuración", icon: SlidersHorizontal, acceso: "todos" },
     ],
   },
   {
     titulo: "Meseros",
     items: [
-      { label: "Solicitudes de mesas", icon: HandPlatter, roles: ["admin", "supervisor", "mesero"], pronto: true },
+      { label: "Solicitudes de mesas", icon: HandPlatter, acceso: ["mesas", "r"], pronto: true },
     ],
   },
 ];
 
 
-export default function Sidebar({ nombre, rol }: { nombre: string; rol: Rol }) {
+function visible(i: Item, rol: Rol, permisos: PermisosGuardados) {
+  if (rol === "admin") return true;
+  if (i.acceso === "admin") return false;
+  if (i.acceso === "todos") return true;
+  return puede(rol, permisos, i.acceso[0], i.acceso[1]);
+}
+
+export default function Sidebar({ nombre, rol, permisos }: { nombre: string; rol: Rol; permisos: PermisosGuardados }) {
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -154,7 +161,7 @@ export default function Sidebar({ nombre, rol }: { nombre: string; rol: Rol }) {
       </div>
 
       {GRUPOS.map(grupo => {
-        const items = grupo.items.filter(i => i.roles.includes(rol));
+        const items = grupo.items.filter(i => visible(i, rol, permisos));
         if (items.length === 0) return null;
 
         return (
