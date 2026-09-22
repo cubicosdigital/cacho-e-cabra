@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, ROJO, AZUL, FONT, TITLE } from "../../../../lib/tokens";
 import { ESTADO_LABEL, type EstadoTrabajador } from "../../../../lib/fichas";
 
+const DEPARTAMENTOS = ["cocina", "barra", "garzones", "coperia"] as const;
+
 interface Trabajador {
   id: string; nombre: string; rut: string | null; cargo: string | null; departamento: string;
   estado: EstadoTrabajador; telefono: string | null;
@@ -21,6 +23,8 @@ export default function TrabajadoresPage() {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
   const [link, setLink] = useState<{ id: string; url: string } | null>(null);
+  const [nuevo, setNuevo] = useState({ nombre: "", departamento: "cocina", tipo_contrato: "full_time" });
+  const [creando, setCreando] = useState(false);
 
   async function cargar() {
     const res = await fetch("/api/trabajadores");
@@ -55,6 +59,16 @@ export default function TrabajadoresPage() {
     await cargar();
   }
 
+  async function crearEmpleado() {
+    if (!nuevo.nombre.trim()) return;
+    setCreando(true);
+    const res = await fetch("/api/empleados", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(nuevo),
+    });
+    setCreando(false);
+    if (res.ok) { setNuevo({ nombre: "", departamento: nuevo.departamento, tipo_contrato: "full_time" }); await cargar(); }
+  }
+
   const inp: React.CSSProperties = { background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", color: TEXT1, fontFamily: FONT, fontSize: 17 };
   const pendientes = lista.filter(t => t.estado === "registrado").length;
 
@@ -84,11 +98,9 @@ export default function TrabajadoresPage() {
                     {t.estado === "invitado" ? "Reenviar por WhatsApp" : "Enviar por WhatsApp"}
                   </button>
                 )}
-                {(t.estado === "registrado" || t.estado === "completa") && (
-                  <Link href={`/admin/trabajadores/${t.id}`} style={{ background: t.estado === "registrado" ? AMR : SURF2, color: t.estado === "registrado" ? "#1a1200" : TEXT2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 16px", fontSize: 16, fontWeight: 700, textDecoration: "none" }}>
-                    {t.estado === "registrado" ? "Completar contrato" : "Ver ficha"}
-                  </Link>
-                )}
+                <Link href={`/admin/trabajadores/${t.id}`} style={{ background: t.estado === "registrado" ? AMR : SURF2, color: t.estado === "registrado" ? "#1a1200" : TEXT2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 16px", fontSize: 16, fontWeight: 700, textDecoration: "none" }}>
+                  {t.estado === "registrado" ? "Completar contrato" : "Ver ficha"}
+                </Link>
               </div>
 
               {abierto === t.id && (
@@ -113,6 +125,23 @@ export default function TrabajadoresPage() {
               )}
             </div>
           ))}
+        </div>
+
+        <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20 }}>
+          <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 14 }}>+ Nuevo trabajador</div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <input placeholder="Nombre" value={nuevo.nombre} onChange={e => setNuevo(n => ({ ...n, nombre: e.target.value }))} style={{ ...inp, flex: 1, minWidth: 180 }} />
+            <select value={nuevo.departamento} onChange={e => setNuevo(n => ({ ...n, departamento: e.target.value }))} style={inp}>
+              {DEPARTAMENTOS.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+            <select value={nuevo.tipo_contrato} onChange={e => setNuevo(n => ({ ...n, tipo_contrato: e.target.value }))} style={inp}>
+              <option value="full_time">Full time</option>
+              <option value="part_time">Part time</option>
+            </select>
+            <button onClick={crearEmpleado} disabled={creando} style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "8px 22px", fontWeight: 700, cursor: "pointer", fontFamily: FONT, opacity: creando ? 0.6 : 1 }}>
+              {creando ? "Agregando…" : "Agregar"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

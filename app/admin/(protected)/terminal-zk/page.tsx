@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { BG, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, ROJO, AZUL, FONT, TITLE } from "../../../../lib/tokens";
 import { LATIDO_VIGENCIA_S, nombreParaTerminal, type Comando, type EstadoTerminal, type TipoComando } from "../../../../lib/terminal";
@@ -92,18 +93,8 @@ export default function TerminalZkPage() {
       const ids = datos.empleados.filter(e => e.zk_id != null && zkIds.includes(e.zk_id)).map(e => e.id);
       if (ids.length === 0) { setAviso({ ok: false, texto: "Esos trabajadores ya no están disponibles para reintentar." }); return; }
       ordenar({ tipo: "sincronizar_usuarios", empleado_ids: ids }, "Carga de trabajadores reenviada.");
-      return;
     }
-    // iniciar_huella / borrar_usuario: se busca al trabajador por el ID que tenía en el terminal en ese momento.
-    const zkId = c.payload?.zk_id as number | undefined;
-    const e = datos.empleados.find(x => x.zk_id === zkId);
-    if (!e) { setAviso({ ok: false, texto: "Ese trabajador ya no está disponible para reintentar." }); return; }
-    if (c.tipo === "iniciar_huella") {
-      const u = zkId != null ? usuarios.get(String(zkId)) : undefined;
-      ordenar({ tipo: "iniciar_huella", empleado_id: e.id, dedo: Math.min(u?.huellas ?? 0, 9) }, `Registro de huella de ${e.nombre.split(" ")[0]} reenviado: mira la pantalla del terminal.`);
-    } else if (c.tipo === "borrar_usuario") {
-      ordenar({ tipo: "borrar_usuario", empleado_id: e.id }, "Borrado reenviado.");
-    }
+    // iniciar_huella / borrar_usuario ahora se reintentan desde la ficha del trabajador.
   }
 
   if (!datos) {
@@ -153,17 +144,6 @@ export default function TerminalZkPage() {
 
   const ultimaSyncS = estado?.ultima_sync ? (Date.parse(ahora) - Date.parse(estado.ultima_sync)) / 1000 : Infinity;
   const sincronizando = conectado && ultimaSyncS < 12;
-
-  // Igual que labelBoton, pero solo muestra el spinner en la fila del trabajador al que le corresponde la orden en curso.
-  function labelPersona(tipo: "iniciar_huella" | "borrar_usuario", zkId: number | null, normal: string) {
-    const c = enCurso.find(x => x.tipo === tipo && x.payload?.zk_id === zkId);
-    if (!c) return normal;
-    return (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-        <Spinner /> {c.estado === "en_proceso" ? "En el terminal…" : "Enviando…"}
-      </span>
-    );
-  }
 
   return (
     <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
@@ -226,7 +206,7 @@ export default function TerminalZkPage() {
           <div style={{ padding: "18px 20px 6px" }}>
             <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900 }}>Trabajadores en el terminal</div>
             <div style={{ fontSize: 15, color: TEXT3 }}>
-              Marca a quienes quieras subir al terminal (nuevos o con datos cambiados) y pulsa <strong>Cargar seleccionados</strong>. Con <strong>Registrar huella</strong>, el terminal pide poner el dedo tres veces; la persona debe estar frente al equipo.
+              Marca a quienes quieras subir al terminal (nuevos o con datos cambiados) y pulsa <strong>Cargar seleccionados</strong>. Para registrar huellas o borrar a alguien del terminal, entra a su ficha.
             </div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
               <button disabled={sel.size === 0 || ocupado("sincronizar_usuarios")}
@@ -238,7 +218,6 @@ export default function TerminalZkPage() {
           </div>
           {empleados.map(e => {
             const u = e.zk_id != null ? usuarios.get(String(e.zk_id)) : undefined;
-            const puedeHuella = conectado && !!u && !ocupado("iniciar_huella");
             return (
               <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 20px", borderTop: `1px solid ${BORDER}`, flexWrap: "wrap" }}>
                 <input type="checkbox" checked={sel.has(e.id)} aria-label={`Seleccionar a ${e.nombre}`}
@@ -259,12 +238,9 @@ export default function TerminalZkPage() {
                 <span style={{ fontSize: 15, color: !u ? TEXT3 : u.huellas > 0 ? VERDE : AMR, width: 110 }}>
                   {!u ? "" : u.huellas > 0 ? `${u.huellas} huella${u.huellas > 1 ? "s" : ""}` : "sin huella"}
                 </span>
-                <button disabled={!puedeHuella} title={u ? "" : "Primero carga los trabajadores"}
-                  onClick={() => ordenar({ tipo: "iniciar_huella", empleado_id: e.id, dedo: Math.min(u?.huellas ?? 0, 9) }, `Registro de huella de ${e.nombre.split(" ")[0]} iniciado: mira la pantalla del terminal.`)}
-                  style={boton(puedeHuella)}>{labelPersona("iniciar_huella", e.zk_id, "Registrar huella")}</button>
-                <button disabled={!conectado || !u || ocupado("borrar_usuario")}
-                  onClick={() => confirm(`¿Borrar a ${e.nombre} del terminal? Se pierden sus huellas allí.`) && ordenar({ tipo: "borrar_usuario", empleado_id: e.id }, "Borrado enviado.")}
-                  style={{ ...boton(conectado && !!u && !ocupado("borrar_usuario")), color: ROJO }}>{labelPersona("borrar_usuario", e.zk_id, "Borrar")}</button>
+                <Link href={`/admin/trabajadores/${e.id}?tab=terminal`} style={{ background: SURF2, color: TEXT2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 18px", fontSize: 16, fontWeight: 700, textDecoration: "none", fontFamily: FONT }}>
+                  Ver ficha
+                </Link>
               </div>
             );
           })}

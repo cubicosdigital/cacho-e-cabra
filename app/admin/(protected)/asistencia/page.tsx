@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, ROJO, FONT, TITLE } from "../../../../lib/tokens";
+import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT3, AMR, VERDE, ROJO, FONT, TITLE } from "../../../../lib/tokens";
 
 interface Empleado {
   id: string; nombre: string; cargo: string | null; departamento: string;
@@ -40,18 +40,8 @@ export default function AsistenciaPage() {
     if (inputFile.current) inputFile.current.value = "";
   }
 
-  async function actualizarZkId(id: string, valor: string) {
-    const zk_id = valor.trim() === "" ? null : parseInt(valor, 10);
-    await fetch(`/api/empleados/${id}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ zk_id }),
-    });
-    await cargar();
-  }
-
   const controlados = empleados.filter(e => e.control_asistencia);
-
-  const inp: React.CSSProperties = { background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "6px 10px", color: TEXT1, fontFamily: FONT, fontSize: 17 };
+  void loading;
 
   return (
     <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
@@ -85,38 +75,12 @@ export default function AsistenciaPage() {
           )}
         </div>
 
-        {/* Mapeo zk_id */}
-        <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: "hidden" }}>
-          <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, padding: "16px 20px 0" }}>Trabajadores y su ID en el terminal</div>
-          {loading ? <div style={{ padding: 20, color: TEXT3 }}>Cargando…</div> : (
-            <div>
-              {empleados.map((emp, idx) => (
-                <div key={emp.id} style={{
-                  display: "flex", alignItems: "center", gap: 14, padding: "12px 20px",
-                  borderTop: idx === 0 ? "none" : `1px solid ${BORDER}`,
-                }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                      <span style={{ fontWeight: 700, fontSize: 18 }}>{emp.nombre}</span>
-                      {!emp.control_asistencia && (
-                        <span style={{ fontSize: 13, fontWeight: 700, background: SURF2, color: AMR, border: `1px solid ${AMR}`, borderRadius: 999, padding: "2px 10px" }}>
-                          No necesita registrar
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: 15, color: TEXT3 }}>{emp.cargo} · {emp.departamento}</div>
-                  </div>
-                  <label style={{ fontSize: 15, color: TEXT3 }}>ID terminal:</label>
-                  <input type="number" placeholder="ej. 1" defaultValue={emp.zk_id ?? ""} style={{ ...inp, width: 80 }}
-                    onBlur={e => actualizarZkId(emp.id, e.target.value)} />
-                  <a href={`/admin/asistencia/${emp.id}`}
-                    style={{ background: SURF2, color: TEXT2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "6px 14px", fontSize: 16, fontWeight: 700, textDecoration: "none", fontFamily: FONT }}>
-                    Ver registros
-                  </a>
-                </div>
-              ))}
-            </div>
-          )}
+        <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 16, color: TEXT3 }}>Para ver la asistencia de una persona o asignarle su ID en el terminal, entra a su ficha.</div>
+          <Link href="/admin/trabajadores"
+            style={{ background: SURF2, color: TEXT1, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 20px", fontSize: 16, fontWeight: 700, textDecoration: "none", fontFamily: FONT }}>
+            Ir a Trabajadores →
+          </Link>
         </div>
       </div>
     </div>
