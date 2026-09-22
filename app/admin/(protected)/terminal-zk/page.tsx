@@ -19,7 +19,8 @@ function Spinner({ color: c = "currentColor", size = 14 }: { color?: string; siz
   return (
     <span style={{
       display: "inline-block", width: size, height: size, borderRadius: "50%",
-      border: `2px solid ${c}`, borderTopColor: "transparent", animation: "girar .7s linear infinite", flexShrink: 0,
+      borderWidth: 2, borderStyle: "solid", borderColor: c, borderTopColor: "transparent",
+      animation: "girar .7s linear infinite", flexShrink: 0,
     }} />
   );
 }
