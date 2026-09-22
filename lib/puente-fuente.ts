@@ -114,6 +114,13 @@ def ajustar_hora(conn, _p):
     return f"Hora ajustada a {ahora.strftime(FORMATO)} (hora de Chile)"
 
 
+def contar_huellas(conn, zk_id):
+    u = next((x for x in conn.get_users() if str(x.user_id) == str(zk_id)), None)
+    if not u:
+        return 0
+    return sum(1 for t in conn.get_templates() if t.uid == u.uid)
+
+
 def registrar_huella(conn, p):
     zk_id = int(p["zk_id"])
     if not any(str(u.user_id) == str(zk_id) for u in conn.get_users()):
@@ -122,10 +129,17 @@ def registrar_huella(conn, p):
     api("/api/terminal/puente/latido", {"terminal_ok": True, "solo_latido": True, "ocupado_s": 110,
                                         "mensaje": f"Esperando la huella de {p.get('nombre', '')}…"})
     log(f"Registrando huella de {p.get('nombre')} (dedo {p.get('dedo', 0)}). Mira la pantalla del terminal.")
-    ok = conn.enroll_user(uid=zk_id, temp_id=int(p.get("dedo", 0)), user_id=str(zk_id))
-    if not ok:
-        raise RuntimeError("No se completó el registro (se acabó el tiempo o la huella no se leyó bien). Inténtalo de nuevo.")
-    return f"Huella de {p.get('nombre')} registrada"
+    antes = contar_huellas(conn, zk_id)
+    try:
+        conn.enroll_user(uid=zk_id, temp_id=int(p.get("dedo", 0)), user_id=str(zk_id))
+    except Exception as e:
+        log(f"  (enroll_user avisó un error, se verifica igual si quedó guardada: {e})")
+    # Este firmware a veces reporta error aunque el terminal SÍ guardó la huella:
+    # la verdad es cuántas huellas hay realmente en el equipo antes y después.
+    despues = contar_huellas(conn, zk_id)
+    if despues > antes:
+        return f"Huella de {p.get('nombre')} registrada"
+    raise RuntimeError("No se completó el registro (se acabó el tiempo o la huella no se leyó bien). Inténtalo de nuevo.")
 
 
 def borrar_usuario(conn, p):
