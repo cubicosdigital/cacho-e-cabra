@@ -22,3 +22,17 @@ export async function GET() {
   }
   return NextResponse.json({ estado: estado.data, comandos: comandos.data, empleados: empleados.data, ahora: new Date().toISOString() });
 }
+
+export async function PATCH(req: Request) {
+  const { db, error } = await requireAdmin();
+  if (error) return error;
+
+  const b = await req.json().catch(() => ({}));
+  const ip = String(b.ip_manual ?? "").trim();
+  if (ip && !/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) {
+    return NextResponse.json({ error: "Esa no parece una IP válida (ej. 192.168.1.98)" }, { status: 400 });
+  }
+  const { error: err } = await db.from("terminal_estado").upsert({ id: "principal", ip_manual: ip || null }, { onConflict: "id" });
+  if (err) return NextResponse.json({ error: err.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}

@@ -26,12 +26,12 @@ export async function POST(req: NextRequest) {
 
   if (b.solo_latido === true) return NextResponse.json({ ok: true });
 
-  const { data: estado } = await db.from("terminal_estado").select("ultima_marca").eq("id", "principal").maybeSingle();
+  const { data: estado } = await db.from("terminal_estado").select("ultima_marca, ip_manual").eq("id", "principal").maybeSingle();
 
   const { data: pendientes } = await db.from("terminal_comandos").select("id, tipo, payload").eq("estado", "pendiente").order("created_at").limit(5);
   const comandos = pendientes ?? [];
   if (comandos.length > 0) {
     await db.from("terminal_comandos").update({ estado: "en_proceso" }).in("id", comandos.map(c => c.id)).eq("estado", "pendiente");
   }
-  return NextResponse.json({ comandos, ultima_marca: estado?.ultima_marca ?? null });
+  return NextResponse.json({ comandos, ultima_marca: estado?.ultima_marca ?? null, ip_manual: estado?.ip_manual ?? null });
 }

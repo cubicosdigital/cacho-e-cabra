@@ -29,12 +29,21 @@ export default function TerminalZkPage() {
   const [error, setError] = useState("");
   const [aviso, setAviso] = useState<{ ok: boolean; texto: string } | null>(null);
   const [sel, setSel] = useState<Set<string>>(new Set());
+  const [ipManual, setIpManual] = useState("");
+  const [guardandoIp, setGuardandoIp] = useState(false);
+  const [esperandoIp, setEsperandoIp] = useState(false);
+  const [guardadaEn, setGuardadaEn] = useState<number | null>(null);
   const [tick, setTick] = useState(0);
 
   const cargar = useCallback(async () => {
     const res = await fetch("/api/terminal");
-    if (res.ok) { setDatos(await res.json()); setError(""); }
-    else setError((await res.json().catch(() => ({}))).error ?? "No se pudo cargar");
+    if (res.ok) {
+      const d: Datos = await res.json();
+      setDatos(d);
+      // No pisa lo que el usuario esté escribiendo en el campo de IP manual.
+      if (document.activeElement?.id !== "ip-manual") setIpManual(d.estado?.ip_manual ?? "");
+      setError("");
+    } else setError((await res.json().catch(() => ({}))).error ?? "No se pudo cargar");
   }, []);
 
   useEffect(() => {
@@ -42,6 +51,19 @@ export default function TerminalZkPage() {
     const t = setInterval(() => { cargar(); setTick(x => x + 1); }, 4000);
     return () => clearInterval(t);
   }, [cargar]);
+
+
+
+  async function guardarIpManual() {
+    setGuardandoIp(true);
+    const res = await fetch("/api/terminal", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ip_manual: ipManual.trim() }) });
+    const d = await res.json().catch(() => ({}));
+    setGuardandoIp(false);
+    if (!res.ok) { setAviso({ ok: false, texto: d.error ?? "No se pudo guardar la IP" }); return; }
+    if (ipManual.trim()) { setEsperandoIp(true); setGuardadaEn(Date.now()); }
+    setAviso(null);
+    await cargar();
+  }
 
   async function ordenar(body: Record<string, unknown>, texto: string) {
     setAviso(null);
@@ -60,11 +82,16 @@ export default function TerminalZkPage() {
   const puenteVivo = latidoS < LATIDO_VIGENCIA_S;
   const conectado = puenteVivo && estado?.terminal_ok === true;
 
+  // Se usa la hora que manda el servidor (dato, no reloj del navegador) para saber si aún conviene mostrar "Conectando…".
+  const esperando = esperandoIp && !conectado && guardadaEn != null && Date.parse(ahora) - guardadaEn < 90_000;
+
   const [color, titulo, detalle] = conectado
     ? [VERDE, "Conectado", "El terminal está respondiendo."]
-    : puenteVivo
-      ? [AMR, "No se encuentra el terminal", estado?.mensaje ?? "Revisa que esté encendido y con el cable de red."]
-      : [TEXT3, "Sin conexión con el terminal por ahora", "Para usar estas opciones, conecta el terminal por cable de red y enciende el programa de conexión. Mientras tanto, puedes subir el archivo del pendrive en Asistencia."];
+    : esperando
+      ? [AMR, "Conectando…", "Probando la IP que ingresaste. Puede tardar hasta un minuto."]
+      : puenteVivo
+        ? [ROJO, "Sin conexión", estado?.mensaje ?? "No se encuentra el terminal. Revisa que esté encendido y con el cable de red conectado."]
+        : [ROJO, "Sin conexión", "El computador del bar no está avisando. Revisa que esté encendido y conectado a la misma red que el terminal. Mientras tanto, puedes subir el archivo del pendrive en Asistencia."];
 
   const diffMin = conectado && estado?.hora_terminal ? Math.round((ms(estado.hora_terminal) - ms(horaChile())) / 60000) : null;
   const horaMala = diffMin != null && Math.abs(diffMin) > 2;
@@ -89,28 +116,34 @@ export default function TerminalZkPage() {
         </div>
 
         <div style={{ ...tarjeta, borderColor: color, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-          <div style={{ width: 14, height: 14, borderRadius: 999, background: color, flexShrink: 0 }} />
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 8, flexShrink: 0, fontWeight: 800, fontSize: 15,
+            padding: "6px 14px", borderRadius: 999, background: conectado ? "#123822" : esperando ? "#3a2f10" : "#3a1414",
+            color, border: `1px solid ${color}`,
+          }}>
+            <span style={{ width: 10, height: 10, borderRadius: 999, background: color, animation: esperando ? "pulso 1s infinite" : "none" }} />
+            {conectado ? "Conectado" : esperando ? "Conectando…" : "Sin conexión"}
+          </span>
+          <style>{`@keyframes pulso { 0%,100% { opacity: 1 } 50% { opacity: .3 } }`}</style>
           <div style={{ flex: 1, minWidth: 260 }}>
             <div style={{ fontFamily: TITLE, fontSize: 22, fontWeight: 900, color }}>{titulo}</div>
             <div style={{ fontSize: 16, color: TEXT2 }}>{detalle}</div>
           </div>
-          {estado?.ip && <div style={{ fontSize: 15, color: TEXT3, textAlign: "right" }}>IP {estado.ip}<br />Serie {estado.serie}<br />Firmware {estado.firmware}</div>}
+          {conectado && estado?.ip && <div style={{ fontSize: 15, color: TEXT3, textAlign: "right" }}>IP {estado.ip}<br />Serie {estado.serie}<br />Firmware {estado.firmware}</div>}
         </div>
 
-        {!conectado && (
-          <div style={tarjeta}>
-            <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 10 }}>Cómo conectar el terminal</div>
-            <ol style={{ margin: 0, paddingLeft: 22, color: TEXT2, fontSize: 17, lineHeight: 1.7 }}>
-              <li>Conecta el terminal por cable de red al router, y tu computador a esa misma red.</li>
-              <li>Descarga el programa de conexión (botón de abajo).</li>
-              <li>Ábrelo: en Mac, descomprime el ZIP y haz clic derecho sobre <strong>Conectar terminal</strong> → <strong>Abrir</strong> (la primera vez). Deja la ventana abierta.</li>
-              <li>En unos segundos esta pantalla dirá <strong style={{ color: VERDE }}>Conectado</strong>. Al terminar, cierra esa ventana.</li>
-            </ol>
-            <a href="/api/terminal/programa" download style={{ ...boton(true, true), display: "inline-block", marginTop: 16, textDecoration: "none" }}>
-              Descargar programa de conexión
-            </a>
+        <div style={tarjeta}>
+          <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 6 }}>IP manual (opcional)</div>
+          <div style={{ fontSize: 15, color: TEXT3, marginBottom: 12 }}>
+            El programa ya busca el terminal solo en la red. Si prefieres indicarla tú, escríbela aquí (la ves en el terminal: <strong>Menú → Comm. → Ethernet</strong>). El programa la probará en su próximo ciclo, sin que tengas que volver a descargarlo.
           </div>
-        )}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <input id="ip-manual" value={ipManual} onChange={e => setIpManual(e.target.value)} placeholder="Ej. 192.168.1.98"
+              style={{ background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "9px 12px", color: TEXT1, fontFamily: FONT, fontSize: 16, width: 200 }} />
+            <button onClick={guardarIpManual} disabled={guardandoIp} style={boton(!guardandoIp, true)}>{guardandoIp ? "Guardando…" : "Guardar IP"}</button>
+            {ipManual && <button onClick={() => { setIpManual(""); guardarIpManual(); }} style={boton(true, false)}>Quitar</button>}
+          </div>
+        </div>
 
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
           <Kpi etiqueta="Trabajadores en el terminal" valor={conectado ? String(estado?.usuarios ?? 0) : "—"} nota="cargados en su memoria" />

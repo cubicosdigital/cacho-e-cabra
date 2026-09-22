@@ -194,8 +194,18 @@ def descubrir():
 
 
 def conectar(estado):
-    """Usa la IP conocida; si no responde (por ejemplo, se movió el terminal a otra red), lo busca solo."""
+    """Prueba primero la IP que el admin haya escrito a mano, luego la conocida, y si nada responde, busca solo en la red."""
     global TERMINAL_IP
+    ip_manual = estado.get("ip_manual")
+    if ip_manual and ip_manual != TERMINAL_IP:
+        try:
+            conn = ZK(ip_manual, port=TERMINAL_PORT, timeout=6, ommit_ping=True).connect()
+            log(f"Conectado por la IP indicada en el admin: {ip_manual}")
+            TERMINAL_IP = ip_manual
+            return conn
+        except Exception:
+            pass  # se sigue con la IP conocida / la búsqueda automática
+
     try:
         if not TERMINAL_IP:
             raise RuntimeError("sin IP configurada")
@@ -214,6 +224,12 @@ def conectar(estado):
 
 
 def ciclo(estado):
+    if "ip_manual" not in estado:
+        try:
+            resp = api("/api/terminal/puente/latido", {"terminal_ok": False, "solo_latido": False, "mensaje": "Iniciando…"})
+            estado["ip_manual"] = resp.get("ip_manual")
+        except Exception:
+            estado["ip_manual"] = None
     try:
         conn = conectar(estado)
     except Exception as e:
@@ -229,6 +245,7 @@ def ciclo(estado):
     try:
         resp = api("/api/terminal/puente/latido", {"terminal_ok": True, **leer_info(conn)})
         ultima = resp.get("ultima_marca")
+        estado["ip_manual"] = resp.get("ip_manual")
         descargado = False
 
         for cmd in resp.get("comandos", []):

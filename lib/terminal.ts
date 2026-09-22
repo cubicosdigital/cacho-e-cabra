@@ -5,7 +5,7 @@ export interface UsuarioTerminal { uid: number; user_id: string; name: string; h
 export interface EstadoTerminal {
   terminal_ok: boolean; ip: string | null; serie: string | null; firmware: string | null; hora_terminal: string | null;
   usuarios: number | null; marcaciones: number | null; usuarios_detalle: UsuarioTerminal[];
-  ultima_marca: string | null; ultima_sync: string | null; ultimo_latido: string | null; mensaje: string | null;
+  ultima_marca: string | null; ultima_sync: string | null; ultimo_latido: string | null; mensaje: string | null; ip_manual: string | null;
 }
 export interface Comando {
   id: string; tipo: TipoComando; payload: Record<string, unknown>; estado: EstadoComando;
