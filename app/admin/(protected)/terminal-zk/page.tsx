@@ -15,6 +15,15 @@ const NOMBRE_COMANDO: Record<TipoComando, string> = {
 const ms = (s: string) => Date.parse(s.replace(" ", "T") + (s.includes("Z") || s.includes("+") ? "" : "Z"));
 const horaChile = () => new Date().toLocaleString("sv-SE", { timeZone: "America/Santiago" });
 
+function Spinner({ color: c = "currentColor", size = 14 }: { color?: string; size?: number }) {
+  return (
+    <span style={{
+      display: "inline-block", width: size, height: size, borderRadius: "50%",
+      border: `2px solid ${c}`, borderTopColor: "transparent", animation: "girar .7s linear infinite", flexShrink: 0,
+    }} />
+  );
+}
+
 function hace(iso: string | null, ahora: string) {
   if (!iso) return "nunca";
   const s = Math.max(0, Math.round((Date.parse(ahora) - Date.parse(iso)) / 1000));
@@ -73,6 +82,29 @@ export default function TerminalZkPage() {
     await cargar();
   }
 
+  function reintentar(c: Comando) {
+    if (!datos) return;
+    if (c.tipo === "ajustar_hora") { ordenar({ tipo: "ajustar_hora" }, "Ajuste de hora reenviado."); return; }
+    if (c.tipo === "descargar_marcaciones") { ordenar({ tipo: "descargar_marcaciones" }, "Descarga de marcaciones reenviada."); return; }
+    if (c.tipo === "sincronizar_usuarios") {
+      const zkIds = ((c.payload?.usuarios as { zk_id: number }[]) ?? []).map(u => u.zk_id);
+      const ids = datos.empleados.filter(e => e.zk_id != null && zkIds.includes(e.zk_id)).map(e => e.id);
+      if (ids.length === 0) { setAviso({ ok: false, texto: "Esos trabajadores ya no están disponibles para reintentar." }); return; }
+      ordenar({ tipo: "sincronizar_usuarios", empleado_ids: ids }, "Carga de trabajadores reenviada.");
+      return;
+    }
+    // iniciar_huella / borrar_usuario: se busca al trabajador por el ID que tenía en el terminal en ese momento.
+    const zkId = c.payload?.zk_id as number | undefined;
+    const e = datos.empleados.find(x => x.zk_id === zkId);
+    if (!e) { setAviso({ ok: false, texto: "Ese trabajador ya no está disponible para reintentar." }); return; }
+    if (c.tipo === "iniciar_huella") {
+      const u = zkId != null ? usuarios.get(String(zkId)) : undefined;
+      ordenar({ tipo: "iniciar_huella", empleado_id: e.id, dedo: Math.min(u?.huellas ?? 0, 9) }, `Registro de huella de ${e.nombre.split(" ")[0]} reenviado: mira la pantalla del terminal.`);
+    } else if (c.tipo === "borrar_usuario") {
+      ordenar({ tipo: "borrar_usuario", empleado_id: e.id }, "Borrado reenviado.");
+    }
+  }
+
   if (!datos) {
     return <div style={{ minHeight: "100vh", background: BG, color: error ? ROJO : TEXT3, fontFamily: FONT, padding: 40 }}>{error || "Cargando…"}</div>;
   }
@@ -107,6 +139,31 @@ export default function TerminalZkPage() {
     fontFamily: FONT, opacity: activo ? 1 : 0.5,
   });
 
+  // Texto del botón: mientras la orden está en cola o corriendo en el terminal, muestra un spinner en vez del label normal.
+  function labelBoton(tipo: TipoComando, normal: string) {
+    const c = enCurso.find(x => x.tipo === tipo);
+    if (!c) return normal;
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+        <Spinner /> {c.estado === "en_proceso" ? "El terminal está recibiendo…" : "Enviando…"}
+      </span>
+    );
+  }
+
+  const ultimaSyncS = estado?.ultima_sync ? (Date.parse(ahora) - Date.parse(estado.ultima_sync)) / 1000 : Infinity;
+  const sincronizando = conectado && ultimaSyncS < 12;
+
+  // Igual que labelBoton, pero solo muestra el spinner en la fila del trabajador al que le corresponde la orden en curso.
+  function labelPersona(tipo: "iniciar_huella" | "borrar_usuario", zkId: number | null, normal: string) {
+    const c = enCurso.find(x => x.tipo === tipo && x.payload?.zk_id === zkId);
+    if (!c) return normal;
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+        <Spinner /> {c.estado === "en_proceso" ? "En el terminal…" : "Enviando…"}
+      </span>
+    );
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
@@ -124,7 +181,7 @@ export default function TerminalZkPage() {
             <span style={{ width: 10, height: 10, borderRadius: 999, background: color, animation: esperando ? "pulso 1s infinite" : "none" }} />
             {conectado ? "Conectado" : esperando ? "Conectando…" : "Sin conexión"}
           </span>
-          <style>{`@keyframes pulso { 0%,100% { opacity: 1 } 50% { opacity: .3 } }`}</style>
+          <style>{`@keyframes pulso { 0%,100% { opacity: 1 } 50% { opacity: .3 } } @keyframes girar { to { transform: rotate(360deg) } }`}</style>
           <div style={{ flex: 1, minWidth: 260 }}>
             <div style={{ fontFamily: TITLE, fontSize: 22, fontWeight: 900, color }}>{titulo}</div>
             <div style={{ fontSize: 16, color: TEXT2 }}>{detalle}</div>
@@ -147,7 +204,10 @@ export default function TerminalZkPage() {
 
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
           <Kpi etiqueta="Trabajadores en el terminal" valor={conectado ? String(estado?.usuarios ?? 0) : "—"} nota="cargados en su memoria" />
-          <Kpi etiqueta="Marcaciones guardadas" valor={conectado ? String(estado?.marcaciones ?? 0) : "—"} nota={`Última sincronización: ${hace(estado?.ultima_sync ?? null, ahora)}`} />
+          <Kpi etiqueta="Marcaciones guardadas" valor={conectado ? String(estado?.marcaciones ?? 0) : "—"}
+            nota={sincronizando
+              ? <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: AMR }}><Spinner color={AMR} size={12} /> Sincronizando…</span>
+              : `Última sincronización: ${hace(estado?.ultima_sync ?? null, ahora)}`} />
           <Kpi etiqueta="Hora del terminal" valor={conectado && estado?.hora_terminal ? estado.hora_terminal.slice(11, 16) : "—"}
             color={horaMala ? ROJO : TEXT1} nota={horaMala ? `Desfasada ${Math.abs(diffMin!)} min respecto a Chile. Ajústala.` : conectado ? "Coincide con la hora de Chile" : undefined} />
         </div>
@@ -155,8 +215,8 @@ export default function TerminalZkPage() {
         <div style={tarjeta}>
           <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 14 }}>Acciones</div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-            <button disabled={ocupado("ajustar_hora")} onClick={() => ordenar({ tipo: "ajustar_hora" }, "Ajuste de hora enviado.")} style={boton(!ocupado("ajustar_hora"), horaMala)}>Ajustar hora a Chile</button>
-            <button disabled={ocupado("descargar_marcaciones")} onClick={() => ordenar({ tipo: "descargar_marcaciones" }, "Descarga de marcaciones enviada.")} style={boton(!ocupado("descargar_marcaciones"))}>Descargar marcaciones ahora</button>
+            <button disabled={ocupado("ajustar_hora")} onClick={() => ordenar({ tipo: "ajustar_hora" }, "Ajuste de hora enviado.")} style={boton(!ocupado("ajustar_hora"), horaMala)}>{labelBoton("ajustar_hora", "Ajustar hora a Chile")}</button>
+            <button disabled={ocupado("descargar_marcaciones")} onClick={() => ordenar({ tipo: "descargar_marcaciones" }, "Descarga de marcaciones enviada.")} style={boton(!ocupado("descargar_marcaciones"))}>{labelBoton("descargar_marcaciones", "Descargar marcaciones ahora")}</button>
           </div>
           {aviso && <div style={{ marginTop: 12, fontSize: 16, color: aviso.ok ? VERDE : ROJO }}>{aviso.texto}</div>}
         </div>
@@ -170,7 +230,7 @@ export default function TerminalZkPage() {
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
               <button disabled={sel.size === 0 || ocupado("sincronizar_usuarios")}
                 onClick={async () => { await ordenar({ tipo: "sincronizar_usuarios", empleado_ids: [...sel] }, `Carga de ${sel.size} trabajador${sel.size > 1 ? "es" : ""} enviada.`); setSel(new Set()); }}
-                style={boton(sel.size > 0 && !ocupado("sincronizar_usuarios"), true)}>Cargar seleccionados ({sel.size})</button>
+                style={boton(sel.size > 0 && !ocupado("sincronizar_usuarios"), true)}>{labelBoton("sincronizar_usuarios", `Cargar seleccionados (${sel.size})`)}</button>
               <button onClick={() => setSel(new Set(faltan.map(e => e.id)))} disabled={faltan.length === 0} style={boton(faltan.length > 0)}>Marcar los que faltan ({faltan.length})</button>
               <button onClick={() => setSel(new Set())} disabled={sel.size === 0} style={boton(sel.size > 0)}>Quitar selección</button>
             </div>
@@ -200,10 +260,10 @@ export default function TerminalZkPage() {
                 </span>
                 <button disabled={!puedeHuella} title={u ? "" : "Primero carga los trabajadores"}
                   onClick={() => ordenar({ tipo: "iniciar_huella", empleado_id: e.id, dedo: Math.min(u?.huellas ?? 0, 9) }, `Registro de huella de ${e.nombre.split(" ")[0]} iniciado: mira la pantalla del terminal.`)}
-                  style={boton(puedeHuella)}>Registrar huella</button>
+                  style={boton(puedeHuella)}>{labelPersona("iniciar_huella", e.zk_id, "Registrar huella")}</button>
                 <button disabled={!conectado || !u || ocupado("borrar_usuario")}
                   onClick={() => confirm(`¿Borrar a ${e.nombre} del terminal? Se pierden sus huellas allí.`) && ordenar({ tipo: "borrar_usuario", empleado_id: e.id }, "Borrado enviado.")}
-                  style={{ ...boton(conectado && !!u && !ocupado("borrar_usuario")), color: ROJO }}>Borrar</button>
+                  style={{ ...boton(conectado && !!u && !ocupado("borrar_usuario")), color: ROJO }}>{labelPersona("borrar_usuario", e.zk_id, "Borrar")}</button>
               </div>
             );
           })}
@@ -219,8 +279,13 @@ export default function TerminalZkPage() {
               <div key={c.id} style={{ display: "flex", gap: 14, alignItems: "baseline", padding: "8px 0", borderTop: `1px solid ${BORDER}`, flexWrap: "wrap" }}>
                 <div style={{ width: 70, fontSize: 14, color: TEXT3 }}>{new Date(c.created_at).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</div>
                 <div style={{ fontWeight: 700, fontSize: 16, minWidth: 220 }}>{NOMBRE_COMANDO[c.tipo]}{quien}</div>
-                <span style={{ fontSize: 13, fontWeight: 700, color: col, border: `1px solid ${col}`, borderRadius: 999, padding: "2px 10px" }}>{txt}</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: col, border: `1px solid ${col}`, borderRadius: 999, padding: "2px 10px" }}>
+                  {(c.estado === "en_proceso" || c.estado === "pendiente") && <Spinner color={col} size={11} />}{txt}
+                </span>
                 <div style={{ flex: 1, minWidth: 200, fontSize: 15, color: TEXT2 }}>{c.resultado}</div>
+                {c.estado === "error" && (
+                  <button disabled={!conectado || ocupado(c.tipo)} onClick={() => reintentar(c)} style={boton(conectado && !ocupado(c.tipo))}>Reintentar</button>
+                )}
               </div>
             );
           })}

@@ -5,7 +5,7 @@ import type { Barra } from "../../../../lib/asistencia";
 
 export const tarjeta: React.CSSProperties = { background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20 };
 
-export function Kpi({ etiqueta, valor, nota, color = TEXT1 }: { etiqueta: string; valor: string; nota?: string; color?: string }) {
+export function Kpi({ etiqueta, valor, nota, color = TEXT1 }: { etiqueta: string; valor: string; nota?: React.ReactNode; color?: string }) {
   return (
     <div style={{ ...tarjeta, flex: "1 1 200px", minWidth: 200, padding: "18px 20px" }}>
       <div style={{ fontSize: 14, fontWeight: 700, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.06em" }}>{etiqueta}</div>
