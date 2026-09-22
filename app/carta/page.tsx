@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { resolverImagen } from "../../lib/imagenes";
 import { TextoRico, sinFormato } from "../../lib/texto-rico";
+import { coincideBusqueda } from "../../lib/busqueda";
 
 // ─── tipos ─────────────────────────────────────────────────────────
 type Categoria = "todo" | "chef" | "cafeteria" | "brunch" | "comida" | "tragos" | "postres";
@@ -194,7 +195,7 @@ export default function CartaPage() {
   // Con texto en el buscador, se busca en TODA la carta (no solo en la pestaña activa).
   const filtered = q === ""
     ? porCategoria
-    : productos.filter(p => p.nombre.toLowerCase().includes(q) || sinFormato(p.descripcion).toLowerCase().includes(q));
+    : productos.filter(p => coincideBusqueda(`${p.nombre} ${sinFormato(p.descripcion)}`, busqueda));
 
   // Agrupa productos consecutivos de la misma subcategoría (ya vienen ordenados así desde la BD).
   // Grupos con más de 3 productos llevan un banner con foto arriba.
@@ -606,7 +607,10 @@ function ProductoRow({ p, enCart, tema: T, fs, onAdd, onRemove }: {
   onRemove: () => void;
 }) {
   const [hover, setHover] = useState(false);
-  const [abierto, setAbierto] = useState(false);
+  const tieneDescripcion = !!p.descripcion.trim();
+  const [abiertoManual, setAbiertoManual] = useState(false);
+  // Sin descripción no hay nada que expandir: el bloque de abajo (con el botón de agregar) queda siempre visible.
+  const abierto = tieneDescripcion ? abiertoManual : true;
   return (
     <div
       onMouseEnter={() => setHover(true)}
@@ -618,10 +622,10 @@ function ProductoRow({ p, enCart, tema: T, fs, onAdd, onRemove }: {
         transition: "all 0.2s",
       }}>
 
-      {/* Encabezado — siempre visible, hace click para expandir */}
+      {/* Encabezado — siempre visible; solo se puede abrir/cerrar si hay descripción que mostrar */}
       <div
-        onClick={() => setAbierto(o => !o)}
-        style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8, cursor: "pointer" }}>
+        onClick={tieneDescripcion ? () => setAbiertoManual(o => !o) : undefined}
+        style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8, cursor: tieneDescripcion ? "pointer" : "default" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
           <span style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: `${18 * fs}px`, fontWeight: 800, color: T.text1, lineHeight: 1.2 }}>
             {p.nombre}
@@ -630,10 +634,12 @@ function ProductoRow({ p, enCart, tema: T, fs, onAdd, onRemove }: {
             <div style={{ fontFamily: "var(--font-raleway),sans-serif", fontSize: `${18 * fs}px`, fontWeight: 900, color: T.amr, letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>
               {fmtPrecio(p.precio)}
             </div>
-            <span style={{
-              display: "inline-flex", width: 20, height: 20, alignItems: "center", justifyContent: "center",
-              color: T.text3, transform: abierto ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s",
-            }}>▾</span>
+            {tieneDescripcion && (
+              <span style={{
+                display: "inline-flex", width: 20, height: 20, alignItems: "center", justifyContent: "center",
+                color: T.text3, transform: abierto ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s",
+              }}>▾</span>
+            )}
           </div>
         </div>
 
@@ -652,7 +658,7 @@ function ProductoRow({ p, enCart, tema: T, fs, onAdd, onRemove }: {
       {/* Detalle — descripción y botón, solo si está expandido */}
       <div style={{ maxHeight: abierto ? 700 : 0, overflow: "hidden", transition: "max-height 0.25s ease" }}>
         <div style={{ padding: "0 18px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-          {p.descripcion && (
+          {tieneDescripcion && (
             <div style={{ fontSize: `${14 * fs}px`, color: T.text3, lineHeight: 1.5, whiteSpace: "pre-line" }}>
               <TextoRico texto={p.descripcion} />
             </div>

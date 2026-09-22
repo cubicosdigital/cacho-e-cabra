@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import SelectorFoto from "../SelectorFoto";
 import { resolverImagen } from "../../../../lib/imagenes";
 import { TextoRico } from "../../../../lib/texto-rico";
+import { coincideBusqueda } from "../../../../lib/busqueda";
 import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, ROJO, FONT, TITLE } from "../../../../lib/tokens";
 
 interface Producto {
@@ -119,7 +120,7 @@ export default function MenuPage() {
   const q = busqueda.trim().toLowerCase();
   const visibles = useMemo(() => {
     const cats = PESTAÑAS.find(p => p.id === pestaña)!.incluye;
-    return productos.filter(p => (q ? true : cats.includes(p.categoria)) && (!q || p.nombre.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q)));
+    return productos.filter(p => (q ? true : cats.includes(p.categoria)) && (!q || coincideBusqueda(`${p.nombre} ${p.descripcion}`, q)));
   }, [productos, pestaña, q]);
 
   const grupos = useMemo(() => {
