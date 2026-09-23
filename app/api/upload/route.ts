@@ -6,14 +6,14 @@ import { requirePermiso } from "@/lib/admin-auth";
 import { puede } from "@/lib/permisos";
 
 const MAX_BYTES_ENTRADA = 25 * 1024 * 1024;
-const MAX_BYTES_SALIDA = 400 * 1024;
-const ANCHO_MAX = 1920;
+const MAX_BYTES_SALIDA = 250 * 1024;
+const ANCHO_MAX = 1600;
 
 const TIPOS_PERMITIDOS = new Set([
   "image/jpeg", "image/png", "image/webp", "image/avif", "image/gif",
 ]);
 
-/** Convierte a WebP, la redimensiona si es muy ancha y baja la calidad hasta que pese <400KB. */
+/** Convierte a WebP, la redimensiona si es muy ancha y baja la calidad hasta que pese <250KB. */
 async function procesarImagen(buffer: Buffer): Promise<Buffer> {
   let ancho = ANCHO_MAX;
   for (let intento = 0; intento < 6; intento++) {

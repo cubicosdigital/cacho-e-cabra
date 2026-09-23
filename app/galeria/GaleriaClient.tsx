@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X, Play, Film, Image as ImageIcon, Heart, Share2 } from "lucide-react";
 import type { GaleriaItem, TipoGaleria } from "../../lib/galeria";
 import { resolverImagen } from "../../lib/imagenes";
@@ -16,12 +16,32 @@ function leerLikesGuardados(): Set<string> {
   }
 }
 
+const BLOQUE = 24;
+
+// Muestra un fondo mientras carga y hace fundido al llegar; si falla, reintenta una vez antes de dejar el fondo.
+function Foto({ src }: { src: string }) {
+  const [listo, setListo] = useState(false);
+  const [intento, setIntento] = useState(0);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={intento ? `${src}${src.includes("?") ? "&" : "?"}r=${intento}` : src}
+      alt="" loading="lazy" decoding="async"
+      onLoad={() => setListo(true)}
+      onError={() => { if (intento < 2) setTimeout(() => setIntento(n => n + 1), 800 * (intento + 1)); }}
+      style={{ width: "100%", height: "100%", objectFit: "cover", opacity: listo ? 1 : 0, transition: "opacity .35s ease, transform .3s ease" }}
+    />
+  );
+}
+
 export default function GaleriaClient({ items: itemsIniciales, categoriasAdmin }: { items: GaleriaItem[]; categoriasAdmin: string[] }) {
   const [items, setItems] = useState(itemsIniciales);
   const [tab, setTab] = useState<TipoGaleria>("imagen");
   const [catSel, setCatSel] = useState<string>("todas");
   const [abierto, setAbierto] = useState<GaleriaItem | null>(null);
   const [yaLiked, setYaLiked] = useState<Set<string>>(new Set());
+  const [limite, setLimite] = useState(BLOQUE);
+  const centinela = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setYaLiked(leerLikesGuardados()); }, []);
 
@@ -40,6 +60,24 @@ export default function GaleriaClient({ items: itemsIniciales, categoriasAdmin }
   useEffect(() => {
     if (catSel !== "todas" && !categorias.includes(catSel)) setCatSel("todas");
   }, [categorias, catSel]);
+
+  let restante = limite;
+  const bloques = categoriasAMostrar.map(cat => {
+    const todos = delTab.filter(i => i.categoria === cat);
+    const visibles = todos.slice(0, Math.max(restante, 0));
+    restante -= visibles.length;
+    return { cat, todos, visibles };
+  });
+  const hayMas = bloques.reduce((n, b) => n + b.todos.length, 0) > limite;
+
+  // Al acercarse al final de lo mostrado, se agrega el siguiente bloque de fotos.
+  useEffect(() => {
+    const el = centinela.current;
+    if (!el || !hayMas) return;
+    const obs = new IntersectionObserver(es => { if (es[0].isIntersecting) setLimite(l => l + BLOQUE); }, { rootMargin: "600px" });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hayMas, limite]);
 
   const hayVideos = items.some(i => i.tipo === "video");
   const hayFotos = items.some(i => i.tipo === "imagen");
@@ -111,7 +149,7 @@ export default function GaleriaClient({ items: itemsIniciales, categoriasAdmin }
               const Icon = t === "video" ? Film : ImageIcon;
               const color = tab === t ? "#1a1200" : TEXT1;
               return (
-                <button key={t} onClick={() => setTab(t)} style={{
+                <button key={t} onClick={() => { setTab(t); setLimite(BLOQUE); }} style={{
                   display: "flex", alignItems: "center", gap: 8,
                   padding: "9px 22px", borderRadius: 999, border: `1px solid ${BORDER}`, cursor: "pointer",
                   fontFamily: FONT, fontSize: 16, fontWeight: 700,
@@ -127,7 +165,7 @@ export default function GaleriaClient({ items: itemsIniciales, categoriasAdmin }
 
         {categorias.length > 1 && (
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 28 }}>
-            <button onClick={() => setCatSel("todas")} style={{
+            <button onClick={() => { setCatSel("todas"); setLimite(BLOQUE); }} style={{
               padding: "7px 18px", borderRadius: 999, border: `1px solid ${BORDER}`, cursor: "pointer",
               fontFamily: FONT, fontSize: 14, fontWeight: 700,
               background: catSel === "todas" ? TEXT1 : "transparent", color: catSel === "todas" ? BG : TEXT3,
@@ -135,7 +173,7 @@ export default function GaleriaClient({ items: itemsIniciales, categoriasAdmin }
               Todas
             </button>
             {categorias.map(cat => (
-              <button key={cat} onClick={() => setCatSel(cat)} style={{
+              <button key={cat} onClick={() => { setCatSel(cat); setLimite(BLOQUE); }} style={{
                 padding: "7px 18px", borderRadius: 999, border: `1px solid ${BORDER}`, cursor: "pointer",
                 fontFamily: FONT, fontSize: 14, fontWeight: 700,
                 background: catSel === cat ? TEXT1 : "transparent", color: catSel === cat ? BG : TEXT3,
@@ -150,8 +188,8 @@ export default function GaleriaClient({ items: itemsIniciales, categoriasAdmin }
           <div style={{ color: TEXT3, fontSize: 17, padding: "40px 0" }}>Muy pronto vamos a subir contenido acá.</div>
         )}
 
-        {categoriasAMostrar.map(cat => {
-          const itemsCat = delTab.filter(i => i.categoria === cat);
+        {bloques.map(({ cat, todos: itemsCat, visibles }) => {
+          if (visibles.length === 0 && itemsCat.length > 0) return null;
           return (
           <div key={cat} style={{ marginBottom: 44 }}>
             {catSel === "todas" && <h2 style={{ fontFamily: TITLE, fontSize: 24, fontWeight: 800, marginBottom: 16, color: TEXT1 }}>{cat}</h2>}
@@ -161,14 +199,9 @@ export default function GaleriaClient({ items: itemsIniciales, categoriasAdmin }
               </div>
             ) : (
             <div className="gal-grid">
-              {itemsCat.map((it, idx) => (
+              {visibles.map((it, idx) => (
                 <div key={it.id} className={`gal-card${idx % 7 === 0 ? " big" : ""}`} onClick={() => setAbierto(it)}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={it.tipo === "video" ? youtubeThumbnail(it.url) : resolverImagen(it.url, 500, 500)}
-                    alt=""
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
+                  <Foto src={it.tipo === "video" ? youtubeThumbnail(it.url) : resolverImagen(it.url, 500, 500)} />
                   {it.tipo === "video" && (
                     <div style={{
                       position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
@@ -195,6 +228,7 @@ export default function GaleriaClient({ items: itemsIniciales, categoriasAdmin }
           </div>
           );
         })}
+        {hayMas && <div ref={centinela} style={{ height: 60, textAlign: "center", color: TEXT3, fontSize: 15 }}>Cargando más fotos…</div>}
       </main>
 
       {abierto && (
