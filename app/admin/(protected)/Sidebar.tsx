@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
   Receipt, Bike, TrendingUp, FileText, Table2, UtensilsCrossed, ChefHat,
   AlertTriangle, Inbox, MessageSquare, CalendarClock, CalendarDays, Users,
-  Image as ImageIcon, PartyPopper, ClipboardList, ListChecks, Megaphone, HandPlatter, Film, Fingerprint, Bell, Settings2, LayoutDashboard, SlidersHorizontal, CreditCard,
+  Image as ImageIcon, PartyPopper, ClipboardList, ListChecks, Megaphone, HandPlatter, Film, Fingerprint, Bell, Settings2, LayoutDashboard, SlidersHorizontal, CreditCard, Briefcase,
   type LucideIcon,
 } from "lucide-react";
 import { SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, FONT } from "../../../lib/tokens";
@@ -61,6 +61,7 @@ const GRUPOS: { titulo: string; items: Item[] }[] = [
     titulo: "Turnos",
     items: [
       { href: "/admin/trabajadores", label: "Trabajadores", icon: Users, acceso: ["trabajadores", "r"] },
+      { href: "/admin/postulaciones", label: "Postulaciones", icon: Briefcase, acceso: ["postulaciones", "r"] },
       { href: "/admin/turnos", label: "Turnos de la semana", icon: CalendarClock, acceso: ["turnos", "u"] },
       { href: "/admin/mi-horario", label: "Mi horario", icon: CalendarDays, acceso: "todos" },
       { href: "/admin/asistencia", label: "Asistencia", icon: Fingerprint, acceso: ["asistencia", "r"] },

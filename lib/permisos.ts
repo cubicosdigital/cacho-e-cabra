@@ -23,6 +23,7 @@ export const MODULOS = [
   { k: "galeria", label: "Galería", grupo: "Contenido" },
   { k: "eventos", label: "Eventos", grupo: "Contenido" },
   { k: "invitados", label: "Invitados por evento", grupo: "Contenido", solo: ["r", "u", "d"] },
+  { k: "postulaciones", label: "Postulaciones (trabaja con nosotros)", grupo: "Personas", solo: ["r", "u", "d"] },
   { k: "tareas", label: "Tareas", grupo: "Operaciones" },
 ] as const satisfies readonly { k: string; label: string; grupo: string; solo?: readonly Accion[] }[];
 
@@ -42,7 +43,7 @@ export const PERMISOS_POR_ROL: Record<Rol, Permisos> = {
   admin: Object.fromEntries(MODULOS.map(m => [m.k, accionesDe(m.k)])) as Permisos,
   supervisor: {
     pedidos: ["c", "r", "u"], delivery: TODO, pos: ["c", "r", "u"], mesas: ["r", "u"], menu: TODO, banner: TODO, galeria: TODO, eventos: TODO,
-    invitados: ["r", "u"], tareas: TODO, turnos: ["r"], denuncias: ["c"],
+    invitados: ["r", "u"], tareas: TODO, turnos: ["r"], denuncias: ["c"], postulaciones: ["r", "u"],
   },
   mesero: { ...basicoStaff, pedidos: ["c", "r", "u"], mesas: ["r"] },
   barra: { ...basicoStaff },

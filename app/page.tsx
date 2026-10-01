@@ -227,6 +227,12 @@ export default async function Home() {
             © {new Date().getFullYear()} Cacho Cabra · Bar · Restaurante · Cafetería
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", width: "100%", marginTop: 16 }}>
+            <a href="/trabajo" style={{
+              display: "inline-flex", alignItems: "center", gap: 8, fontSize: 15, fontWeight: 800, color: "#1a1200",
+              textDecoration: "none", background: AMR, border: `1px solid ${AMR}`, borderRadius: 999, padding: "12px 24px",
+            }}>
+              💼 Trabaja con nosotros
+            </a>
             <a href="/reclamos" style={{
               display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: TEXT1,
               textDecoration: "none", background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 999, padding: "9px 18px",
