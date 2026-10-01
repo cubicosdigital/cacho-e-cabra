@@ -46,10 +46,12 @@ export const PERMISOS_POR_ROL: Record<Rol, Permisos> = {
     invitados: ["r", "u"], tareas: TODO, turnos: ["r"], denuncias: ["c"], postulaciones: ["r", "u"],
   },
   mesero: { ...basicoStaff, pedidos: ["c", "r", "u"], mesas: ["r"] },
+  runner: { ...basicoStaff, pedidos: ["r", "u"], mesas: ["r"] },
   barra: { ...basicoStaff },
   coperia: { ...basicoStaff },
   cocina: { ...basicoStaff },
   caja: { ...basicoStaff, ventas: ["r"], pos: ["c", "r", "u"] },
+  recepcionista: { ...basicoStaff, pedidos: ["r"], mesas: ["c", "r", "u"], reclamos: ["r", "u"] },
 };
 
 /** Guardado en usuarios_admin.permisos: { modulos: { galeria: ["r","u"] }, pos?: boolean }. */
