@@ -112,7 +112,7 @@ export default function TerminalZkPage() {
   const [color, titulo, detalle] = conectado
     ? [VERDE, "Conectado", "El terminal está respondiendo."]
     : esperando
-      ? [AMR, "Conectando…", "Probando la IP que ingresaste. Puede tardar hasta un minuto."]
+      ? [AMR, `Conectando a ${ipManual || "la IP ingresada"}…`, "Probando la IP que ingresaste. Puede tardar hasta un minuto."]
       : puenteVivo
         ? [ROJO, "Sin conexión", estado?.mensaje ?? "No se encuentra el terminal. Revisa que esté encendido y con el cable de red conectado."]
         : [ROJO, "Sin conexión", "El computador del bar no está avisando. Revisa que esté encendido y conectado a la misma red que el terminal. Mientras tanto, puedes subir el archivo del pendrive en Asistencia."];
@@ -159,7 +159,7 @@ export default function TerminalZkPage() {
             padding: "6px 14px", borderRadius: 999, background: conectado ? "#123822" : esperando ? "#3a2f10" : "#3a1414",
             color, border: `1px solid ${color}`,
           }}>
-            <span style={{ width: 10, height: 10, borderRadius: 999, background: color, animation: esperando ? "pulso 1s infinite" : "none" }} />
+            {esperando ? <Spinner color={color} size={12} /> : <span style={{ width: 10, height: 10, borderRadius: 999, background: color }} />}
             {conectado ? "Conectado" : esperando ? "Conectando…" : "Sin conexión"}
           </span>
           <style>{`@keyframes pulso { 0%,100% { opacity: 1 } 50% { opacity: .3 } } @keyframes girar { to { transform: rotate(360deg) } }`}</style>
@@ -178,7 +178,9 @@ export default function TerminalZkPage() {
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
             <input id="ip-manual" value={ipManual} onChange={e => setIpManual(e.target.value)} placeholder="Ej. 192.168.1.98"
               style={{ background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "9px 12px", color: TEXT1, fontFamily: FONT, fontSize: 16, width: 200 }} />
-            <button onClick={guardarIpManual} disabled={guardandoIp} style={boton(!guardandoIp, true)}>{guardandoIp ? "Guardando…" : "Guardar IP"}</button>
+            <button onClick={guardarIpManual} disabled={guardandoIp} style={boton(!guardandoIp, true)}>
+              {guardandoIp ? <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Spinner size={14} /> Conectando…</span> : "Conectar a IP"}
+            </button>
             {ipManual && <button onClick={() => { setIpManual(""); guardarIpManual(); }} style={boton(true, false)}>Quitar</button>}
           </div>
         </div>
