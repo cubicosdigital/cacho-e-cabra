@@ -1,7 +1,8 @@
 "use client";
 import { useRef, useState } from "react";
+import { Upload } from "lucide-react";
 import { resolverImagen } from "../../../lib/imagenes";
-import { SURF2, BORDER, TEXT1, TEXT3, FONT } from "../../../lib/tokens";
+import { SURF2, BORDER, TEXT1, TEXT3, AMR, FONT } from "../../../lib/tokens";
 
 /**
  * Deja cambiar la foto de un producto: subiendo un archivo o pegando
@@ -56,9 +57,11 @@ export default function SelectorFoto({
           onChange={e => { const f = e.target.files?.[0]; if (f) subir(f); e.target.value = ""; }}
         />
         <button type="button" onClick={() => input.current?.click()} disabled={subiendo} style={{
-          background: SURF2, border: `1px solid ${BORDER}`, color: TEXT1, borderRadius: 8,
-          padding: "8px 14px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: FONT,
+          display: "flex", alignItems: "center", gap: 8, justifyContent: "center",
+          background: "transparent", border: `1.5px dashed ${AMR}`, color: AMR, borderRadius: 8,
+          padding: "9px 14px", fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: FONT,
         }}>
+          <Upload size={16} />
           {subiendo ? "Subiendo…" : valor ? "Cambiar foto" : "Subir foto"}
         </button>
         <input
