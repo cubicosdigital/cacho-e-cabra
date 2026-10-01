@@ -175,7 +175,7 @@ export default function RegistroPage({ params }: { params: Promise<{ token: stri
           <div style={{ color: TEXT2, fontSize: 18, marginBottom: 22 }}>
             Tu ficha quedó registrada. Tu administrador completará los datos de tu contrato. Para volver a entrar, usa tu correo y te enviaremos un código.
           </div>
-          <button onClick={() => router.push("/admin/mi-horario")} style={boton()}>Ver mi horario</button>
+          <button onClick={() => router.push("/admin/mi-horario")} style={boton()}>Ingresar al portal admin</button>
         </div>
       </div></div>
     );

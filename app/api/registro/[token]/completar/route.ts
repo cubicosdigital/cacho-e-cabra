@@ -14,7 +14,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   const correo = String(body.email ?? "").trim().toLowerCase();
   const codigo = String(body.codigo ?? "").replace(/\D/g, "");
   if (!EMAIL_RE.test(correo)) return NextResponse.json({ error: "Ese correo no parece válido." }, { status: 400 });
-  if (codigo.length < 6) return NextResponse.json({ error: "Escribe el código de 6 dígitos que llegó a tu correo." }, { status: 400 });
+  if (codigo.length < 8) return NextResponse.json({ error: "Escribe el código de 8 dígitos que llegó a tu correo." }, { status: 400 });
 
   const ficha = sanearFicha(body.ficha ?? {});
   for (const [campo, nombre] of OBLIGATORIOS) {
@@ -31,7 +31,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   const rolNuevo = ROL_POR_DEPARTAMENTO[empleado.departamento] ?? "mesero";
   const { data: cuenta, error: errCuenta } = await db
     .from("usuarios_admin")
-    .insert({ email: correo, nombre: empleado.nombre, rol: rolNuevo, permisos: { modulos: PERMISOS_POR_ROL[rolNuevo] } })
+    .insert({
+      email: correo, nombre: empleado.nombre, rol: rolNuevo, permisos: { modulos: PERMISOS_POR_ROL[rolNuevo] },
+      // "Mi perfil" vive en usuarios_admin: se precarga con lo que la persona ya llenó en su ficha,
+      // para que no tenga que volver a tipear lo mismo apenas entra.
+      rut: empleado.rut, telefono: ficha.telefono, direccion: ficha.direccion, comuna: ficha.comuna,
+      fecha_nacimiento: ficha.fecha_nacimiento,
+      contacto_emergencia_nombre: ficha.emergencia_nombre, contacto_emergencia_telefono: ficha.emergencia_telefono,
+    })
     .select("id")
     .single();
   if (errCuenta) return NextResponse.json({ error: "Ese correo ya está registrado en el sistema." }, { status: 409 });

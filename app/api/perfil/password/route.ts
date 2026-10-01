@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const codigo = String(body.codigo ?? "").replace(/\D/g, "");
   const password = String(body.password ?? "");
-  if (codigo.length < 6) return NextResponse.json({ error: "Escribe el código de 6 dígitos que llegó a tu correo." }, { status: 400 });
+  if (codigo.length < 8) return NextResponse.json({ error: "Escribe el código de 8 dígitos que llegó a tu correo." }, { status: 400 });
   if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
     return NextResponse.json({ error: "La contraseña debe tener al menos 8 caracteres, con letras y números." }, { status: 400 });
   }
