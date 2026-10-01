@@ -114,11 +114,11 @@ export default function LoginPage() {
             )}
             {modo === "codigo" && codigoEnviado && (
               <div>
-                <div style={{ fontSize: 16, color: TEXT3, fontWeight: 600, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Código de 6 dígitos</div>
-                <input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={codigo}
+                <div style={{ fontSize: 16, color: TEXT3, fontWeight: 600, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Código de 8 dígitos</div>
+                <input inputMode="numeric" autoComplete="one-time-code" maxLength={8} value={codigo}
                   onChange={e => setCodigo(e.target.value.replace(/\D/g, ""))}
-                  onKeyDown={e => e.key === "Enter" && codigo.length >= 6 && entrarConCodigo()}
-                  style={{ ...inp, textAlign: "center", letterSpacing: "0.4em", fontSize: 26 }} placeholder="000000" />
+                  onKeyDown={e => e.key === "Enter" && codigo.length >= 8 && entrarConCodigo()}
+                  style={{ ...inp, textAlign: "center", letterSpacing: "0.4em", fontSize: 26 }} placeholder="00000000" />
                 <div style={{ fontSize: 14, color: TEXT3, marginTop: 6 }}>Te lo enviamos a {email}.</div>
               </div>
             )}
@@ -132,7 +132,7 @@ export default function LoginPage() {
 
           <button
             onClick={modo === "password" ? handleLogin : codigoEnviado ? entrarConCodigo : enviarCodigo}
-            disabled={loading || (modo === "codigo" && codigoEnviado && codigo.length < 6)}
+            disabled={loading || (modo === "codigo" && codigoEnviado && codigo.length < 8)}
             style={{ width: "100%", padding: "13px", background: AMR, color: "#1a1200", border: "none", borderRadius: 10, fontWeight: 800, fontSize: 19, cursor: "pointer", fontFamily: FONT, opacity: loading ? 0.7 : 1 }}>
             {loading ? "Un momento..." : modo === "password" ? "Entrar" : codigoEnviado ? "Entrar" : "Enviar código a mi correo"}
           </button>

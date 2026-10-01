@@ -115,14 +115,14 @@ function Seguridad({ correo }: { correo: string }) {
       <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 6 }}>Cambiar contraseña</div>
       {paso === "inicio" && (
         <>
-          <div style={{ fontSize: 16, color: TEXT2, marginBottom: 16 }}>Por seguridad, te enviaremos un código de 6 dígitos a <strong>{correo}</strong>. Con ese código podrás elegir tu nueva contraseña.</div>
+          <div style={{ fontSize: 16, color: TEXT2, marginBottom: 16 }}>Por seguridad, te enviaremos un código de 8 dígitos a <strong>{correo}</strong>. Con ese código podrás elegir tu nueva contraseña.</div>
           <button onClick={pedirCodigo} disabled={trabajando} style={boton(!trabajando)}>{trabajando ? "Enviando…" : "Enviarme el código"}</button>
         </>
       )}
       {paso === "codigo" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ fontSize: 16, color: TEXT2 }}>Enviamos el código a <strong>{correo}</strong>. Revisa también la carpeta de spam.</div>
-          <Campo label="Código de 6 dígitos"><input inputMode="numeric" maxLength={6} value={codigo} onChange={e => setCodigo(e.target.value.replace(/\D/g, ""))} style={{ ...inp, textAlign: "center", letterSpacing: "0.4em", fontSize: 24 }} placeholder="000000" /></Campo>
+          <Campo label="Código de 8 dígitos"><input inputMode="numeric" maxLength={8} value={codigo} onChange={e => setCodigo(e.target.value.replace(/\D/g, ""))} style={{ ...inp, textAlign: "center", letterSpacing: "0.4em", fontSize: 24 }} placeholder="00000000" /></Campo>
           <Campo label="Nueva contraseña"><input type={ver ? "text" : "password"} value={pass} onChange={e => setPass(e.target.value)} style={inp} autoComplete="new-password" /></Campo>
           <Campo label="Repite la nueva contraseña"><input type={ver ? "text" : "password"} value={pass2} onChange={e => setPass2(e.target.value)} style={inp} autoComplete="new-password" /></Campo>
           <label style={{ display: "flex", alignItems: "center", gap: 8, color: TEXT2, fontSize: 15, cursor: "pointer" }}>
@@ -133,7 +133,7 @@ function Seguridad({ correo }: { correo: string }) {
           </div>
           {msg && <Aviso {...msg} />}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <button onClick={cambiar} disabled={trabajando || codigo.length < 6 || !reglas.every(r => r[1])} style={boton(!trabajando && codigo.length >= 6 && reglas.every(r => r[1]))}>{trabajando ? "Cambiando…" : "Cambiar contraseña"}</button>
+            <button onClick={cambiar} disabled={trabajando || codigo.length < 8 || !reglas.every(r => r[1])} style={boton(!trabajando && codigo.length >= 8 && reglas.every(r => r[1]))}>{trabajando ? "Cambiando…" : "Cambiar contraseña"}</button>
             <button onClick={pedirCodigo} disabled={trabajando} style={boton(!trabajando, false)}>Reenviar código</button>
           </div>
         </div>

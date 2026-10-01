@@ -187,12 +187,12 @@ export default function RegistroPage({ params }: { params: Promise<{ token: stri
         {cabecera}
         <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ fontFamily: TITLE, fontSize: 24, fontWeight: 900 }}>Confirma tu correo</div>
-          <div style={{ color: TEXT2, fontSize: 17 }}>Te enviamos un código de 6 dígitos a <strong>{f.email}</strong>. Revisa también la carpeta de spam.</div>
-          <input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={codigo} placeholder="000000"
+          <div style={{ color: TEXT2, fontSize: 17 }}>Te enviamos un código de 8 dígitos a <strong>{f.email}</strong>. Revisa también la carpeta de spam.</div>
+          <input inputMode="numeric" autoComplete="one-time-code" maxLength={8} value={codigo} placeholder="00000000"
             onChange={e => setCodigo(e.target.value.replace(/\D/g, ""))}
             style={{ ...inp, fontSize: 32, textAlign: "center", letterSpacing: "0.4em" }} />
           {error && <div style={{ color: "#fca5a5", background: "#231515", border: "1px solid #6b2020", borderRadius: 8, padding: "10px 14px", fontSize: 16 }}>{error}</div>}
-          <button onClick={confirmar} disabled={enviando || codigo.length < 6} style={boton(!enviando && codigo.length >= 6)}>
+          <button onClick={confirmar} disabled={enviando || codigo.length < 8} style={boton(!enviando && codigo.length >= 8)}>
             {enviando ? "Enviando…" : "Confirmar y enviar mi ficha"}
           </button>
           <button onClick={() => { setPaso("form"); setCodigo(""); setError(""); }}
