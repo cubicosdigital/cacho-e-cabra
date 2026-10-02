@@ -16,9 +16,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   if (!EMAIL_RE.test(correo)) return NextResponse.json({ error: "Ese correo no parece válido." }, { status: 400 });
   if (codigo.length < 8) return NextResponse.json({ error: "Escribe el código de 8 dígitos que llegó a tu correo." }, { status: 400 });
 
-  const ficha = sanearFicha(body.ficha ?? {});
+  const { rut: rutIngresado, ...ficha } = sanearFicha(body.ficha ?? {});
+  const rut = empleado.rut || rutIngresado;
+  if (!rut) return NextResponse.json({ error: "Falta tu RUT." }, { status: 400 });
   for (const [campo, nombre] of OBLIGATORIOS) {
-    if (!ficha[campo]) return NextResponse.json({ error: `Falta ${nombre}.` }, { status: 400 });
+    if (!ficha[campo as keyof typeof ficha]) return NextResponse.json({ error: `Falta ${nombre}.` }, { status: 400 });
   }
 
   // Verificar el código es lo último que puede fallar por culpa del usuario: se consume al usarse.
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       email: correo, nombre: empleado.nombre, rol: rolNuevo, permisos: { modulos: PERMISOS_POR_ROL[rolNuevo] },
       // "Mi perfil" vive en usuarios_admin: se precarga con lo que la persona ya llenó en su ficha,
       // para que no tenga que volver a tipear lo mismo apenas entra.
-      rut: empleado.rut, telefono: ficha.telefono, direccion: ficha.direccion, comuna: ficha.comuna,
+      rut, telefono: ficha.telefono, direccion: ficha.direccion, comuna: ficha.comuna,
       fecha_nacimiento: ficha.fecha_nacimiento,
       contacto_emergencia_nombre: ficha.emergencia_nombre, contacto_emergencia_telefono: ficha.emergencia_telefono,
     })
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     .single();
   if (errCuenta) return NextResponse.json({ error: "Ese correo ya está registrado en el sistema." }, { status: 409 });
 
-  await db.from("empleados").update({ usuario_admin_id: cuenta.id }).eq("id", empleado.id);
+  await db.from("empleados").update({ usuario_admin_id: cuenta.id, ...(empleado.rut ? {} : { rut }) }).eq("id", empleado.id);
   const { error: errFicha } = await db.from("fichas_empleado").upsert({
     empleado_id: empleado.id, email: correo, ...ficha,
     consentimiento_fecha: ficha.consentimiento ? ahora : null, registrado_at: ahora, updated_at: ahora,

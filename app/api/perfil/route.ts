@@ -38,5 +38,6 @@ export async function PATCH(req: NextRequest) {
 
   const { data, error } = await getSupabase().from("usuarios_admin").update(cambios).eq("email", user.email!).select(SELECT).single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if ("rut" in cambios && cambios.rut) await getSupabase().from("empleados").update({ rut: cambios.rut }).eq("usuario_admin_id", data.id);
   return NextResponse.json(data);
 }

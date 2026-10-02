@@ -43,7 +43,7 @@ export function sanearFicha(b: Record<string, unknown>) {
   const salud = b.salud_sistema === "fonasa" || b.salud_sistema === "isapre" ? b.salud_sistema : null;
 
   return {
-    telefono: texto(b.telefono, 30), direccion: texto(b.direccion, 200), comuna: texto(b.comuna, 80),
+    rut: texto(b.rut, 20), telefono: texto(b.telefono, 30), direccion: texto(b.direccion, 200), comuna: texto(b.comuna, 80),
     fecha_nacimiento: fecha(b.fecha_nacimiento), nacionalidad: texto(b.nacionalidad, 60), estado_civil: texto(b.estado_civil, 40),
     emergencia_nombre: texto(b.emergencia_nombre, 120), emergencia_parentesco: texto(b.emergencia_parentesco, 40),
     emergencia_telefono: texto(b.emergencia_telefono, 30),

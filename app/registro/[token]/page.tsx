@@ -64,6 +64,7 @@ export default function RegistroPage({ params }: { params: Promise<{ token: stri
   const [info, setInfo] = useState<Info | null>(null);
   const [errorLink, setErrorLink] = useState("");
   const [f, setF] = useState(VACIA);
+  const [rutIngresado, setRutIngresado] = useState("");
   const [cargas, setCargas] = useState<Carga[]>([]);
   const [paso, setPaso] = useState<"form" | "codigo" | "listo">("form");
   const [codigo, setCodigo] = useState("");
@@ -89,7 +90,7 @@ export default function RegistroPage({ params }: { params: Promise<{ token: stri
 
   function ficha() {
     return {
-      telefono: f.telefono, direccion: f.direccion, comuna: f.comuna, fecha_nacimiento: f.fecha_nacimiento, nacionalidad,
+      rut: info?.rut ? "" : rutIngresado, telefono: f.telefono, direccion: f.direccion, comuna: f.comuna, fecha_nacimiento: f.fecha_nacimiento, nacionalidad,
       estado_civil: f.estado_civil, emergencia_nombre: f.emergencia_nombre, emergencia_parentesco: f.emergencia_parentesco,
       emergencia_telefono: f.emergencia_telefono, afp: f.afp, salud_sistema: f.salud_sistema || null,
       isapre_nombre: f.isapre_nombre, isapre_plan: f.isapre_plan, seguro_cesantia: siNo(f.seguro_cesantia), cargas,
@@ -104,6 +105,7 @@ export default function RegistroPage({ params }: { params: Promise<{ token: stri
   async function pedirCodigo() {
     setError("");
     const faltan: [string, string][] = [
+      ...(info?.rut ? [] : [[rutIngresado, "tu RUT"] as [string, string]]),
       [f.email, "tu correo"], [f.telefono, "tu teléfono"], [f.direccion, "tu dirección"], [f.comuna, "tu comuna"],
       [f.fecha_nacimiento, "tu fecha de nacimiento"], [nacionalidad, "tu nacionalidad"], [f.estado_civil, "tu estado civil"],
       [f.emergencia_nombre, "el nombre de tu contacto de emergencia"], [f.emergencia_parentesco, "el parentesco de tu contacto de emergencia"],
@@ -223,6 +225,7 @@ export default function RegistroPage({ params }: { params: Promise<{ token: stri
         </Seccion>
 
         <Seccion titulo="Contacto y domicilio">
+          {!info.rut && <Campo label="RUT" obligatorio><input value={rutIngresado} onChange={e => setRutIngresado(e.target.value)} style={inp} placeholder="12.345.678-9" /></Campo>}
           <Campo label="Correo electrónico" obligatorio><input type="email" value={f.email} onChange={e => set("email", e.target.value)} style={inp} placeholder="tu@correo.cl" /></Campo>
           <Campo label="Teléfono" obligatorio><input type="tel" value={f.telefono} onChange={e => set("telefono", e.target.value)} style={inp} placeholder="+56 9 1234 5678" /></Campo>
           <Campo label="Dirección" obligatorio><input value={f.direccion} onChange={e => set("direccion", e.target.value)} style={inp} placeholder="Calle y número" /></Campo>
