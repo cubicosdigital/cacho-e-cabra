@@ -99,8 +99,13 @@ export default function FichaTrabajadorPage({ params }: { params: Promise<{ id: 
   const [cargando, setCargando] = useState(false);
 
   const cargarEmpleado = useCallback(async () => {
-    const res = await fetch("/api/empleados");
-    if (res.ok) setEmpleado((await res.json() as Empleado[]).find(e => e.id === id) ?? null);
+    // /api/empleados no trae el RUT (dato sensible); lo pedimos aparte, donde sí exige el permiso de trabajadores.
+    const [res, resRut] = await Promise.all([fetch("/api/empleados"), fetch(`/api/trabajadores/${id}/ficha`)]);
+    if (res.ok) {
+      const base = (await res.json() as Empleado[]).find(e => e.id === id) ?? null;
+      const rut = resRut.ok ? ((await resRut.json()).empleado?.rut ?? null) : null;
+      setEmpleado(base ? { ...base, rut } : null);
+    }
     setLoading(false);
   }, [id]);
   useEffect(() => { (async () => { await cargarEmpleado(); })(); }, [cargarEmpleado]);
