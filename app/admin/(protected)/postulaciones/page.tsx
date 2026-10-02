@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { MessageCircle, FileText } from "lucide-react";
-import type { Postulacion, EstadoPostulacion } from "../../../../lib/postulaciones";
+import { MessageCircle, FileText, Trash2 } from "lucide-react";
+import { CATEGORIAS_POSTULACION, type Postulacion, type EstadoPostulacion } from "../../../../lib/postulaciones";
 import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, ROJO, VERDE, FONT, TITLE } from "../../../../lib/tokens";
 
 const ESTADOS: { value: EstadoPostulacion; label: string; color: string }[] = [
@@ -22,6 +22,8 @@ export default function PostulacionesAdminPage() {
   const [postulaciones, setPostulaciones] = useState<Postulacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [sinAcceso, setSinAcceso] = useState(false);
+  const [filtro, setFiltro] = useState<string>("todas");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -36,6 +38,23 @@ export default function PostulacionesAdminPage() {
     setPostulaciones(prev => prev.map(p => p.id === id ? { ...p, ...cambios } : p));
     await fetch(`/api/postulaciones/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cambios) });
   }
+
+  async function categorizar(id: string, categoria: string) {
+    const previo = postulaciones;
+    setError("");
+    setPostulaciones(prev => prev.map(p => p.id === id ? { ...p, categoria: categoria || null } : p));
+    const res = await fetch(`/api/postulaciones/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ categoria: categoria || null }) });
+    if (!res.ok) { setPostulaciones(previo); setError("No se pudo guardar la categoría. ¿Corriste la migración 017 en Supabase?"); }
+  }
+
+  async function eliminar(p: Postulacion) {
+    if (!confirm(`¿Eliminar la postulación de ${p.nombre}? Se borra también su currículum.`)) return;
+    const res = await fetch(`/api/postulaciones/${p.id}`, { method: "DELETE" });
+    if (res.ok) setPostulaciones(prev => prev.filter(x => x.id !== p.id));
+    else setError("No se pudo eliminar.");
+  }
+
+  const visibles = filtro === "todas" ? postulaciones : filtro === "sin" ? postulaciones.filter(p => !p.categoria) : postulaciones.filter(p => p.categoria === filtro);
 
   if (sinAcceso) {
     return (
@@ -55,13 +74,24 @@ export default function PostulacionesAdminPage() {
           </div>
         </div>
 
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {[{ value: "todas", label: "Todas" }, ...CATEGORIAS_POSTULACION, { value: "sin", label: "Sin categoría" }].map(c => (
+            <button key={c.value} onClick={() => setFiltro(c.value)} style={{
+              padding: "6px 16px", borderRadius: 999, border: `1px solid ${BORDER}`, cursor: "pointer", fontFamily: FONT, fontSize: 14, fontWeight: 700,
+              background: filtro === c.value ? TEXT1 : "transparent", color: filtro === c.value ? BG : TEXT3,
+            }}>{c.label}</button>
+          ))}
+        </div>
+
+        {error && <div style={{ background: "#2a1212", border: "1px solid #5c2626", color: "#fca5a5", borderRadius: 10, padding: "10px 16px", fontSize: 15 }}>{error}</div>}
+
         {loading ? (
           <div style={{ color: TEXT3 }}>Cargando…</div>
-        ) : postulaciones.length === 0 ? (
+        ) : visibles.length === 0 ? (
           <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 24, textAlign: "center", color: TEXT3 }}>
             Todavía no hay postulaciones.
           </div>
-        ) : postulaciones.map(p => {
+        ) : visibles.map(p => {
           const est = ESTADOS.find(e => e.value === p.estado)!;
           return (
             <div key={p.id} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderLeft: `4px solid ${est.color}`, borderRadius: 14, padding: 20, display: "flex", gap: 16, flexWrap: "wrap" }}>
@@ -91,7 +121,13 @@ export default function PostulacionesAdminPage() {
                 </a>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 140 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 150 }}>
+                <select value={p.categoria ?? ""} onChange={e => categorizar(p.id, e.target.value)} style={{
+                  background: SURF2, border: `1px solid ${BORDER}`, color: TEXT1, borderRadius: 8, padding: "7px 8px", fontFamily: FONT, fontSize: 14, fontWeight: 700,
+                }}>
+                  <option value="">Sin categoría</option>
+                  {CATEGORIAS_POSTULACION.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
                 {ESTADOS.map(e => (
                   <button key={e.value} onClick={() => actualizar(p.id, { estado: e.value })} style={{
                     fontSize: 13, fontWeight: 700, borderRadius: 8, padding: "6px 10px", border: "none", cursor: "pointer", fontFamily: FONT,
@@ -100,6 +136,10 @@ export default function PostulacionesAdminPage() {
                     {e.label}
                   </button>
                 ))}
+                <button onClick={() => eliminar(p)} style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 4,
+                  background: "none", border: `1px solid ${BORDER}`, color: "#fca5a5", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontFamily: FONT, fontSize: 13, fontWeight: 700,
+                }}><Trash2 size={14} /> Eliminar</button>
               </div>
             </div>
           );
