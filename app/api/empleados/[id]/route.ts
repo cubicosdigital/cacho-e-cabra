@@ -18,6 +18,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { data, error } = await db.from("empleados").update(soloCamposPermitidos(body)).eq("id", id).select(EMPLEADO_COLUMNAS).single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 403 });
+  // El RUT también vive en "Mi perfil" (usuarios_admin): se mantiene igual en ambos lados.
+  if ("rut" in body && data.usuario_admin_id) await db.from("usuarios_admin").update({ rut: body.rut || null }).eq("id", data.usuario_admin_id);
   return NextResponse.json(data);
 }
 

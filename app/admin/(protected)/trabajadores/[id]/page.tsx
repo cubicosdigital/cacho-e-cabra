@@ -139,7 +139,7 @@ export default function FichaTrabajadorPage({ params }: { params: Promise<{ id: 
         </div>
 
         {tab === "datos" && <TabDatos empleado={empleado} inp={inp} onGuardado={cargarEmpleado} cargando={cargando} setCargando={setCargando} />}
-        {tab === "contrato" && <TabContrato id={id} inp={inp} />}
+        {tab === "contrato" && <TabContrato id={id} inp={inp} empleado={empleado} onGuardado={cargarEmpleado} />}
         {tab === "terminal" && <TabTerminal id={id} empleado={empleado} />}
         {tab === "asistencia" && <TabAsistencia id={id} empleado={empleado} />}
         {tab === "turnos" && <TabTurnos id={id} empleado={empleado} />}
@@ -254,7 +254,15 @@ function TabDatos({ empleado, inp, onGuardado, cargando, setCargando }: {
 
 // ---------- Contrato ----------
 
-function TabContrato({ id, inp }: { id: string; inp: React.CSSProperties }) {
+function TabContrato({ id, inp, empleado, onGuardado }: { id: string; inp: React.CSSProperties; empleado: Empleado; onGuardado: () => Promise<void> }) {
+  const [rut, setRut] = useState(empleado.rut ?? "");
+  const [rutMsg, setRutMsg] = useState<{ ok: boolean; texto: string } | null>(null);
+  async function guardarRut() {
+    setRutMsg(null);
+    const res = await fetch(`/api/empleados/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rut: rut.trim() || null }) });
+    if (res.ok) { setRutMsg({ ok: true, texto: "RUT guardado." }); await onGuardado(); }
+    else setRutMsg({ ok: false, texto: (await res.json().catch(() => ({}))).error ?? "No se pudo guardar el RUT." });
+  }
   const [ficha, setFicha] = useState<Ficha | null>(null);
   const [loading, setLoading] = useState(true);
   const [c, setC] = useState({ fecha_ingreso: "", contrato_duracion: "", fecha_termino: "", jornada_horas_semanales: "", sueldo_base: "" });
@@ -338,6 +346,14 @@ function TabContrato({ id, inp }: { id: string; inp: React.CSSProperties }) {
       </div>
 
       <Seccion titulo="Contacto y domicilio">
+        <div style={{ minWidth: 260 }}>
+          <div style={{ fontSize: 13, color: TEXT3, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>RUT</div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <input value={rut} onChange={e => setRut(e.target.value)} style={{ ...inp, maxWidth: 200 }} placeholder="12.345.678-9" />
+            <button onClick={guardarRut} style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "9px 16px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Guardar RUT</button>
+            {rutMsg && <span style={{ color: rutMsg.ok ? VERDE : ROJO, fontSize: 15 }}>{rutMsg.texto}</span>}
+          </div>
+        </div>
         <Dato etiqueta="Correo" valor={ficha.email} /><Dato etiqueta="Teléfono" valor={ficha.telefono} />
         <Dato etiqueta="Dirección" valor={ficha.direccion} /><Dato etiqueta="Comuna" valor={ficha.comuna} />
         <Dato etiqueta="Nacimiento" valor={fmtFecha(ficha.fecha_nacimiento)} /><Dato etiqueta="Nacionalidad" valor={ficha.nacionalidad} />
