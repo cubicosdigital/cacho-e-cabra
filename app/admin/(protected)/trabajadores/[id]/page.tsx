@@ -47,7 +47,7 @@ function Spinner({ color: c = "currentColor", size = 14 }: { color?: string; siz
 
 function Dato({ etiqueta, valor }: { etiqueta: string; valor: string | null | undefined }) {
   return (
-    <div style={{ minWidth: 180 }}>
+    <div style={{ minWidth: "min(100%, 180px)", overflowWrap: "anywhere" }}>
       <div style={{ fontSize: 13, color: TEXT3, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>{etiqueta}</div>
       <div style={{ fontSize: 18, color: valor ? TEXT1 : TEXT3, marginTop: 2 }}>{valor || "—"}</div>
     </div>
@@ -116,16 +116,17 @@ export default function FichaTrabajadorPage({ params }: { params: Promise<{ id: 
   if (!empleado) return <div style={{ minHeight: "100vh", background: BG, color: ROJO, fontFamily: FONT, padding: 40 }}>No se encontró al trabajador.</div>;
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <style>{`
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) brightness(2); opacity: 1; width: 26px; height: 26px; cursor: pointer; }
         @keyframes girar { to { transform: rotate(360deg) } }
+        @media (max-width: 767px) { .tp-kpis > * { flex: 1 1 calc(50% - 8px) !important; padding: 14px !important; } .tp-kpis > * > div:nth-child(2) { font-size: 26px !important; } }
       `}</style>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
         <div>
           <Link href="/admin/trabajadores" style={botonVolver}>← Volver</Link>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-            <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>{empleado.nombre}</div>
+            <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900, overflowWrap: "anywhere" }}>{empleado.nombre}</div>
             {!empleado.activo && (
               <span style={{ fontSize: 14, fontWeight: 700, color: ROJO, border: `1px solid ${ROJO}`, borderRadius: 999, padding: "3px 12px" }}>Dado de baja</span>
             )}
@@ -133,11 +134,11 @@ export default function FichaTrabajadorPage({ params }: { params: Promise<{ id: 
           <div style={{ fontSize: 17, color: TEXT3 }}>{empleado.cargo} · {empleado.departamento} · RUT {empleado.rut ?? "—"}</div>
         </div>
 
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", borderBottom: `1px solid ${BORDER}` }}>
+        <div className="adm-scroll-x" style={{ display: "flex", gap: 6, flexWrap: "wrap", borderBottom: `1px solid ${BORDER}` }}>
           {TABS.map(t => (
             <button key={t.id} onClick={() => irA(t.id)} style={{
               background: "none", border: "none", cursor: "pointer", fontFamily: FONT,
-              padding: "10px 16px", fontSize: 17, fontWeight: 700, color: tab === t.id ? AMR : TEXT3,
+              padding: "10px 16px", fontSize: 17, fontWeight: 700, whiteSpace: "nowrap", color: tab === t.id ? AMR : TEXT3,
               borderBottom: tab === t.id ? `3px solid ${AMR}` : "3px solid transparent", marginBottom: -1,
             }}>{t.label}</button>
           ))}
@@ -351,7 +352,7 @@ function TabContrato({ id, inp, empleado, onGuardado }: { id: string; inp: React
       </div>
 
       <Seccion titulo="Contacto y domicilio">
-        <div style={{ minWidth: 260 }}>
+        <div style={{ minWidth: "min(100%, 260px)" }}>
           <div style={{ fontSize: 13, color: TEXT3, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>RUT</div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <input value={rut} onChange={e => setRut(e.target.value)} style={{ ...inp, maxWidth: 200 }} placeholder="12.345.678-9" />
@@ -482,7 +483,7 @@ function TabTerminal({ id, empleado }: { id: string; empleado: Empleado }) {
             <div key={c.id} style={{ display: "flex", gap: 14, alignItems: "baseline", padding: "8px 0", borderTop: `1px solid ${BORDER}`, flexWrap: "wrap" }}>
               <div style={{ width: 70, fontSize: 14, color: TEXT3 }}>{new Date(c.created_at).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</div>
               <span style={{ fontSize: 13, fontWeight: 700, color: col, border: `1px solid ${col}`, borderRadius: 999, padding: "2px 10px" }}>{txt}</span>
-              <div style={{ flex: 1, minWidth: 200, fontSize: 15, color: TEXT2 }}>{c.resultado}</div>
+              <div style={{ flex: 1, minWidth: 200, fontSize: 15, color: TEXT2, overflowWrap: "anywhere" }}>{c.resultado}</div>
             </div>
           );
         })}
@@ -540,14 +541,14 @@ function TabAsistencia({ id, empleado }: { id: string; empleado: Empleado }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <div className="adm-scroll-x" style={{ display: "flex", justifyContent: "flex-end" }}>
         <FiltroFechas desde={desde} hasta={hasta} onAplicar={(d, h) => { setDesde(d); setHasta(h); }} />
       </div>
       {loading ? <div style={{ color: TEXT3 }}>Cargando…</div> : dias.length === 0 ? (
         <div style={{ ...tarjeta, color: TEXT3, fontSize: 16 }}>Sin registros en este rango.</div>
       ) : (
         <>
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+          <div className="tp-kpis" style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             <Kpi etiqueta="Horas trabajadas" valor={fmtHoras(stats.totalMin)} nota={`${fmtHoras(stats.promDia)} por día en promedio`} color={AMR} />
             <Kpi etiqueta="Días trabajados" valor={String(dias.length)} nota={stats.mejor ? `Su día más largo: ${fmtHoras(stats.mejor.trabajado!)}` : undefined} />
             <Kpi etiqueta="Puntualidad" valor={`${stats.puntualidad}%`} nota={`${stats.atrasos} atrasos`} color={colorPunt(stats.puntualidad)} />
@@ -558,6 +559,7 @@ function TabAsistencia({ id, empleado }: { id: string; empleado: Empleado }) {
           </Panel>
           <div style={tarjeta}>
             <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 6 }}>Registros</div>
+            <div className="adm-table-wrap"><div style={{ minWidth: 520 }}>
             <div style={{ display: "flex", gap: 14, padding: "6px 4px", fontSize: 14, color: TEXT3, fontWeight: 700, textTransform: "uppercase" }}>
               <div style={{ width: 190 }}>Fecha</div><div style={{ width: 90 }}>Entrada</div>
               <div style={{ width: 90 }}>Salida</div><div style={{ flex: 1 }}>Horas trabajadas</div>
@@ -580,6 +582,7 @@ function TabAsistencia({ id, empleado }: { id: string; empleado: Empleado }) {
                 ))}
               </div>
             ))}
+            </div></div>
           </div>
         </>
       )}
@@ -639,6 +642,14 @@ function TabTurnos({ id, empleado }: { id: string; empleado: Empleado }) {
         <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 4 }}>Semana · temporada {TEMPORADA}</div>
         <div style={{ fontSize: 15, color: TEXT3, marginBottom: 14 }}>{empleado.tipo_contrato === "part_time" ? "Part time" : "Full time"} · {total}h/semana</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, fontWeight: 700, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            <span style={{ width: 36 }}>Día</span>
+            <span style={{ width: 100 }}>Entrada</span>
+            <span style={{ width: 12 }} />
+            <span style={{ width: 100 }}>Salida</span>
+            <span style={{ width: 60 }} title="Horas trabajadas ese día">Horas</span>
+            <span style={{ flex: 1 }}>Nota</span>
+          </div>
           {DIAS.map(dia => (
             <div key={dia} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <span style={{ width: 36, fontSize: 16, color: TEXT3, fontWeight: 700 }}>{DIA_LABEL[dia]}</span>
@@ -646,11 +657,11 @@ function TabTurnos({ id, empleado }: { id: string; empleado: Empleado }) {
               <span style={{ color: TEXT3 }}>→</span>
               <input type="time" value={draft[dia]?.salida ?? ""} onChange={e => setDraft(d => ({ ...d, [dia]: { ...d[dia], salida: e.target.value } }))} style={{ ...inp, width: 100 }} />
               <input type="number" step="0.5" placeholder="hrs" value={draft[dia]?.horas ?? "0"} onChange={e => setDraft(d => ({ ...d, [dia]: { ...d[dia], horas: e.target.value } }))} style={{ ...inp, width: 60 }} />
-              <input type="text" placeholder="nota (opcional)" value={draft[dia]?.nota ?? ""} onChange={e => setDraft(d => ({ ...d, [dia]: { ...d[dia], nota: e.target.value } }))} style={{ ...inp, flex: 1, minWidth: 160 }} />
+              <input type="text" placeholder="nota (opcional)" value={draft[dia]?.nota ?? ""} onChange={e => setDraft(d => ({ ...d, [dia]: { ...d[dia], nota: e.target.value } }))} style={{ ...inp, flex: 1, minWidth: 120 }} />
             </div>
           ))}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 16, flexWrap: "wrap" }}>
           <button onClick={guardarSemana} disabled={guardando} style={{ background: VERDE, color: "#062018", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, cursor: "pointer", fontFamily: FONT, opacity: guardando ? 0.6 : 1 }}>
             {guardando ? "Guardando…" : "Guardar semana"}
           </button>
