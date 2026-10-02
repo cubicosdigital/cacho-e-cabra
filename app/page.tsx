@@ -210,9 +210,11 @@ export default async function Home() {
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: TEXT3, lineHeight: 1.6 }}>
                 <Clock size={16} strokeWidth={2} color={AMR} style={{ flexShrink: 0, marginTop: 2 }} />
                 <span>
-                  Lun – Jue · 09:00 – 23:00<br />
-                  Vie – Sáb · 09:00 – 01:00<br />
-                  Domingo · 09:00 – 20:00
+                  Mar – Mié · 17:00 – 00:00<br />
+                  Jueves · 17:00 – 02:00<br />
+                  Vie – Sáb · 13:00 – 03:00<br />
+                  Domingo · 14:00 – 00:00<br />
+                  Lunes · Cerrado
                 </span>
               </div>
             </div>
