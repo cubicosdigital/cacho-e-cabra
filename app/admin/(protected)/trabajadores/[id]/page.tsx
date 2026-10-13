@@ -592,6 +592,17 @@ function TabAsistencia({ id, empleado }: { id: string; empleado: Empleado }) {
 
 // ---------- Turnos ----------
 
+const COLACION_H = 0.5;
+
+// Horas trabajadas = salida - entrada (si la salida es de madrugada, cruza la medianoche) menos la colación.
+function horasDeTurno(entrada: string, salida: string): number | null {
+  if (!entrada || !salida) return null;
+  const min = (h: string) => { const [a, b] = h.split(":").map(Number); return a * 60 + b; };
+  let dif = min(salida) - min(entrada);
+  if (dif <= 0) dif += 24 * 60;
+  return Math.max(0, Math.round((dif / 60 - COLACION_H) * 2) / 2);
+}
+
 function TabTurnos({ id, empleado }: { id: string; empleado: Empleado }) {
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [loading, setLoading] = useState(true);
@@ -631,8 +642,19 @@ function TabTurnos({ id, empleado }: { id: string; empleado: Empleado }) {
     else setMsg({ ok: false, texto: (await res.json()).error });
   }
 
-  const inp: React.CSSProperties = { background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "6px 10px", color: TEXT1, fontFamily: FONT, fontSize: 17 };
-  const total = turnos.reduce((s, t) => s + t.horas, 0);
+  function cambiarHorario(dia: string, campo: "entrada" | "salida", valor: string) {
+    setDraft(d => {
+      const nuevo = { ...d[dia], [campo]: valor };
+      const h = horasDeTurno(nuevo.entrada, nuevo.salida);
+      if (h != null) nuevo.horas = String(h);
+      else if (!nuevo.entrada && !nuevo.salida) nuevo.horas = "0";
+      return { ...d, [dia]: nuevo };
+    });
+  }
+
+  const inp: React.CSSProperties = { background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "6px 10px", color: TEXT1, fontFamily: FONT, fontSize: 17, colorScheme: "dark" };
+  const total = DIAS.reduce((s, dia) => s + (parseFloat(draft[dia]?.horas) || 0), 0);
+  void turnos;
 
   if (loading) return <div style={{ color: TEXT3 }}>Cargando…</div>;
 
@@ -644,19 +666,19 @@ function TabTurnos({ id, empleado }: { id: string; empleado: Empleado }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, fontWeight: 700, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.04em" }}>
             <span style={{ width: 36 }}>Día</span>
-            <span style={{ width: 100 }}>Entrada</span>
+            <span style={{ width: 150 }}>Entrada</span>
             <span style={{ width: 12 }} />
-            <span style={{ width: 100 }}>Salida</span>
-            <span style={{ width: 60 }} title="Horas trabajadas ese día">Horas</span>
+            <span style={{ width: 150 }}>Salida</span>
+            <span style={{ width: 70 }} title="Se calcula solo (descuenta 30 min de colación). Puedes corregirlo a mano.">Horas</span>
             <span style={{ flex: 1 }}>Nota</span>
           </div>
           {DIAS.map(dia => (
             <div key={dia} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <span style={{ width: 36, fontSize: 16, color: TEXT3, fontWeight: 700 }}>{DIA_LABEL[dia]}</span>
-              <input type="time" value={draft[dia]?.entrada ?? ""} onChange={e => setDraft(d => ({ ...d, [dia]: { ...d[dia], entrada: e.target.value } }))} style={{ ...inp, width: 100 }} />
+              <input type="time" value={draft[dia]?.entrada ?? ""} onChange={e => cambiarHorario(dia, "entrada", e.target.value)} style={{ ...inp, width: 150 }} />
               <span style={{ color: TEXT3 }}>→</span>
-              <input type="time" value={draft[dia]?.salida ?? ""} onChange={e => setDraft(d => ({ ...d, [dia]: { ...d[dia], salida: e.target.value } }))} style={{ ...inp, width: 100 }} />
-              <input type="number" step="0.5" placeholder="hrs" value={draft[dia]?.horas ?? "0"} onChange={e => setDraft(d => ({ ...d, [dia]: { ...d[dia], horas: e.target.value } }))} style={{ ...inp, width: 60 }} />
+              <input type="time" value={draft[dia]?.salida ?? ""} onChange={e => cambiarHorario(dia, "salida", e.target.value)} style={{ ...inp, width: 150 }} />
+              <input type="number" step="0.5" placeholder="hrs" value={draft[dia]?.horas ?? "0"} onChange={e => setDraft(d => ({ ...d, [dia]: { ...d[dia], horas: e.target.value } }))} style={{ ...inp, width: 70 }} />
               <input type="text" placeholder="nota (opcional)" value={draft[dia]?.nota ?? ""} onChange={e => setDraft(d => ({ ...d, [dia]: { ...d[dia], nota: e.target.value } }))} style={{ ...inp, flex: 1, minWidth: 120 }} />
             </div>
           ))}
