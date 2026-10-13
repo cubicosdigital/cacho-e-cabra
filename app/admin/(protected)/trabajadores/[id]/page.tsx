@@ -124,7 +124,8 @@ export default function FichaTrabajadorPage({ params }: { params: Promise<{ id: 
       `}</style>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
         <div>
-          <Link href="/admin/trabajadores" style={botonVolver}>← Volver</Link>
+          <Link href="/admin/trabajadores" style={botonVolver}
+            onClick={e => { if (window.history.length > 1) { e.preventDefault(); router.back(); } }}>← Volver</Link>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900, overflowWrap: "anywhere" }}>{empleado.nombre}</div>
             {!empleado.activo && (
