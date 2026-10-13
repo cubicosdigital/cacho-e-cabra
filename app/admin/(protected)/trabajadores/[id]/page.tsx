@@ -654,6 +654,7 @@ function TabTurnos({ id, empleado }: { id: string; empleado: Empleado }) {
 
   const inp: React.CSSProperties = { background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "6px 10px", color: TEXT1, fontFamily: FONT, fontSize: 17, colorScheme: "dark" };
   const total = DIAS.reduce((s, dia) => s + (parseFloat(draft[dia]?.horas) || 0), 0);
+  const meta = empleado.tipo_contrato === "part_time" ? 30 : 42;
   void turnos;
 
   if (loading) return <div style={{ color: TEXT3 }}>Cargando…</div>;
@@ -662,7 +663,13 @@ function TabTurnos({ id, empleado }: { id: string; empleado: Empleado }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={tarjeta}>
         <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 4 }}>Semana · temporada {TEMPORADA}</div>
-        <div style={{ fontSize: 15, color: TEXT3, marginBottom: 14 }}>{empleado.tipo_contrato === "part_time" ? "Part time" : "Full time"} · {total}h/semana</div>
+        <div style={{ fontSize: 16, marginBottom: 14, display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+          <span style={{ color: TEXT3 }}>{empleado.tipo_contrato === "part_time" ? "Part time" : "Full time"}</span>
+          <span style={{ fontFamily: TITLE, fontSize: 22, fontWeight: 900, color: total === meta ? VERDE : total > meta ? ROJO : AMR }}>{total} h de {meta} h</span>
+          <span style={{ color: total === meta ? VERDE : total > meta ? ROJO : AMR, fontWeight: 700 }}>
+            {total === meta ? "Semana completa" : total > meta ? `Se pasa por ${total - meta} h` : `Faltan ${meta - total} h`}
+          </span>
+        </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, fontWeight: 700, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.04em" }}>
             <span style={{ width: 36 }}>Día</span>
