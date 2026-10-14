@@ -43,10 +43,10 @@ export default function DenunciasAdminPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 800, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Denuncias</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Denuncias</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>{denuncias.length} recibidas · {denuncias.filter(d => d.estado === "nueva").length} nuevas</div>
         </div>
 
@@ -61,11 +61,11 @@ export default function DenunciasAdminPage() {
                 <span style={{ fontSize: 16, color: TEXT3 }}>{d.anonima ? "Anónima" : d.nombre_denunciante || "Sin nombre"}</span>
                 <span style={{ fontSize: 16, color: TEXT3, marginLeft: "auto" }}>{new Date(d.created_at).toLocaleDateString("es-CL")}</span>
               </div>
-              <div style={{ fontSize: 18, color: TEXT2, lineHeight: 1.6, marginBottom: 12 }}>{d.descripcion}</div>
+              <div style={{ fontSize: 18, color: TEXT2, lineHeight: 1.6, marginBottom: 12, overflowWrap: "anywhere" }}>{d.descripcion}</div>
               <textarea placeholder="Respuesta / notas internas…" defaultValue={d.respuesta_admin ?? ""} onChange={e => setRespuestas(r => ({ ...r, [d.id]: e.target.value }))}
                 style={{ width: "100%", background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", color: TEXT1, fontFamily: FONT, fontSize: 17, minHeight: 50, boxSizing: "border-box", marginBottom: 10 }} />
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {ESTADOS.map(e => (
                     <button key={e.value} onClick={() => actualizar(d.id, { estado: e.value })}
                       style={{ fontSize: 16, fontWeight: d.estado === e.value ? 700 : 500, color: d.estado === e.value ? "#1a1200" : TEXT3, background: d.estado === e.value ? e.color : SURF2, border: "none", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontFamily: FONT }}>

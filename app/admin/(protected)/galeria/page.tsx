@@ -217,17 +217,17 @@ export default function GaleriaAdminPage() {
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
 
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Galería</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Galería</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>
             Videos de YouTube y fotografías, agrupados por categoría (Aniversario, Carta, etc.) para la página pública /galeria.
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {(["imagen", "video"] as TipoGaleria[]).map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               display: "flex", alignItems: "center", gap: 8,
@@ -303,7 +303,7 @@ export default function GaleriaAdminPage() {
             Todavía no hay {tab === "video" ? "videos" : "fotos"}. Agrega el primero abajo.
           </div>
         ) : vista === "cuadricula" ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 14 }}>
+          <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 14 }}>
             {delTabCat.map(it => (
               <div
                 key={it.id}
@@ -366,7 +366,7 @@ export default function GaleriaAdminPage() {
                   background: SURFACE, border: `1px solid ${arrastrando === it.id ? AMR : BORDER}`, borderRadius: 16,
                   padding: 16, display: "flex", gap: 16, flexWrap: "wrap", opacity: it.activo ? 1 : 0.6, cursor: "grab",
                 }}>
-                <div style={{ width: 220, flexShrink: 0 }}>
+                <div className="adm-full" style={{ width: 220, flexShrink: 0 }}>
                   <div style={{ width: "100%", height: 130, borderRadius: 10, overflow: "hidden", background: SURF2, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                     {it.tipo === "video" ? (
                       it.url && extraerYoutubeId(it.url) ? (
@@ -401,7 +401,7 @@ export default function GaleriaAdminPage() {
                   )}
                 </div>
 
-                <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", gap: 8, justifyContent: "center" }}>
+                <div className="adm-full" style={{ flex: 1, minWidth: 260, maxWidth: "100%", display: "flex", flexDirection: "column", gap: 8, justifyContent: "center" }}>
                   <select value={it.categoria}
                     onChange={e => { setItems(prev => prev.map(x => x.id === it.id ? { ...x, categoria: e.target.value } : x)); patch(it.id, { categoria: e.target.value }); }}
                     style={selectBase}>
@@ -410,7 +410,7 @@ export default function GaleriaAdminPage() {
                   </select>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+                <div className="adm-full" style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
                   <button onClick={() => patch(it.id, { activo: !it.activo })} style={{
                     fontSize: 15, fontWeight: 700, borderRadius: 8, padding: "8px 14px", border: "none", cursor: "pointer", fontFamily: FONT,
                     background: it.activo ? "#1a2e1a" : SURF2, color: it.activo ? VERDE : TEXT3,
@@ -432,7 +432,7 @@ export default function GaleriaAdminPage() {
         )}
 
         <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20 }}>
-          <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
+          <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
             <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900 }}>
               + Agregar {tab === "video" ? "video" : "foto"}
             </div>
@@ -446,9 +446,9 @@ export default function GaleriaAdminPage() {
               : "Ponle título y categoría, y sube el archivo. Si eliges varias fotos a la vez, se agrupan como una galería dentro de esa categoría."}
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <input placeholder="Título" value={nuevo.titulo ?? ""} onChange={e => setNuevo(n => ({ ...n, titulo: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 200 }} />
+            <input placeholder="Título" value={nuevo.titulo ?? ""} onChange={e => setNuevo(n => ({ ...n, titulo: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 200, maxWidth: "100%", boxSizing: "border-box" }} />
             {opcionesCategoria.length > 0 ? (
-              <select value={nuevo.categoria ?? ""} onChange={e => setNuevo(n => ({ ...n, categoria: e.target.value }))} style={{ ...selectBase, flex: 1, minWidth: 160 }}>
+              <select value={nuevo.categoria ?? ""} onChange={e => setNuevo(n => ({ ...n, categoria: e.target.value }))} style={{ ...selectBase, flex: 1, minWidth: 160, maxWidth: "100%", boxSizing: "border-box" }}>
                 {opcionesCategoria.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             ) : (
@@ -458,7 +458,7 @@ export default function GaleriaAdminPage() {
             )}
             {tab === "video" ? (
               <Fragment key="form-video">
-                <input placeholder="Link de YouTube" value={nuevo.url ?? ""} onChange={e => setNuevo(n => ({ ...n, url: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 220 }} />
+                <input placeholder="Link de YouTube" value={nuevo.url ?? ""} onChange={e => setNuevo(n => ({ ...n, url: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 220, maxWidth: "100%", boxSizing: "border-box" }} />
                 <button onClick={crear} style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Agregar</button>
               </Fragment>
             ) : (
@@ -497,7 +497,7 @@ export default function GaleriaAdminPage() {
           onClick={() => setEditando(null)}
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
         >
-          <div onClick={e => e.stopPropagation()} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 24, width: "100%", maxWidth: 440, display: "flex", flexDirection: "column", gap: 14 }}>
+          <div className="adm-modal" onClick={e => e.stopPropagation()} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 24, width: "100%", maxWidth: 440, display: "flex", flexDirection: "column", gap: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900 }}>Editar {editando.tipo === "video" ? "video" : "foto"}</div>
               <button onClick={() => setEditando(null)} style={{ background: "none", border: "none", color: TEXT3, cursor: "pointer" }}><X size={20} /></button>

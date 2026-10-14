@@ -14,7 +14,7 @@ const VACIA = {
   emergencia_nombre: "", emergencia_parentesco: "", emergencia_telefono: "",
   afp: "", salud_sistema: "", isapre_nombre: "", isapre_plan: "", seguro_cesantia: "",
   visa_tipo: "", visa_vencimiento: "", banco: "", tipo_cuenta: "", numero_cuenta: "",
-  manipulador_alimentos: "", manipulador_vencimiento: "", consentimiento: false,
+  consentimiento: false,
 };
 
 const inp: React.CSSProperties = {
@@ -84,7 +84,6 @@ export default function RegistroPage({ params }: { params: Promise<{ token: stri
   const set = <K extends keyof typeof VACIA>(k: K, v: (typeof VACIA)[K]) => setF(p => ({ ...p, [k]: v }));
   const nacionalidad = f.nacionalidad === "Otra" ? f.nacionalidad_otra.trim() : f.nacionalidad;
   const esExtranjero = f.nacionalidad !== "Chilena";
-  const aplicaManipulador = !!info && ["cocina", "barra", "coperia"].includes(info.departamento);
 
   const siNo = (v: string) => (v === "Sí" ? true : v === "No" ? false : null);
 
@@ -96,8 +95,6 @@ export default function RegistroPage({ params }: { params: Promise<{ token: stri
       isapre_nombre: f.isapre_nombre, isapre_plan: f.isapre_plan, seguro_cesantia: siNo(f.seguro_cesantia), cargas,
       visa_tipo: esExtranjero ? f.visa_tipo : "", visa_vencimiento: esExtranjero ? f.visa_vencimiento : "",
       banco: f.banco, tipo_cuenta: f.tipo_cuenta, numero_cuenta: f.numero_cuenta,
-      manipulador_alimentos: aplicaManipulador ? siNo(f.manipulador_alimentos) : null,
-      manipulador_vencimiento: aplicaManipulador ? f.manipulador_vencimiento : "",
       consentimiento: f.consentimiento,
     };
   }
@@ -279,13 +276,6 @@ export default function RegistroPage({ params }: { params: Promise<{ token: stri
           <Campo label="Tipo de cuenta"><Opciones valor={f.tipo_cuenta} onChange={v => set("tipo_cuenta", v)} lista={TIPOS_CUENTA} /></Campo>
           <Campo label="Número de cuenta"><input inputMode="numeric" value={f.numero_cuenta} onChange={e => set("numero_cuenta", e.target.value)} style={inp} /></Campo>
         </Seccion>
-
-        {aplicaManipulador && (
-          <Seccion titulo="Manipulación de alimentos" nota="Opcional.">
-            <Campo label="¿Tienes curso de manipulador de alimentos?"><SiNo valor={f.manipulador_alimentos} onChange={v => set("manipulador_alimentos", v)} /></Campo>
-            {f.manipulador_alimentos === "Sí" && <Campo label="Vigente hasta"><input type="date" value={f.manipulador_vencimiento} onChange={e => set("manipulador_vencimiento", e.target.value)} style={inp} /></Campo>}
-          </Seccion>
-        )}
 
         <label style={{ display: "flex", gap: 12, alignItems: "flex-start", color: TEXT2, fontSize: 16, lineHeight: 1.45, cursor: "pointer" }}>
           <input type="checkbox" checked={f.consentimiento} onChange={e => set("consentimiento", e.target.checked)} style={{ width: 22, height: 22, marginTop: 2, accentColor: AMR }} />

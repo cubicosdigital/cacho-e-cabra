@@ -28,10 +28,10 @@ export default function MiHorarioPage() {
   const totalHoras = turnos.reduce((s, t) => s + t.horas, 0);
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 700, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Mi horario</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Mi horario</div>
           {empleado && <div style={{ fontSize: 17, color: TEXT3 }}>{empleado.nombre} · {empleado.departamento} · {empleado.tipo_contrato === "part_time" ? "Part time" : "Full time"} · {totalHoras}h/semana</div>}
         </div>
 
@@ -47,8 +47,8 @@ export default function MiHorarioPage() {
               const t = turnos.find(x => x.dia_semana === dia);
               const libre = !t?.hora_entrada;
               return (
-                <div key={dia} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 20px", borderTop: idx === 0 ? "none" : `1px solid ${BORDER}` }}>
-                  <div style={{ width: 100, fontWeight: 700, fontSize: 18 }}>{DIA_LABEL[dia]}</div>
+                <div key={dia} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 20px", flexWrap: "wrap", borderTop: idx === 0 ? "none" : `1px solid ${BORDER}` }}>
+                  <div style={{ width: 100, flexShrink: 0, fontWeight: 700, fontSize: 18 }}>{DIA_LABEL[dia]}</div>
                   {libre ? (
                     <span style={{ fontSize: 17, color: TEXT3 }}>Libre</span>
                   ) : (
@@ -59,7 +59,7 @@ export default function MiHorarioPage() {
                       <span style={{ fontSize: 16, color: TEXT3 }}>{t!.horas}h</span>
                     </>
                   )}
-                  {t?.nota && <span style={{ fontSize: 16, color: TEXT2, marginLeft: "auto", fontStyle: "italic", maxWidth: 260, textAlign: "right" }}>{t.nota}</span>}
+                  {t?.nota && <span style={{ fontSize: 16, color: TEXT2, marginLeft: "auto", fontStyle: "italic", maxWidth: "100%", textAlign: "right" }}>{t.nota}</span>}
                 </div>
               );
             })}

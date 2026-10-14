@@ -58,10 +58,10 @@ export default function MesasPage() {
   const totalCapacidad = mesas.reduce((s, m) => s + m.capacidad, 0);
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1000, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Mesas</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Mesas</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>{mesas.length} mesas · {totalCapacidad} personas de capacidad {saving && "· guardando…"}</div>
         </div>
 
@@ -73,7 +73,7 @@ export default function MesasPage() {
               <div key={zona}>
                 <div style={{ padding: "12px 20px", background: SURF2, fontSize: 16, fontWeight: 700, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.06em" }}>{zona}</div>
                 {mesas.filter(m => m.zona === zona).map(m => (
-                  <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 20px", borderTop: `1px solid ${BORDER}` }}>
+                  <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 20px", borderTop: `1px solid ${BORDER}`, flexWrap: "wrap" }}>
                     <span style={{ fontWeight: 800, fontSize: 19, width: 70 }}>Mesa {m.numero}</span>
                     <select value={m.forma} onChange={e => actualizar(m.id, "forma", e.target.value)}
                       style={{ background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "6px 10px", color: TEXT1, fontFamily: FONT, fontSize: 17 }}>

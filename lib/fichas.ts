@@ -16,7 +16,6 @@ export interface Ficha {
   seguro_cesantia: boolean | null; cargas: Carga[];
   visa_tipo: string | null; visa_vencimiento: string | null;
   banco: string | null; tipo_cuenta: string | null; numero_cuenta: string | null;
-  manipulador_alimentos: boolean | null; manipulador_vencimiento: string | null;
   consentimiento: boolean; consentimiento_fecha: string | null;
   fecha_ingreso: string | null; contrato_duracion: "indefinido" | "plazo_fijo" | "por_obra" | null;
   fecha_termino: string | null; jornada_horas_semanales: number | null; sueldo_base: number | null;

@@ -9,6 +9,6 @@ export async function GET() {
   const { data } = await db.from("usuarios_admin").select("id, nombre, rol").eq("email", user.email!).maybeSingle();
   if (!data) return NextResponse.json(null);
 
-  const { data: empleado } = await db.from("empleados").select("id").eq("usuario_admin_id", data.id).maybeSingle();
-  return NextResponse.json({ ...data, empleado_id: empleado?.id ?? null });
+  const { data: empleado } = await db.from("empleados").select("id, jornada_tipo").eq("usuario_admin_id", data.id).maybeSingle();
+  return NextResponse.json({ ...data, empleado_id: empleado?.id ?? null, sin_turnos: empleado?.jornada_tipo === "art22" });
 }

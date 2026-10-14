@@ -9,7 +9,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (g.error) return g.error;
   const db = getSupabase();
 
-  const { data: empleado } = await db.from("empleados").select("id, nombre, rut, cargo, departamento").eq("id", id).maybeSingle();
+  const { data: empleado } = await db.from("empleados").select("id, nombre, rut, cargo, departamento, fecha_baja, motivo_baja, detalle_baja").eq("id", id).maybeSingle();
   if (!empleado) return NextResponse.json({ error: "Trabajador no encontrado" }, { status: 404 });
   const { data: ficha } = await db.from("fichas_empleado").select("*").eq("empleado_id", id).maybeSingle();
 

@@ -94,11 +94,11 @@ export default function BannerPage() {
   const activos = slides.filter(s => s.activo).length;
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
 
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Banner principal</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Banner principal</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>
             {activos > 0
               ? `${activos} ${activos === 1 ? "slide activo" : "slides activos"} en el home.`
@@ -121,7 +121,7 @@ export default function BannerPage() {
                 background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16,
                 padding: 16, display: "flex", gap: 16, flexWrap: "wrap", opacity: s.activo ? 1 : 0.6,
               }}>
-                <div style={{ width: 220, flexShrink: 0 }}>
+                <div className="adm-full" style={{ width: 220, flexShrink: 0 }}>
                   <div style={{ width: "100%", height: 130, borderRadius: 10, overflow: "hidden", background: SURF2, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {s.imagen ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -147,7 +147,7 @@ export default function BannerPage() {
                     style={{ ...inputBase, width: "100%", marginTop: 6, fontSize: 14 }} />
                 </div>
 
-                <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", gap: 8 }}>
+                <div className="adm-full" style={{ flex: 1, minWidth: 260, maxWidth: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
                   <input value={s.etiqueta} placeholder="Etiqueta (ej: 🎉 Evento Exclusivo)"
                     onChange={e => setSlides(prev => prev.map(x => x.id === s.id ? { ...x, etiqueta: e.target.value } : x))}
                     onBlur={e => patch(s.id, { etiqueta: e.target.value })} style={inputBase} />
@@ -160,14 +160,14 @@ export default function BannerPage() {
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <input value={s.botonTexto} placeholder="Texto del botón"
                       onChange={e => setSlides(prev => prev.map(x => x.id === s.id ? { ...x, botonTexto: e.target.value } : x))}
-                      onBlur={e => patch(s.id, { botonTexto: e.target.value })} style={{ ...inputBase, flex: 1, minWidth: 150 }} />
+                      onBlur={e => patch(s.id, { botonTexto: e.target.value })} style={{ ...inputBase, flex: 1, minWidth: 150, maxWidth: "100%", boxSizing: "border-box" }} />
                     <input value={s.botonHref} placeholder="/eventos/4"
                       onChange={e => setSlides(prev => prev.map(x => x.id === s.id ? { ...x, botonHref: e.target.value } : x))}
                       onBlur={e => patch(s.id, { botonHref: e.target.value })} style={{ ...inputBase, flex: 1, minWidth: 150 }} />
                   </div>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+                <div className="adm-full" style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
                   <button onClick={() => patch(s.id, { activo: !s.activo })} style={{
                     fontSize: 15, fontWeight: 700, borderRadius: 8, padding: "8px 14px", border: "none", cursor: "pointer", fontFamily: FONT,
                     background: s.activo ? "#1a2e1a" : SURF2, color: s.activo ? VERDE : TEXT3,
@@ -187,9 +187,9 @@ export default function BannerPage() {
           <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 6 }}>+ Agregar slide</div>
           <div style={{ fontSize: 15, color: TEXT3, marginBottom: 14 }}>Se crea oculto. Súbele la foto y actívalo cuando esté listo.</div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <input placeholder="Título" value={nuevo.titulo} onChange={e => setNuevo(n => ({ ...n, titulo: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 200 }} />
-            <input placeholder="Etiqueta" value={nuevo.etiqueta} onChange={e => setNuevo(n => ({ ...n, etiqueta: e.target.value }))} style={{ ...inputBase, flex: 1, minWidth: 160 }} />
-            <input placeholder="Descripción" value={nuevo.descripcion} onChange={e => setNuevo(n => ({ ...n, descripcion: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 200 }} />
+            <input placeholder="Título" value={nuevo.titulo} onChange={e => setNuevo(n => ({ ...n, titulo: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 200, maxWidth: "100%", boxSizing: "border-box" }} />
+            <input placeholder="Etiqueta" value={nuevo.etiqueta} onChange={e => setNuevo(n => ({ ...n, etiqueta: e.target.value }))} style={{ ...inputBase, flex: 1, minWidth: 160, maxWidth: "100%", boxSizing: "border-box" }} />
+            <input placeholder="Descripción" value={nuevo.descripcion} onChange={e => setNuevo(n => ({ ...n, descripcion: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 200, maxWidth: "100%", boxSizing: "border-box" }} />
             <button onClick={crear} style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Agregar</button>
           </div>
         </div>

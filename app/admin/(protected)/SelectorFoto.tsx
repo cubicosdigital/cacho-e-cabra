@@ -51,7 +51,7 @@ export default function SelectorFoto({
         )}
       </div>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
         <input
           ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/avif" style={{ display: "none" }}
           onChange={e => { const f = e.target.files?.[0]; if (f) subir(f); e.target.value = ""; }}

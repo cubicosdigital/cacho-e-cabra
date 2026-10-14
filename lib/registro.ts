@@ -53,7 +53,6 @@ export function sanearFicha(b: Record<string, unknown>) {
     seguro_cesantia: bool(b.seguro_cesantia), cargas,
     visa_tipo: texto(b.visa_tipo, 80), visa_vencimiento: fecha(b.visa_vencimiento),
     banco: texto(b.banco, 60), tipo_cuenta: texto(b.tipo_cuenta, 40), numero_cuenta: texto(b.numero_cuenta, 30),
-    manipulador_alimentos: bool(b.manipulador_alimentos), manipulador_vencimiento: fecha(b.manipulador_vencimiento),
     consentimiento: b.consentimiento === true,
   };
 }

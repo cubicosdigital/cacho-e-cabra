@@ -130,7 +130,7 @@ function GraficoVentas({ dias }: { dias: { fecha: string; local: number; deliver
       <div style={{ display: "flex", gap, marginTop: 6 }}>
         {dias.map((d, i) => <div key={d.fecha} style={{ flex: 1, minWidth: 1, fontSize: 11, color: TEXT3, textAlign: "center", whiteSpace: "nowrap", overflow: "visible" }}>{i % cada === 0 ? corto(d.fecha) : ""}</div>)}
       </div>
-      <div style={{ display: "flex", gap: 16, marginTop: 10, fontSize: 13, color: TEXT2 }}>
+      <div style={{ display: "flex", gap: 16, marginTop: 10, fontSize: 13, color: TEXT2, flexWrap: "wrap" }}>
         <span><span style={{ display: "inline-block", width: 10, height: 10, background: AMR, borderRadius: 2, marginRight: 6 }} />Local</span>
         <span><span style={{ display: "inline-block", width: 10, height: 10, background: AZUL, borderRadius: 2, marginRight: 6 }} />Delivery</span>
       </div>
@@ -232,14 +232,14 @@ export default function DashboardPage() {
   const syncMin = iso(eq.terminal.ultimaSync);
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "28px 36px 48px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "28px 36px 48px" }}>
       <style>{`@keyframes latido { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(1.5); } }`}</style>
-      <div style={{ maxWidth: 1240, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ maxWidth: 1240, margin: "0 auto", minWidth: 0, display: "flex", flexDirection: "column", gap: 20 }}>
 
         {/* Encabezado */}
         <div style={{ display: "flex", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
-          <div style={{ flex: 1, minWidth: 280 }}>
-            <div style={{ fontFamily: TITLE, fontSize: 34, fontWeight: 900 }}>{saludo}{nombre ? `, ${nombre}` : ""}</div>
+          <div style={{ flex: 1, minWidth: "min(100%, 280px)" }}>
+            <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 34, fontWeight: 900 }}>{saludo}{nombre ? `, ${nombre}` : ""}</div>
             <div style={{ fontSize: 18, color: TEXT2 }}>{fechaLarga} · {d.hora}</div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: TEXT3 }}>
@@ -265,7 +265,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Números grandes */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 250px), 1fr))", gap: 16 }}>
           <KpiGrande titulo="Ventas de hoy" valor={v.hoy} formato={plata} color={AMR} href="/admin/ventas"
             extra={<Sparkline valores={spark} color={AMR} />}
             pie={<><Delta actual={v.hoy} previo={v.mismoDiaSemPasada} etiqueta={`vs ${DIA_LARGO[v.diaSemana] ?? "hoy"} pasado`} /><div style={{ color: TEXT3, marginTop: 2 }}>Local {plata(v.hoyLocal)} · Delivery {plata(v.hoyDelivery)}</div></>} />
@@ -281,12 +281,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Ventas */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))", gap: 16 }}>
           <div style={{ ...tarjeta, gridColumn: "span 1" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 6 }}>
               <div style={tituloSeccion}>Ventas</div>
               <div style={{ flex: 1 }} />
-              <div style={{ display: "flex", gap: 6 }}>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {RANGOS.map(r => (
                   <button key={r.dias} onClick={() => setRango(r.dias)} style={{ background: rango === r.dias ? AMR : SURF2, color: rango === r.dias ? "#1a1200" : TEXT2, border: `1px solid ${BORDER}`, borderRadius: 999, padding: "4px 14px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>{r.label}</button>
                 ))}
@@ -324,7 +324,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Equipo */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))", gap: 16 }}>
           <div style={tarjeta}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
               <div style={tituloSeccion}>Equipo hoy</div>
@@ -370,7 +370,7 @@ export default function DashboardPage() {
                 ? <div style={{ color: TEXT2, fontSize: 15 }}>Sin permisos ni cursos por vencer en los próximos 90 días.</div>
                 : d.trabajadores.porVencer.slice(0, 4).map(x => (
                   <Link key={x.empleado_id + x.tipo} href={`/admin/trabajadores/${x.empleado_id}`} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "6px 0", textDecoration: "none", color: TEXT1, fontSize: 15 }}>
-                    <span>{primerNombre(x.nombre)} · {x.tipo}</span>
+                    <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{primerNombre(x.nombre)} · {x.tipo}</span>
                     <Pastilla color={x.dias < 0 ? ROJO : x.dias <= 30 ? AMR : TEXT3}>{x.dias < 0 ? `venció hace ${-x.dias} d` : `en ${x.dias} d`}</Pastilla>
                   </Link>
                 ))}
@@ -383,7 +383,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Eventos y pendientes */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))", gap: 16 }}>
           <div style={tarjeta}>
             <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
               <div style={tituloSeccion}>Eventos</div><div style={{ flex: 1 }} />

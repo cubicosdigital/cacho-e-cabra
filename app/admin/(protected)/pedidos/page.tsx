@@ -73,10 +73,10 @@ export default function PedidosPage() {
   const catFiltro = CATEGORIAS_POR_ROL[rol];
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1400, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Pedidos en vivo</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Pedidos en vivo</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>
             {catFiltro ? `Vista ${rol} · ${catFiltro.join(", ")}` : "Vista completa"}
           </div>
@@ -85,7 +85,7 @@ export default function PedidosPage() {
         {loading ? (
           <div style={{ color: TEXT3 }}>Cargando…</div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, alignItems: "start" }}>
+          <div className="adm-scroll-x" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(250px, 1fr))", gap: 16, alignItems: "start" }}>
             {ESTADOS.map(col => {
               const cards = pedidos.filter(p => p.estado === col.value);
               return (

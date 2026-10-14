@@ -29,11 +29,11 @@ export default function NotificacionesPage() {
   const sinLeer = lista.filter(n => !n.leida).length;
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Notificaciones</div>
+            <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Notificaciones</div>
             <div style={{ fontSize: 17, color: TEXT3 }}>{sinLeer > 0 ? `${sinLeer} sin leer` : "Todo al día"}</div>
           </div>
           {sinLeer > 0 && (
@@ -47,9 +47,9 @@ export default function NotificacionesPage() {
           {loading ? <div style={{ padding: 20, color: TEXT3 }}>Cargando…</div> : lista.length === 0 ? (
             <div style={{ padding: 20, color: TEXT3 }}>Aún no hay notificaciones.</div>
           ) : lista.map((n, idx) => (
-            <div key={n.id} style={{ display: "flex", gap: 14, alignItems: "center", padding: "16px 20px", borderTop: idx === 0 ? "none" : `1px solid ${BORDER}`, opacity: n.leida ? 0.6 : 1 }}>
+            <div key={n.id} style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", padding: "16px 20px", borderTop: idx === 0 ? "none" : `1px solid ${BORDER}`, opacity: n.leida ? 0.6 : 1 }}>
               <div style={{ width: 10, height: 10, borderRadius: 999, background: n.leida ? "transparent" : AMR, flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>
                 <div style={{ fontWeight: 700, fontSize: 18 }}>{n.titulo}</div>
                 {n.mensaje && <div style={{ fontSize: 16, color: TEXT2 }}>{n.mensaje}</div>}
                 <div style={{ fontSize: 14, color: TEXT3, marginTop: 2 }}>{cuando(n.created_at)}</div>

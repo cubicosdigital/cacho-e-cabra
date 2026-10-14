@@ -91,11 +91,11 @@ export default function SugerenciasChefPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 28 }}>
 
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>👨‍🍳 Sugerencias del Chef</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>👨‍🍳 Sugerencias del Chef</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>
             {productos.length} sugerencias · {productos.filter(p => p.disponible).length} publicadas · se muestran en la carta solo viernes, sábado y domingo
           </div>
@@ -116,7 +116,7 @@ export default function SugerenciasChefPage() {
                         style={{ background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", color: TEXT1, fontFamily: FONT }} />
                       <textarea value={editDraft.descripcion ?? ""} onChange={e => setEditDraft(d => ({ ...d, descripcion: e.target.value }))}
                         style={{ background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", color: TEXT1, fontFamily: FONT, minHeight: 50 }} />
-                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                         <input type="number" value={editDraft.precio ?? 0} onChange={e => setEditDraft(d => ({ ...d, precio: parseInt(e.target.value) || 0 }))}
                           style={{ background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", color: TEXT1, fontFamily: FONT, width: 120 }} />
                         <button onClick={() => guardarEdit(p.id)} style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Guardar</button>
@@ -124,7 +124,7 @@ export default function SugerenciasChefPage() {
                       </div>
                     </div>
                   ) : (
-                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, rowGap: 8 }}>
                       <div style={{
                         width: 74, height: 52, flexShrink: 0, borderRadius: 8, overflow: "hidden", background: SURF2,
                         display: "flex", alignItems: "center", justifyContent: "center",
@@ -136,12 +136,12 @@ export default function SugerenciasChefPage() {
                           <span style={{ color: TEXT3, fontSize: 12 }}>sin foto</span>
                         )}
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <div style={{ flex: "1 1 140px", minWidth: 0 }}>
+                        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                           <span style={{ fontWeight: 700, fontSize: 19 }}>{p.nombre}</span>
                           {!p.disponible && <span style={{ fontSize: 16, color: TEXT3, background: SURF2, borderRadius: 6, padding: "2px 8px" }}>borrador</span>}
                         </div>
-                        <div style={{ fontSize: 17, color: TEXT2, marginTop: 2 }}>{p.descripcion}</div>
+                        <div style={{ fontSize: 17, color: TEXT2, marginTop: 2, overflowWrap: "anywhere" }}>{p.descripcion}</div>
                       </div>
                       <div style={{ fontWeight: 800, fontSize: 19, color: AMR, flexShrink: 0 }}>{fmt(p.precio)}</div>
                       <button onClick={() => togglePublicado(p)} style={{
@@ -164,10 +164,10 @@ export default function SugerenciasChefPage() {
           <div style={{ fontSize: 15, color: TEXT3, marginBottom: 14 }}>Se crea como borrador. Usa &quot;Publicar&quot; cuando esté disponible.</div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <input placeholder="Nombre" value={nuevo.nombre} onChange={e => setNuevo(n => ({ ...n, nombre: e.target.value }))}
-              style={{ flex: 2, minWidth: 180, background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 14px", color: TEXT1, fontFamily: FONT }} />
+              style={{ flex: 2, minWidth: 180, maxWidth: "100%", boxSizing: "border-box", background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 14px", color: TEXT1, fontFamily: FONT }} />
             <input placeholder="Descripción" value={nuevo.descripcion} onChange={e => setNuevo(n => ({ ...n, descripcion: e.target.value }))}
-              style={{ flex: 3, minWidth: 200, background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 14px", color: TEXT1, fontFamily: FONT }} />
-            <input type="number" placeholder="Precio" value={nuevo.precio} onChange={e => setNuevo(n => ({ ...n, precio: e.target.value }))}
+              style={{ flex: 3, minWidth: 200, maxWidth: "100%", boxSizing: "border-box", background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 14px", color: TEXT1, fontFamily: FONT }} />
+            <input className="adm-full" type="number" placeholder="Precio" value={nuevo.precio} onChange={e => setNuevo(n => ({ ...n, precio: e.target.value }))}
               style={{ width: 110, background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 14px", color: TEXT1, fontFamily: FONT }} />
             <button onClick={crear} disabled={creando} style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
               {creando ? "..." : "Crear borrador"}

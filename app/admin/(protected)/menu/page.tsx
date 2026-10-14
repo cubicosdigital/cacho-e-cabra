@@ -73,10 +73,10 @@ function FormularioProducto({ borrador, setBorrador, subcategorias, onGuardar, o
 }) {
   const set = <K extends keyof Borrador>(k: K, v: Borrador[K]) => setBorrador({ ...borrador, [k]: v });
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px 20px 20px", background: SURF2 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px 20px 20px", background: SURF2, minWidth: 0 }}>
       <div style={{ fontFamily: TITLE, fontSize: 18, fontWeight: 900 }}>{titulo}</div>
       <SelectorFoto valor={borrador.foto ?? ""} onChange={foto => set("foto", foto)} />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: 12 }}>
         <label><div style={{ fontSize: 13, color: TEXT3, fontWeight: 700, marginBottom: 4 }}>NOMBRE</div><input value={borrador.nombre} onChange={e => set("nombre", e.target.value)} style={inp} /></label>
         <label><div style={{ fontSize: 13, color: TEXT3, fontWeight: 700, marginBottom: 4 }}>PRECIO</div><input type="number" value={borrador.precio || ""} onChange={e => set("precio", parseInt(e.target.value, 10) || 0)} style={inp} /></label>
         <label><div style={{ fontSize: 13, color: TEXT3, fontWeight: 700, marginBottom: 4 }}>CATEGORÍA</div>
@@ -180,11 +180,11 @@ export default function MenuPage() {
   const agotados = productos.filter(p => !p.disponible).length;
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1000, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
+        <div className="adm-stack" style={{ display: "flex", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: 240 }}>
-            <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Menú carta</div>
+            <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Menú carta</div>
             <div style={{ fontSize: 17, color: TEXT3 }}>
               {productos.length} productos · {productos.length - agotados} disponibles{agotados > 0 && <> · <span style={{ color: ROJO }}>{agotados} agotados</span></>}
             </div>
@@ -198,7 +198,7 @@ export default function MenuPage() {
         </div>
 
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-          <div style={{ display: "flex", gap: 6, padding: 4, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, flexWrap: "wrap" }}>
+          <div className="adm-scroll-x" style={{ display: "flex", gap: 6, padding: 4, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, flexWrap: "wrap" }}>
             {PESTAÑAS.map(t => (
               <button key={t.id} onClick={() => { setPestaña(t.id); setAbierto(null); setBusqueda(""); }} style={{
                 fontFamily: FONT, fontSize: 16, fontWeight: 700, padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer",
@@ -206,7 +206,7 @@ export default function MenuPage() {
               }}>{t.label} <span style={{ opacity: 0.65, fontWeight: 500 }}>{conteo(t.incluye)}</span></button>
             ))}
           </div>
-          <input placeholder="Buscar en toda la carta…" value={busqueda} onChange={e => setBusqueda(e.target.value)} style={{ ...inp, width: 260 }} />
+          <input placeholder="Buscar en toda la carta…" value={busqueda} onChange={e => setBusqueda(e.target.value)} className="adm-full" style={{ ...inp, width: 260 }} />
         </div>
 
         {error && <div style={{ background: "#2a1212", border: "1px solid #5c2626", color: "#fca5a5", borderRadius: 10, padding: "10px 16px", fontSize: 16 }}>{error}</div>}
@@ -227,14 +227,14 @@ export default function MenuPage() {
                 const abiertoAqui = abierto === p.id;
                 return (
                   <div key={p.id} style={{ borderTop: idx === 0 ? "none" : `1px solid ${BORDER}` }}>
-                    <div onClick={() => abrir(p)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", cursor: "pointer", opacity: p.disponible ? 1 : 0.55, background: abiertoAqui ? SURF2 : "transparent" }}>
+                    <div onClick={() => abrir(p)} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, rowGap: 8, padding: "12px 16px", cursor: "pointer", opacity: p.disponible ? 1 : 0.55, background: abiertoAqui ? SURF2 : "transparent" }}>
                       <div style={{ width: 96, height: 68, flexShrink: 0, borderRadius: 10, overflow: "hidden", background: SURF2, display: "flex", alignItems: "center", justifyContent: "center" }}>
                         {p.foto
                           // eslint-disable-next-line @next/next/no-img-element
                           ? <img src={resolverImagen(p.foto, 300, 210)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           : <span style={{ color: TEXT3, fontSize: 12 }}>sin foto</span>}
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ flex: "1 1 140px", minWidth: 0 }}>
                         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                           <span style={{ fontFamily: TITLE, fontWeight: 800, fontSize: 19 }}>{p.nombre}</span>
                           {p.badge && <span style={{ fontSize: 12, fontWeight: 700, color: TEXT3, border: `1px solid ${BORDER}`, borderRadius: 999, padding: "1px 8px" }}>{p.badge}</span>}

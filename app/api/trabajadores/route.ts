@@ -12,7 +12,7 @@ export async function GET() {
 
   const { data, error: err } = await db
     .from("empleados")
-    .select("id, nombre, rut, cargo, departamento, control_asistencia, fichas_empleado(*), invitaciones(id, telefono, expira_en, usada_en, created_at)")
+    .select("id, nombre, rut, cargo, departamento, control_asistencia, activo, fecha_baja, motivo_baja, detalle_baja, jornada_tipo, fichas_empleado(*), invitaciones(id, telefono, expira_en, usada_en, created_at)")
     .order("nombre");
   if (err) return NextResponse.json({ error: err.message }, { status: 500 });
 
@@ -27,7 +27,7 @@ export async function GET() {
 
     return {
       id: e.id, nombre: e.nombre, rut: e.rut, cargo: e.cargo, departamento: e.departamento,
-      control_asistencia: e.control_asistencia, estado,
+      control_asistencia: e.control_asistencia, activo: e.activo, fecha_baja: e.fecha_baja, motivo_baja: e.motivo_baja, detalle_baja: e.detalle_baja, jornada_tipo: e.jornada_tipo, estado,
       telefono: ficha?.telefono ?? ultima?.telefono ?? null,
     };
   });

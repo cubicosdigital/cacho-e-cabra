@@ -88,11 +88,11 @@ export default function VentasPage() {
   const maxMonto = datos.categorias[0]?.[1].monto ?? 1;
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
 
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Resumen de ventas</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Resumen de ventas</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>Solo cuenta lo entregado. Local + delivery.</div>
         </div>
 
@@ -102,10 +102,10 @@ export default function VentasPage() {
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 6, padding: 4, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, alignSelf: "flex-start" }}>
+        <div className="adm-scroll-x" style={{ display: "flex", gap: 6, padding: 4, maxWidth: "100%", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, alignSelf: "flex-start" }}>
           {RANGOS.map(r => (
             <button key={r.value} onClick={() => setRango(r.value)} style={{
-              fontFamily: FONT, fontSize: 17, fontWeight: 600, padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer",
+              fontFamily: FONT, fontSize: 17, fontWeight: 600, padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
               background: rango === r.value ? AMR : "transparent", color: rango === r.value ? "#1a1200" : TEXT3,
             }}>{r.label}</button>
           ))}
@@ -115,7 +115,7 @@ export default function VentasPage() {
           <div style={{ color: TEXT3 }}>Cargando…</div>
         ) : (
           <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 190px), 1fr))", gap: 14 }}>
               {[
                 { label: "Total vendido", valor: fmt(datos.total), color: AMR },
                 { label: "Local", valor: fmt(datos.totalLocal), color: VERDE },
@@ -138,7 +138,7 @@ export default function VentasPage() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {datos.categorias.map(([cat, d]) => (
                     <div key={cat}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 16, marginBottom: 4 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", fontSize: 16, marginBottom: 4 }}>
                         <span style={{ color: TEXT1, fontWeight: 600, textTransform: "capitalize" }}>{cat}</span>
                         <span style={{ color: TEXT3 }}>{d.unidades} u · <strong style={{ color: AMR }}>{fmt(d.monto)}</strong></span>
                       </div>
@@ -160,7 +160,7 @@ export default function VentasPage() {
                   {datos.productos.map(([nombre, unidades], i) => (
                     <div key={nombre} style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 17 }}>
                       <span style={{ color: TEXT3, width: 24, fontWeight: 700 }}>{i + 1}</span>
-                      <span style={{ flex: 1, color: TEXT1 }}>{nombre}</span>
+                      <span style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere", color: TEXT1 }}>{nombre}</span>
                       <span style={{ color: AMR, fontWeight: 800 }}>{unidades}</span>
                     </div>
                   ))}

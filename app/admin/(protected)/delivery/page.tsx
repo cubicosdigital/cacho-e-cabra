@@ -87,12 +87,12 @@ export default function DeliveryPage() {
   const visibles = pedidos.filter(p => p.estado !== "entregado" || new Date(p.created_at) >= hoy);
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1400, margin: "0 auto", display: "flex", flexDirection: "column", gap: 22 }}>
 
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
+        <div className="adm-stack" style={{ display: "flex", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Pedidos delivery</div>
+            <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Pedidos delivery</div>
             <div style={{ fontSize: 17, color: TEXT3 }}>
               {delDia.length} pedidos hoy · {fmt(delDia.reduce((s, p) => s + p.total, 0))}
             </div>
@@ -111,27 +111,27 @@ export default function DeliveryPage() {
         {abierto && (
           <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <input placeholder="Cliente" value={form.cliente} onChange={e => setForm(f => ({ ...f, cliente: e.target.value }))} style={{ ...inputBase, flex: 1, minWidth: 180 }} />
-              <input placeholder="+56 9 ..." value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} style={{ ...inputBase, width: 170 }} />
+              <input placeholder="Cliente" value={form.cliente} onChange={e => setForm(f => ({ ...f, cliente: e.target.value }))} style={{ ...inputBase, flex: 1, minWidth: 0 }} />
+              <input placeholder="+56 9 ..." value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className="adm-full" style={{ ...inputBase, width: 170 }} />
             </div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <input placeholder="Dirección" value={form.direccion} onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: 220 }} />
-              <input placeholder="Depto / referencia" value={form.referencia} onChange={e => setForm(f => ({ ...f, referencia: e.target.value }))} style={{ ...inputBase, flex: 1, minWidth: 160 }} />
+              <input placeholder="Dirección" value={form.direccion} onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))} style={{ ...inputBase, flex: 2, minWidth: "min(100%, 220px)" }} />
+              <input placeholder="Depto / referencia" value={form.referencia} onChange={e => setForm(f => ({ ...f, referencia: e.target.value }))} style={{ ...inputBase, flex: 1, minWidth: "min(100%, 160px)" }} />
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <div style={{ fontSize: 15, color: TEXT2, fontWeight: 700 }}>Productos</div>
               {form.items.map((item, i) => (
-                <div key={i} style={{ display: "flex", gap: 8 }}>
+                <div key={i} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <input placeholder="Producto" value={item.nombre}
                     onChange={e => setForm(f => ({ ...f, items: f.items.map((x, j) => j === i ? { ...x, nombre: e.target.value } : x) }))}
-                    style={{ ...inputBase, flex: 2, minWidth: 160 }} />
+                    style={{ ...inputBase, flex: "2 1 100%", minWidth: 0 }} />
                   <input type="number" placeholder="Cant." value={item.cantidad}
                     onChange={e => setForm(f => ({ ...f, items: f.items.map((x, j) => j === i ? { ...x, cantidad: e.target.value } : x) }))}
-                    style={{ ...inputBase, width: 85 }} />
+                    style={{ ...inputBase, width: 85, flex: "1 1 70px" }} />
                   <input type="number" placeholder="Precio c/u" value={item.precio}
                     onChange={e => setForm(f => ({ ...f, items: f.items.map((x, j) => j === i ? { ...x, precio: e.target.value } : x) }))}
-                    style={{ ...inputBase, width: 130 }} />
+                    style={{ ...inputBase, width: 130, flex: "1 1 100px" }} />
                   {form.items.length > 1 && (
                     <button onClick={() => setForm(f => ({ ...f, items: f.items.filter((_, j) => j !== i) }))}
                       style={{ background: "none", border: "none", color: "#fca5a5", cursor: "pointer", fontSize: 19 }}>🗑</button>
@@ -145,8 +145,8 @@ export default function DeliveryPage() {
             </div>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-              <input type="number" placeholder="Despacho" value={form.despacho} onChange={e => setForm(f => ({ ...f, despacho: e.target.value }))} style={{ ...inputBase, width: 140 }} />
-              <input placeholder="Notas" value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))} style={{ ...inputBase, flex: 1, minWidth: 180 }} />
+              <input type="number" placeholder="Despacho" value={form.despacho} onChange={e => setForm(f => ({ ...f, despacho: e.target.value }))} style={{ ...inputBase, width: 140, flex: "1 1 120px" }} />
+              <input placeholder="Notas" value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))} style={{ ...inputBase, flex: 1, minWidth: "min(100%, 180px)" }} />
               <button onClick={crear} disabled={guardando} style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "10px 24px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
                 {guardando ? "..." : "Crear pedido"}
               </button>
@@ -157,7 +157,7 @@ export default function DeliveryPage() {
         {loading ? (
           <div style={{ color: TEXT3 }}>Cargando…</div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, alignItems: "start" }}>
+          <div className="adm-scroll-x" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(250px, 1fr))", gap: 16, alignItems: "start" }}>
             {COLUMNAS.map(col => {
               const cards = visibles.filter(p => p.estado === col.value);
               return (
@@ -170,13 +170,13 @@ export default function DeliveryPage() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {cards.map(p => (
                       <div key={p.id} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderTop: `3px solid ${col.color}`, borderRadius: 12, padding: 14 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                          <span style={{ fontWeight: 800, fontSize: 18 }}>{p.cliente}</span>
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
+                          <span style={{ fontWeight: 800, fontSize: 18, minWidth: 0, overflowWrap: "anywhere" }}>{p.cliente}</span>
                           <span style={{ fontSize: 15, color: TEXT3 }}>
                             {new Date(p.created_at).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
                           </span>
                         </div>
-                        <div style={{ fontSize: 16, color: TEXT2, marginBottom: 2 }}>{p.direccion}</div>
+                        <div style={{ fontSize: 16, color: TEXT2, marginBottom: 2, overflowWrap: "anywhere" }}>{p.direccion}</div>
                         {p.referencia && <div style={{ fontSize: 15, color: TEXT3, marginBottom: 6 }}>{p.referencia}</div>}
 
                         <div style={{ display: "flex", flexDirection: "column", gap: 3, margin: "8px 0" }}>

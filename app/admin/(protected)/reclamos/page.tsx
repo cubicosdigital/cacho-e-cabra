@@ -43,10 +43,10 @@ export default function ReclamosAdminPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 800, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Reclamos</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Reclamos</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>{reclamos.length} recibidos · {reclamos.filter(r => r.estado === "nuevo").length} nuevos</div>
         </div>
 
@@ -59,14 +59,14 @@ export default function ReclamosAdminPage() {
               <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 16, fontWeight: 700, color: TEXT3, background: SURF2, borderRadius: 6, padding: "2px 8px", textTransform: "uppercase" }}>{r.tipo}</span>
                 <span style={{ fontSize: 17, fontWeight: 700 }}>{r.nombre}</span>
-                <span style={{ fontSize: 16, color: TEXT3 }}>{r.email}{r.telefono ? ` · ${r.telefono}` : ""}</span>
+                <span style={{ fontSize: 16, color: TEXT3, overflowWrap: "anywhere", minWidth: 0 }}>{r.email}{r.telefono ? ` · ${r.telefono}` : ""}</span>
                 <span style={{ fontSize: 16, color: TEXT3, marginLeft: "auto" }}>{new Date(r.created_at).toLocaleDateString("es-CL")}</span>
               </div>
-              <div style={{ fontSize: 18, color: TEXT2, lineHeight: 1.6, marginBottom: 12 }}>{r.mensaje}</div>
+              <div style={{ fontSize: 18, color: TEXT2, lineHeight: 1.6, marginBottom: 12, overflowWrap: "anywhere" }}>{r.mensaje}</div>
               <textarea placeholder="Respuesta al cliente / notas internas…" defaultValue={r.respuesta_admin ?? ""} onChange={e => setRespuestas(v => ({ ...v, [r.id]: e.target.value }))}
                 style={{ width: "100%", background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", color: TEXT1, fontFamily: FONT, fontSize: 17, minHeight: 50, boxSizing: "border-box", marginBottom: 10 }} />
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {ESTADOS.map(e => (
                     <button key={e.value} onClick={() => actualizar(r.id, { estado: e.value })}
                       style={{ fontSize: 16, fontWeight: r.estado === e.value ? 700 : 500, color: r.estado === e.value ? "#1a1200" : TEXT3, background: r.estado === e.value ? e.color : SURF2, border: "none", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontFamily: FONT }}>

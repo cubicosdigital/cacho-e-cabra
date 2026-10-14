@@ -24,10 +24,10 @@ export default function TurnosPage() {
   }, []);
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Turnos de la semana</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Turnos de la semana</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>{empleados.length} empleados · temporada {TEMPORADA} · edita el turno de cada persona desde su ficha</div>
         </div>
 
@@ -41,8 +41,8 @@ export default function TurnosPage() {
                 {equipo.map((emp, idx) => {
                   const total = turnos.filter(t => t.empleado_id === emp.id).reduce((s, t) => s + t.horas, 0);
                   return (
-                    <div key={emp.id} style={{ borderTop: idx === 0 ? "none" : `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: 14, padding: "14px 20px" }}>
-                      <div style={{ flex: 1 }}>
+                    <div key={emp.id} style={{ borderTop: idx === 0 ? "none" : `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", flexWrap: "wrap" }}>
+                      <div style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>
                         <div style={{ fontWeight: 700, fontSize: 19 }}>{emp.nombre}</div>
                         <div style={{ fontSize: 16, color: TEXT3 }}>{emp.tipo_contrato === "part_time" ? "Part time" : "Full time"} · {total}h/semana</div>
                       </div>

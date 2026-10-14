@@ -7,7 +7,7 @@ export const tarjeta: React.CSSProperties = { background: SURFACE, border: `1px 
 
 export function Kpi({ etiqueta, valor, nota, color = TEXT1 }: { etiqueta: string; valor: string; nota?: React.ReactNode; color?: string }) {
   return (
-    <div style={{ ...tarjeta, flex: "1 1 200px", minWidth: 200, padding: "18px 20px" }}>
+    <div style={{ ...tarjeta, flex: "1 1 150px", minWidth: 0, padding: "18px 20px" }}>
       <div style={{ fontSize: 14, fontWeight: 700, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.06em" }}>{etiqueta}</div>
       <div style={{ fontFamily: TITLE, fontSize: 34, fontWeight: 900, color, lineHeight: 1.15, marginTop: 6 }}>{valor}</div>
       {nota && <div style={{ fontSize: 14, color: TEXT3, marginTop: 4 }}>{nota}</div>}
@@ -74,12 +74,12 @@ export function BarrasHorizontales({ filas, formato, color = AMR, href }: {
       {filas.map((f, i) => {
         const contenido = (
           <>
-            <div style={{ width: 26, fontFamily: TITLE, fontWeight: 900, fontSize: 18, color: i === 0 ? AMR : TEXT3 }}>{i + 1}</div>
-            <div style={{ width: 230, fontSize: 16, fontWeight: 600, color: TEXT1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.etiqueta}</div>
-            <div style={{ flex: 1, background: SURF2, borderRadius: 999, height: 14, overflow: "hidden" }}>
+            <div style={{ width: 26, flexShrink: 0, fontFamily: TITLE, fontWeight: 900, fontSize: 18, color: i === 0 ? AMR : TEXT3 }}>{i + 1}</div>
+            <div style={{ width: 230, flexShrink: 1, minWidth: 0, fontSize: 16, fontWeight: 600, color: TEXT1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.etiqueta}</div>
+            <div style={{ flex: 1, minWidth: 30, background: SURF2, borderRadius: 999, height: 14, overflow: "hidden" }}>
               <div style={{ width: `${(f.valor / max) * 100}%`, height: "100%", background: f.color ?? color, borderRadius: 999 }} />
             </div>
-            <div style={{ width: 130, textAlign: "right", fontSize: 16, fontWeight: 700, color: TEXT2 }}>{formato(f.valor)}</div>
+            <div style={{ width: 130, flexShrink: 0, textAlign: "right", fontSize: 16, fontWeight: 700, color: TEXT2 }}>{formato(f.valor)}</div>
           </>
         );
         const estilo: React.CSSProperties = { display: "flex", alignItems: "center", gap: 12, fontFamily: FONT, textDecoration: "none" };
@@ -97,7 +97,7 @@ export function FiltroFechas({ desde, hasta, onAplicar }: { desde: string; hasta
   const [h, setH] = useState(hasta);
   const inp: React.CSSProperties = { background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "6px 10px", color: TEXT1, fontFamily: FONT, fontSize: 17 };
   return (
-    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+    <div className="adm-full" style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
       <style>{`
         input[type="date"]::-webkit-calendar-picker-indicator {
           filter: invert(1) brightness(2);

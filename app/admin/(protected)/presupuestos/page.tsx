@@ -16,7 +16,7 @@ function fmt(n: number) { return `$${n.toLocaleString("es-CL")}`; }
 
 const inputBase: React.CSSProperties = {
   background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8,
-  padding: "9px 12px", color: TEXT1, fontFamily: FONT, fontSize: 16,
+  padding: "9px 12px", color: TEXT1, fontFamily: FONT, fontSize: 16, maxWidth: "100%", boxSizing: "border-box",
 };
 
 /** El editor trabaja los bloques como texto plano: un subtítulo termina en ":" y el resto son líneas. */
@@ -74,6 +74,8 @@ function EditorItems({ items, onChange }: { items: ItemPresupuesto[]; onChange: 
     <div>
       <div style={{ fontSize: 15, color: TEXT2, fontWeight: 700, marginBottom: 4 }}>Ítems adicionales</div>
       <div style={{ fontSize: 14, color: TEXT3, marginBottom: 8 }}>Cada ítem suma al total: por ejemplo arriendo de mesas, garzón extra, torta o decoración.</div>
+      <div className="adm-table-wrap">
+      <div style={{ minWidth: 560 }}>
       {items.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "minmax(160px, 1fr) 84px 120px 110px 32px", gap: 8, alignItems: "center", marginBottom: 6, fontSize: 12, fontWeight: 800, color: TEXT3, textTransform: "uppercase" }}>
           <div>Descripción</div><div>Cantidad</div><div>Precio unit.</div><div style={{ textAlign: "right" }}>Subtotal</div><div />
@@ -88,7 +90,9 @@ function EditorItems({ items, onChange }: { items: ItemPresupuesto[]; onChange: 
           <button onClick={() => onChange(items.filter((_, j) => j !== i))} title="Quitar" style={{ background: "none", border: "none", color: "#fca5a5", cursor: "pointer", fontSize: 18 }}>✕</button>
         </div>
       ))}
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
         <button onClick={() => onChange([...items, { descripcion: "", cantidad: 1, precio: 0 }])} style={{ background: SURF2, border: `1px dashed ${BORDER}`, color: TEXT2, borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontFamily: FONT, fontSize: 15 }}>+ Agregar ítem</button>
         {items.length > 0 && <span style={{ color: TEXT2, fontSize: 15 }}>Suma de ítems: <strong style={{ color: TEXT1 }}>{fmt(subtotalItems(items))}</strong></span>}
       </div>
@@ -235,11 +239,11 @@ export default function PresupuestosPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
 
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Presupuestos</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Presupuestos</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>
             {lista.length} presupuestos · {lista.filter(p => p.estado === "aceptado").length} aceptados
           </div>
@@ -299,7 +303,7 @@ export default function PresupuestosPage() {
                         <span style={{ color: TEXT3 }}> ({draft.personas ?? 0} personas × {fmt(draft.precioPorPersona ?? 0)}{contenido.items.length > 0 ? ` + ${fmt(subtotalItems(contenido.items))} en ítems` : ""})</span>
                       </div>
 
-                      <div style={{ display: "flex", gap: 8 }}>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <button onClick={() => guardar(p.id)} style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "9px 18px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Guardar</button>
                         <button onClick={() => setEditId(null)} style={{ background: "none", border: "none", color: TEXT3, cursor: "pointer", fontFamily: FONT }}>cancelar</button>
                         <div style={{ flex: 1 }} />
@@ -308,7 +312,7 @@ export default function PresupuestosPage() {
                     </div>
                   ) : (
                     <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-                      <div style={{ flex: 1, minWidth: 220 }}>
+                      <div style={{ flex: 1, minWidth: 220, overflowWrap: "anywhere" }}>
                         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                           <span style={{ fontWeight: 700, fontSize: 19 }}>{p.cliente}</span>
                           <span style={{ fontSize: 15, color: meta.color, background: meta.bg, borderRadius: 6, padding: "2px 8px" }}>{meta.label}</span>
@@ -370,7 +374,7 @@ export default function PresupuestosPage() {
                 <input type="number" value={plantillaEdit.precio || ""} onChange={e => setPlantillaEdit({ ...plantillaEdit, precio: parseInt(e.target.value, 10) || 0 })} placeholder="$ por persona (opcional)" style={{ ...inputBase, width: 190 }} />
               </div>
               <EditorContenido c={plantillaEdit.c} setC={c => setPlantillaEdit({ ...plantillaEdit, c })} />
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button onClick={guardarPlantilla} disabled={!plantillaEdit.nombre.trim()} style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "9px 18px", fontWeight: 700, cursor: "pointer", fontFamily: FONT, opacity: plantillaEdit.nombre.trim() ? 1 : 0.6 }}>Guardar plantilla</button>
                 <button onClick={() => setPlantillaEdit(null)} style={{ background: "none", border: "none", color: TEXT3, cursor: "pointer", fontFamily: FONT }}>cancelar</button>
               </div>

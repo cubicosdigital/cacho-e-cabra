@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { BG, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, ROJO, FONT, TITLE } from "../../../../../lib/tokens";
 import {
-  HORA_ENTRADA_ESPERADA, TOLERANCIA_MIN, DIAS_SEMANA, agruparPorPeriodo, fmtHoras, parseFecha, resumirDias, type Marca,
+  HORA_ENTRADA_ESPERADA, TOLERANCIA_MIN, DIAS_SEMANA, agruparPorPeriodo, entradasProgramadas, fmtHoras, parseFecha, resumirDias, type Marca,
 } from "../../../../../lib/asistencia";
 import { BarrasHorizontales, BarrasVerticales, FiltroFechas, Kpi, Panel, botonVolver, tarjeta } from "../graficos";
 
@@ -25,6 +25,7 @@ function conDia(fecha: string) {
 export default function RegistrosGeneralesPage() {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
+  const [programadas, setProgramadas] = useState<ReturnType<typeof entradasProgramadas>>(new Map());
   const [loading, setLoading] = useState(true);
   const [desde, setDesde] = useState(haceUnMesISO());
   const [hasta, setHasta] = useState(hoyISO());
@@ -32,10 +33,12 @@ export default function RegistrosGeneralesPage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [eRes, aRes] = await Promise.all([
+      const [eRes, aRes, tRes] = await Promise.all([
         fetch("/api/empleados"),
         fetch(`/api/asistencia?desde=${desde}&hasta=${hasta}`),
+        fetch("/api/turnos"),
       ]);
+      if (tRes.ok) setProgramadas(entradasProgramadas(await tRes.json()));
       if (eRes.ok) setEmpleados(await eRes.json());
       if (aRes.ok) setAsistencias(await aRes.json());
       setLoading(false);
@@ -43,7 +46,7 @@ export default function RegistrosGeneralesPage() {
   }, [desde, hasta]);
 
   const controlados = useMemo(() => empleados.filter(e => e.control_asistencia), [empleados]);
-  const dias = useMemo(() => resumirDias(asistencias), [asistencias]);
+  const dias = useMemo(() => resumirDias(asistencias, programadas), [asistencias, programadas]);
 
   const stats = useMemo(() => {
     const totalMin = dias.reduce((s, d) => s + (d.trabajado ?? 0), 0);
@@ -86,13 +89,13 @@ export default function RegistrosGeneralesPage() {
   const irATrabajador = (id: string) => `/admin/asistencia/${id}`;
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
         <div>
           <Link href="/admin/asistencia" style={botonVolver}>← Volver</Link>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: 260 }}>
-              <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Registros generales</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Registros generales</div>
               <div style={{ fontSize: 17, color: TEXT3 }}>
                 {controlados.length} trabajadores con control · atraso = entrada después de las {HORA_ENTRADA_ESPERADA} + {TOLERANCIA_MIN} min
               </div>
@@ -111,12 +114,12 @@ export default function RegistrosGeneralesPage() {
             </div>
 
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-              <div style={{ flex: "1 1 480px", minWidth: 0 }}>
+              <div style={{ flex: "1 1 min(100%, 480px)", minWidth: 0 }}>
                 <Panel titulo="Horas trabajadas" subtitulo={horasPeriodo.porSemana ? "Total del equipo por semana" : "Total del equipo por día"}>
                   <BarrasVerticales barras={horasPeriodo.barras.map(b => ({ ...b, valor: b.valor / 60 }))} formato={v => `${Math.round(v)} h`} />
                 </Panel>
               </div>
-              <div style={{ flex: "1 1 480px", minWidth: 0 }}>
+              <div style={{ flex: "1 1 min(100%, 480px)", minWidth: 0 }}>
                 <Panel titulo="Personas presentes" subtitulo={presentesPeriodo.porSemana ? "Marcaciones-día por semana" : "Cuántos vinieron cada día"}>
                   <BarrasVerticales barras={presentesPeriodo.barras} formato={v => `${v} ${presentesPeriodo.porSemana ? "asistencias" : "personas"}`} color={VERDE} />
                 </Panel>
@@ -137,11 +140,11 @@ export default function RegistrosGeneralesPage() {
               <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 14 }}>Registros</div>
               {asistencias.length === 0 && <div style={{ color: TEXT3, fontSize: 16 }}>Sin registros en este rango.</div>}
               {asistencias.slice(0, 200).map(a => (
-                <div key={a.id} style={{ display: "flex", gap: 14, padding: "8px 4px", borderBottom: `1px solid ${BORDER}`, fontSize: 16 }}>
-                  <div style={{ width: 190, color: TEXT3 }}>{conDia(a.fecha)}</div>
+                <div key={a.id} style={{ display: "flex", flexWrap: "wrap", gap: "2px 14px", padding: "8px 4px", borderBottom: `1px solid ${BORDER}`, fontSize: 16 }}>
+                  <div style={{ width: 190, maxWidth: "100%", color: TEXT3 }}>{conDia(a.fecha)}</div>
                   <div style={{ width: 70, color: TEXT3 }}>{a.hora.slice(0, 5)}</div>
                   <div style={{ width: 90, color: a.tipo === "entrada" ? VERDE : AMR, fontWeight: 700, textTransform: "capitalize" }}>{a.tipo}</div>
-                  <div style={{ flex: 1, color: TEXT2 }}>{a.empleados?.nombre}</div>
+                  <div style={{ flex: "1 1 120px", minWidth: 0, color: TEXT2 }}>{a.empleados?.nombre}</div>
                 </div>
               ))}
               {asistencias.length > 200 && (

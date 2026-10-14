@@ -35,10 +35,10 @@ export default function NuevaDenunciaPage() {
   const inp: React.CSSProperties = { background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "10px 14px", color: TEXT1, fontFamily: FONT, fontSize: 18, width: "100%", boxSizing: "border-box" };
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Canal de denuncias</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Canal de denuncias</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>Solo la administración ve estas denuncias. Puedes enviarla de forma anónima.</div>
         </div>
 

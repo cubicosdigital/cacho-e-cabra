@@ -73,12 +73,12 @@ export default function GaleriaCategoriasPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 700, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
 
         <div>
           <a href="/admin/galeria" style={{ color: TEXT3, fontSize: 15, textDecoration: "none" }}>← Volver a Galería</a>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900, marginTop: 6 }}>Categorías de la galería</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900, marginTop: 6 }}>Categorías de la galería</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>
             Estas son las categorías que vas a poder elegir al subir fotos o videos en /admin/galeria.
           </div>
@@ -90,14 +90,14 @@ export default function GaleriaCategoriasPage() {
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <input
             placeholder="Nueva categoría (ej: Fiestas, Local)"
             value={nueva}
             onChange={e => setNueva(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") crear(); }}
             style={{
-              flex: 1, background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8,
+              flex: 1, minWidth: 0, background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8,
               padding: "10px 14px", color: TEXT1, fontFamily: FONT, fontSize: 16,
             }}
           />
@@ -116,14 +116,14 @@ export default function GaleriaCategoriasPage() {
             {categorias.map((c, i) => (
               <div key={c.id} style={{
                 background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12,
-                padding: "12px 16px", display: "flex", alignItems: "center", gap: 12, opacity: c.activo ? 1 : 0.55,
+                padding: "12px 16px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, opacity: c.activo ? 1 : 0.55,
               }}>
                 <input
                   value={c.nombre}
                   onChange={e => setCategorias(prev => prev.map(x => x.id === c.id ? { ...x, nombre: e.target.value } : x))}
                   onBlur={e => patch(c.id, { nombre: e.target.value })}
                   style={{
-                    flex: 1, background: "transparent", border: "none", color: TEXT1, fontFamily: FONT,
+                    flex: "1 1 140px", minWidth: 0, background: "transparent", border: "none", color: TEXT1, fontFamily: FONT,
                     fontSize: 16, fontWeight: 700, outline: "none",
                   }}
                 />

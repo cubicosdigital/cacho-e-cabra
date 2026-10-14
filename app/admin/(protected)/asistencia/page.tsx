@@ -44,11 +44,11 @@ export default function AsistenciaPage() {
   void loading;
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-          <div style={{ flex: 1, minWidth: 260 }}>
-            <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Asistencia</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Asistencia</div>
             <div style={{ fontSize: 17, color: TEXT3 }}>{controlados.length} trabajadores con control de asistencia</div>
           </div>
           <Link href="/admin/asistencia/registros"

@@ -3,7 +3,7 @@ import { requirePermiso } from "@/lib/admin-auth";
 import { getSupabase } from "@/lib/supabase";
 import { EMPLEADO_COLUMNAS } from "@/lib/empleados";
 
-const CAMPOS_EMPLEADO = ["nombre", "rut", "cargo", "departamento", "tipo_contrato", "control_asistencia", "zk_id", "activo", "usuario_admin_id"];
+const CAMPOS_EMPLEADO = ["nombre", "rut", "cargo", "departamento", "tipo_contrato", "control_asistencia", "zk_id", "activo", "usuario_admin_id", "jornada_tipo", "fecha_baja", "motivo_baja", "detalle_baja"];
 function soloCamposPermitidos(body: Record<string, unknown>) {
   return Object.fromEntries(Object.entries(body ?? {}).filter(([k]) => CAMPOS_EMPLEADO.includes(k)));
 }

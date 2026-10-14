@@ -55,7 +55,7 @@ export const PERMISOS_POR_ROL: Record<Rol, Permisos> = {
 };
 
 /** Guardado en usuarios_admin.permisos: { modulos: { galeria: ["r","u"] }, pos?: boolean }. */
-export interface PermisosGuardados { modulos?: Permisos; pos?: boolean }
+export interface PermisosGuardados { modulos?: Permisos; pos?: boolean; sin_turnos?: boolean }
 
 export function permisosEfectivos(rol: Rol, guardados: PermisosGuardados | null | undefined): Permisos {
   if (rol === "admin") return PERMISOS_POR_ROL.admin;

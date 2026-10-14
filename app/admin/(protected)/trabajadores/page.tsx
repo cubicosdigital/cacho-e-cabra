@@ -9,7 +9,9 @@ const DEPARTAMENTOS = ["cocina", "barra", "garzones", "coperia"] as const;
 interface Trabajador {
   id: string; nombre: string; rut: string | null; cargo: string | null; departamento: string;
   estado: EstadoTrabajador; telefono: string | null;
+  activo: boolean; fecha_baja: string | null; motivo_baja: "despido" | "renuncia" | "otro" | null; detalle_baja: string | null; jornada_tipo: "ordinaria" | "art22";
 }
+const MOTIVO_LABEL = { despido: "Despedido", renuncia: "Renunció", otro: "Otro" } as const;
 
 const COLOR_ESTADO: Record<EstadoTrabajador, string> = {
   sin_invitar: TEXT3, invitado: AZUL, vencida: ROJO, registrado: AMR, completa: VERDE,
@@ -70,30 +72,46 @@ export default function TrabajadoresPage() {
   }
 
   const inp: React.CSSProperties = { background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", color: TEXT1, fontFamily: FONT, fontSize: 17 };
-  const pendientes = lista.filter(t => t.estado === "registrado").length;
+  const [vista, setVista] = useState<"activos" | "baja">("activos");
+  const activos = lista.filter(t => t.activo !== false);
+  const dadosDeBaja = lista.filter(t => t.activo === false);
+  const visibles = vista === "activos" ? activos : dadosDeBaja;
+  const pendientes = activos.filter(t => t.estado === "registrado").length;
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Trabajadores</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Trabajadores</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>
-            {lista.length} trabajadores{pendientes > 0 && <> · <span style={{ color: AMR, fontWeight: 700 }}>{pendientes} con el contrato por completar</span></>}
+            {activos.length} trabajadores{pendientes > 0 && <> · <span style={{ color: AMR, fontWeight: 700 }}>{pendientes} con el contrato por completar</span></>}
           </div>
         </div>
 
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {([["activos", `Activos (${activos.length})`], ["baja", `Dados de baja (${dadosDeBaja.length})`]] as const).map(([k, l]) => (
+            <button key={k} onClick={() => setVista(k)} style={{ background: vista === k ? AMR : SURF2, color: vista === k ? "#1a1200" : TEXT2, border: `1px solid ${BORDER}`, borderRadius: 999, padding: "8px 22px", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>{l}</button>
+          ))}
+        </div>
+
         <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: "hidden" }}>
-          {loading ? <div style={{ padding: 20, color: TEXT3 }}>Cargando…</div> : lista.map((t, idx) => (
+          {!loading && visibles.length === 0 && <div style={{ padding: 20, color: TEXT3 }}>{vista === "baja" ? "Todavía no hay trabajadores dados de baja." : "Sin trabajadores."}</div>}
+          {loading ? <div style={{ padding: 20, color: TEXT3 }}>Cargando…</div> : visibles.map((t, idx) => (
             <div key={t.id} style={{ borderTop: idx === 0 ? "none" : `1px solid ${BORDER}` }}>
               <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 240 }}>
                   <div style={{ fontWeight: 700, fontSize: 19 }}>{t.nombre}</div>
-                  <div style={{ fontSize: 15, color: TEXT3 }}>{t.cargo} · RUT {t.rut ?? "—"}</div>
+                  <div style={{ fontSize: 15, color: TEXT3 }}>{t.cargo} · RUT {t.rut ?? "—"}{t.jornada_tipo === "art22" && " · Art. 22"}</div>
+                  {!t.activo && (
+                    <div style={{ fontSize: 14, color: ROJO, marginTop: 2 }}>
+                      {t.motivo_baja ? MOTIVO_LABEL[t.motivo_baja] : "Dado de baja"}{t.fecha_baja && ` · ${t.fecha_baja.split("-").reverse().join("/")}`}{t.detalle_baja && ` · ${t.detalle_baja}`}
+                    </div>
+                  )}
                 </div>
-                <span style={{ fontSize: 14, fontWeight: 700, color: COLOR_ESTADO[t.estado], border: `1px solid ${COLOR_ESTADO[t.estado]}`, borderRadius: 999, padding: "3px 12px" }}>
+                {t.activo && <span style={{ fontSize: 14, fontWeight: 700, color: COLOR_ESTADO[t.estado], border: `1px solid ${COLOR_ESTADO[t.estado]}`, borderRadius: 999, padding: "3px 12px" }}>
                   {ESTADO_LABEL[t.estado]}
-                </span>
-                {(t.estado === "sin_invitar" || t.estado === "vencida" || t.estado === "invitado") && (
+                </span>}
+                {t.activo && (t.estado === "sin_invitar" || t.estado === "vencida" || t.estado === "invitado") && (
                   <button onClick={() => abrir(t)} style={{ background: abierto === t.id ? AMR : SURF2, color: abierto === t.id ? "#1a1200" : TEXT2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 16px", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
                     {t.estado === "invitado" ? "Reenviar por WhatsApp" : "Enviar por WhatsApp"}
                   </button>
@@ -108,7 +126,7 @@ export default function TrabajadoresPage() {
                   <div style={{ fontSize: 15, color: TEXT3 }}>Teléfono de {t.nombre.split(" ")[0]} (WhatsApp). Se abrirá WhatsApp con el mensaje listo para enviar.</div>
                   <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                     <span style={{ color: TEXT2, fontSize: 17 }}>+56</span>
-                    <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="9 1234 5678" style={{ ...inp, width: 200 }} />
+                    <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="9 1234 5678" style={{ ...inp, width: 200, maxWidth: "100%" }} />
                     <button onClick={() => invitar(t)} disabled={enviando}
                       style={{ background: VERDE, color: "#062018", border: "none", borderRadius: 8, padding: "9px 20px", fontWeight: 700, fontSize: 16, cursor: "pointer", fontFamily: FONT, opacity: enviando ? 0.6 : 1 }}>
                       {enviando ? "Generando…" : "Abrir WhatsApp"}

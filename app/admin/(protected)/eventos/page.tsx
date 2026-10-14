@@ -107,11 +107,11 @@ export default function EventosAdminPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
 
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Eventos</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Eventos</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>
             {eventos.length} eventos · {eventos.filter(e => e.publicado).length} publicados · {eventos.filter(e => e.destacado).length} destacados en el home
           </div>

@@ -118,14 +118,14 @@ export default function PosPage() {
   const deudaTotal = panel.conDeuda.reduce((s, c) => s + c.saldo, 0);
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "28px 36px 48px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "28px 36px 48px" }}>
       <div style={{ maxWidth: 1240, margin: "0 auto", display: "flex", flexDirection: "column", gap: 18 }}>
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>POS · Caja</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>POS · Caja</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>Cobra cada cuenta por partes: cada persona paga lo suyo y el saldo baja hasta cero.</div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
+        <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
           {[
             { t: "Cobrado hoy", v: plata(panel.cobradoHoy), c: VERDE, n: panel.propinasHoy ? `+ ${plata(panel.propinasHoy)} de propina` : "sin propinas registradas" },
             { t: "Por cobrar ahora", v: plata(porCobrar), c: porCobrar ? AMR : TEXT1, n: `${panel.abiertas.length} cuenta${panel.abiertas.length === 1 ? "" : "s"} abierta${panel.abiertas.length === 1 ? "" : "s"}` },
@@ -158,7 +158,7 @@ export default function PosPage() {
 
         {error && <div style={{ background: "#2a1212", border: "1px solid #5c2626", color: "#fca5a5", borderRadius: 10, padding: "10px 16px", fontSize: 16 }}>{error}</div>}
 
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(280px, 340px) minmax(0, 1fr)", gap: 18, alignItems: "start" }}>
+        <div className="adm-grid-1" style={{ display: "grid", gridTemplateColumns: "minmax(280px, 340px) minmax(0, 1fr)", gap: 18, alignItems: "start" }}>
           {/* Lista de cuentas */}
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div style={tarjeta}>
@@ -169,7 +169,7 @@ export default function PosPage() {
                   <span>Mesa <strong>{m.mesa}</strong> · {m.pedidos} pedido{m.pedidos > 1 ? "s" : ""}</span><strong style={{ color: AMR }}>{plata(m.total)}</strong>
                 </button>
               ))}
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <input value={nuevaMesa} onChange={e => setNuevaMesa(e.target.value)} placeholder="Mesa (ej. 5)" style={inp} onKeyDown={e => e.key === "Enter" && nuevaMesa.trim() && abrir(nuevaMesa)} />
                 <button onClick={() => nuevaMesa.trim() && abrir(nuevaMesa)} style={{ ...chip(true), flexShrink: 0 }}>Abrir</button>
               </div>
@@ -221,7 +221,7 @@ export default function PosPage() {
                     const resta = i.cantidad - i.pagado, n = unidades[i.id] ?? 0;
                     return (
                       <div key={i.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 18px", borderTop: `1px solid ${BORDER}`, opacity: resta === 0 ? 0.55 : 1, flexWrap: "wrap" }}>
-                        <div style={{ flex: 1, minWidth: 180 }}>
+                        <div style={{ flex: 1, minWidth: 140 }}>
                           <div style={{ fontWeight: 700, fontSize: 17 }}>{i.cantidad} × {i.nombre}</div>
                           <div style={{ fontSize: 14, color: resta === 0 ? VERDE : TEXT3 }}>{resta === 0 ? "Pagado completo" : i.pagado > 0 ? `Pagado ${i.pagado} de ${i.cantidad}` : `${plata(i.precio_unitario)} c/u`}</div>
                         </div>
@@ -267,13 +267,13 @@ export default function PosPage() {
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
                       {METODOS.map(m => <button key={m} onClick={() => setMetodo(m)} style={chip(metodo === m)}>{METODO_LABEL[m]}</button>)}
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, marginBottom: 14 }}>
+                    <div className="adm-grid-1" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, marginBottom: 14 }}>
                       <input value={pagador} onChange={e => setPagador(e.target.value)} placeholder={metodo === "cortesia" ? "Motivo (obligatorio)" : "¿Quién paga? (opcional)"} style={inp} />
                       <input type="number" value={propina} onChange={e => setPropina(e.target.value)} placeholder="Propina (opcional)" style={inp} />
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                      <button onClick={cobrar} disabled={!puedeCobrar} style={{ background: VERDE, color: "#062018", border: "none", borderRadius: 10, padding: "13px 28px", fontSize: 18, fontWeight: 800, cursor: puedeCobrar ? "pointer" : "not-allowed", opacity: puedeCobrar ? 1 : 0.5, fontFamily: FONT }}>
+                      <button className="adm-full" onClick={cobrar} disabled={!puedeCobrar} style={{ background: VERDE, color: "#062018", border: "none", borderRadius: 10, padding: "13px 28px", fontSize: 18, fontWeight: 800, cursor: puedeCobrar ? "pointer" : "not-allowed", opacity: puedeCobrar ? 1 : 0.5, fontFamily: FONT }}>
                         {trabajando ? "Registrando…" : `Registrar pago de ${plata(monto)}`}
                       </button>
                       {monto > saldo && <span style={{ color: ROJO, fontSize: 15 }}>El monto supera lo que falta ({plata(saldo)}).</span>}
@@ -288,7 +288,7 @@ export default function PosPage() {
                     {sel.pagos.map(p => (
                       <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 18px", borderTop: `1px solid ${BORDER}`, opacity: p.anulado ? 0.5 : 1, flexWrap: "wrap" }}>
                         <div style={{ width: 54, color: TEXT3, fontSize: 14 }}>{new Date(p.created_at).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</div>
-                        <div style={{ flex: 1, minWidth: 160 }}>
+                        <div style={{ flex: 1, minWidth: 120, overflowWrap: "anywhere" }}>
                           <div style={{ fontWeight: 700, textDecoration: p.anulado ? "line-through" : "none" }}>{p.pagador || "Sin nombre"} · {METODO_LABEL[p.metodo]}</div>
                           {p.anulado && <div style={{ fontSize: 13, color: ROJO }}>Anulado: {p.anulado_motivo}</div>}
                           {!p.anulado && p.propina > 0 && <div style={{ fontSize: 13, color: TEXT3 }}>+ {plata(p.propina)} de propina</div>}

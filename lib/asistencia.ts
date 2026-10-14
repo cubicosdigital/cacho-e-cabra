@@ -36,8 +36,23 @@ export function fmtFechaCorta(fecha: string) {
   return `${d}/${m}`;
 }
 
-/** Junta las marcas sueltas en un resumen por trabajador y día. */
-export function resumirDias(marcas: Marca[]): DiaTrabajado[] {
+const DIAS_TURNO = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
+
+/** Hora de entrada programada por persona y día de la semana: clave "empleado_id|lunes". */
+export type EntradasProgramadas = Map<string, string>;
+
+export function entradasProgramadas(turnos: { empleado_id: string; dia_semana: string; hora_entrada: string | null }[]): EntradasProgramadas {
+  const m: EntradasProgramadas = new Map();
+  for (const t of turnos) if (t.hora_entrada) m.set(`${t.empleado_id}|${t.dia_semana}`, t.hora_entrada.slice(0, 5));
+  return m;
+}
+
+/**
+ * Junta las marcas sueltas en un resumen por trabajador y día.
+ * Si la persona marca antes de su hora de entrada programada, la marca queda registrada pero el tiempo se
+ * cuenta desde la hora programada; lo que trabaja después de la salida programada sí se suma.
+ */
+export function resumirDias(marcas: Marca[], programadas?: EntradasProgramadas): DiaTrabajado[] {
   const grupos = new Map<string, Marca[]>();
   for (const m of marcas) {
     const k = `${m.empleado_id}|${m.fecha}`;
@@ -48,10 +63,13 @@ export function resumirDias(marcas: Marca[]): DiaTrabajado[] {
   return [...grupos.values()].map(rs => {
     const entrada = rs.filter(r => r.tipo === "entrada").map(r => r.hora).sort()[0] ?? null;
     const salida = rs.filter(r => r.tipo === "salida").map(r => r.hora).sort().at(-1) ?? null;
+    const dia = DIAS_TURNO[parseFecha(rs[0].fecha).getDay()];
+    const prog = programadas?.get(`${rs[0].empleado_id}|${dia}`);
+    const inicioContado = entrada ? (prog ? Math.max(minutos(entrada), minutos(prog)) : minutos(entrada)) : null;
     return {
       empleado_id: rs[0].empleado_id, fecha: rs[0].fecha, entrada, salida,
-      trabajado: entrada && salida ? Math.max(0, minutos(salida) - minutos(entrada)) : null,
-      tarde: entrada ? minutos(entrada) > limite : false,
+      trabajado: inicioContado != null && salida ? Math.max(0, minutos(salida) - inicioContado) : null,
+      tarde: entrada ? minutos(entrada) > (prog ? minutos(prog) + TOLERANCIA_MIN : limite) : false,
     };
   });
 }

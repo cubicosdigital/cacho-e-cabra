@@ -65,10 +65,10 @@ export default function PostulacionesAdminPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Postulaciones</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Postulaciones</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>
             {postulaciones.length} recibidas · {postulaciones.filter(p => p.estado === "nueva").length} nuevas
           </div>
@@ -103,7 +103,7 @@ export default function PostulacionesAdminPage() {
                 </div>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 160 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 160 }} className="adm-full">
                 <a href={p.cv_url} target="_blank" rel="noopener noreferrer" style={{
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "9px 14px",
@@ -121,7 +121,7 @@ export default function PostulacionesAdminPage() {
                 </a>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 150 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 150 }} className="adm-full">
                 <select value={p.categoria ?? ""} onChange={e => categorizar(p.id, e.target.value)} style={{
                   background: SURF2, border: `1px solid ${BORDER}`, color: TEXT1, borderRadius: 8, padding: "7px 8px", fontFamily: FONT, fontSize: 14, fontWeight: 700,
                 }}>

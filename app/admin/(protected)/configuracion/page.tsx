@@ -50,7 +50,7 @@ function MiPerfil({ perfil, onGuardado }: { perfil: Perfil; onGuardado: (p: Perf
       <div style={tarjeta}>
         <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 4 }}>Mi perfil</div>
         <div style={{ fontSize: 15, color: TEXT3, marginBottom: 16 }}>{perfil.email} · <strong style={{ color: AMR }}>{ROL_LABEL[perfil.rol]}</strong> (el correo y el rol los define un administrador)</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: 14 }}>
           <Campo label="Nombre completo"><input value={f.nombre} onChange={e => set("nombre", e.target.value)} style={inp} /></Campo>
           <Campo label="Teléfono"><input type="tel" value={f.telefono} onChange={e => set("telefono", e.target.value)} style={inp} placeholder="+56 9 1234 5678" /></Campo>
           <Campo label="RUT"><input value={f.rut} onChange={e => set("rut", e.target.value)} style={inp} placeholder="12.345.678-9" /></Campo>
@@ -61,7 +61,7 @@ function MiPerfil({ perfil, onGuardado }: { perfil: Perfil; onGuardado: (p: Perf
       </div>
       <div style={tarjeta}>
         <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 14 }}>Contacto de emergencia</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: 14 }}>
           <Campo label="Nombre"><input value={f.contacto_emergencia_nombre} onChange={e => set("contacto_emergencia_nombre", e.target.value)} style={inp} /></Campo>
           <Campo label="Teléfono"><input type="tel" value={f.contacto_emergencia_telefono} onChange={e => set("contacto_emergencia_telefono", e.target.value)} style={inp} /></Campo>
         </div>
@@ -200,11 +200,11 @@ function Usuarios({ yoId }: { yoId: string }) {
           const soyYo = c.id === yoId;
           return (
             <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 22px", borderTop: `1px solid ${BORDER}`, flexWrap: "wrap", opacity: c.activo ? 1 : 0.55 }}>
-              <div style={{ flex: 1, minWidth: 220 }}>
+              <div style={{ flex: 1, minWidth: "min(100%, 220px)" }}>
                 <div style={{ fontWeight: 700, fontSize: 18 }}>{c.nombre}{soyYo && <span style={{ color: AMR, fontSize: 14 }}> · tú</span>}</div>
                 <div style={{ fontSize: 14, color: TEXT3 }}>{c.email}{c.empleado && ` · trabajador: ${c.empleado}`}</div>
               </div>
-              <select value={c.rol} disabled={soyYo} onChange={e => cambiar(c.id, { rol: e.target.value })} style={{ ...inp, width: 170 }}>
+              <select value={c.rol} disabled={soyYo} onChange={e => cambiar(c.id, { rol: e.target.value })} style={{ ...inp, width: 170, maxWidth: "100%" }}>
                 {[...new Set<Rol>([...ROLES_CREABLES, c.rol])].map(r => <option key={r} value={r}>{ROL_LABEL[r]}</option>)}
               </select>
               <button disabled={soyYo} onClick={() => cambiar(c.id, { activo: !c.activo })} style={{ ...boton(!soyYo, false), padding: "8px 16px", color: c.activo ? TEXT2 : VERDE }}>{c.activo ? "Desactivar" : "Activar"}</button>
@@ -216,7 +216,7 @@ function Usuarios({ yoId }: { yoId: string }) {
       <div style={tarjeta}>
         <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 4 }}>Crear usuario</div>
         <div style={{ fontSize: 15, color: TEXT3, marginBottom: 16 }}>Entra con su correo y un código que le llega al correo. No necesita contraseña.</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))", gap: 14 }}>
           <Campo label="Nombre completo"><input value={f.nombre} onChange={e => setF({ ...f, nombre: e.target.value })} style={inp} /></Campo>
           <Campo label="Correo"><input type="email" value={f.email} onChange={e => setF({ ...f, email: e.target.value })} style={inp} /></Campo>
           <Campo label="Teléfono (opcional)"><input type="tel" value={f.telefono} onChange={e => setF({ ...f, telefono: e.target.value })} style={inp} /></Campo>
@@ -315,7 +315,7 @@ function PermisosTab() {
       {cuenta && (
         <div style={{ ...tarjeta, padding: 0, overflow: "hidden" }}>
           <div style={{ padding: "16px 22px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: 240 }}>
+            <div style={{ flex: 1, minWidth: "min(100%, 240px)" }}>
               <div style={{ fontFamily: TITLE, fontSize: 19, fontWeight: 900 }}>{cuenta.nombre}</div>
               <div style={{ fontSize: 14, color: TEXT3 }}>{cuenta.email} · rol {ROL_LABEL[cuenta.rol]}{diferenteAlRol && <span style={{ color: AMR }}> · permisos personalizados</span>}</div>
             </div>
@@ -324,6 +324,7 @@ function PermisosTab() {
           </div>
           {msg && <div style={{ padding: "0 22px 12px" }}><Aviso {...msg} /></div>}
 
+          <div className="adm-table-wrap"><div style={{ minWidth: 560 }}>
           <div style={{ display: "grid", gridTemplateColumns: "minmax(200px, 1fr) repeat(4, 76px)", alignItems: "center", padding: "8px 22px", borderTop: `1px solid ${BORDER}`, fontSize: 13, fontWeight: 800, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.05em" }}>
             <div>Módulo</div>{ACCIONES.map(a => <div key={a.k} style={{ textAlign: "center" }}>{a.label}</div>)}
           </div>
@@ -347,6 +348,7 @@ function PermisosTab() {
               })}
             </div>
           ))}
+          </div></div>
           <div style={{ padding: "12px 22px", fontSize: 14, color: TEXT3, borderTop: `1px solid ${BORDER}` }}>
             Al marcar Crear, Editar o Borrar se marca también Ver. Todo el mundo puede ver su propio horario y cambiar su contraseña.
           </div>
@@ -375,14 +377,14 @@ export default function ConfiguracionPage() {
   const tabs = [["perfil", "Mi perfil"], ["seguridad", "Seguridad"], ...(perfil.rol === "admin" ? [["usuarios", "Usuarios"], ["permisos", "Permisos"]] : [])] as [typeof tab, string][];
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <style>{`input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) brightness(2); opacity: 1; width: 26px; height: 26px; cursor: pointer; }`}</style>
       <div style={{ maxWidth: 980, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Configuración</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Configuración</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>{perfil.nombre} · {ROL_LABEL[perfil.rol]}</div>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className="adm-scroll-x" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {tabs.map(([k, l]) => (
             <button key={k} onClick={() => setTab(k)} style={{ background: tab === k ? AMR : SURF2, color: tab === k ? "#1a1200" : TEXT2, border: `1px solid ${BORDER}`, borderRadius: 999, padding: "8px 22px", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>{l}</button>
           ))}

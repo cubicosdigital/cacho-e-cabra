@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getSupabase } from "@/lib/supabase";
-import { HORA_ENTRADA_ESPERADA, TOLERANCIA_MIN, minutos, resumirDias, type Marca } from "@/lib/asistencia";
+import { HORA_ENTRADA_ESPERADA, TOLERANCIA_MIN, entradasProgramadas, minutos, resumirDias, type Marca } from "@/lib/asistencia";
 import { contratoCompleto, type Ficha } from "@/lib/fichas";
 import { LATIDO_VIGENCIA_S } from "@/lib/terminal";
 import { MINUTOS_ALERTA, detalles } from "@/lib/pos";
@@ -124,7 +124,7 @@ export async function GET() {
       };
     });
 
-    const semana = resumirDias(asistencias.filter(a => controlados.some(c => c.id === a.empleado_id)));
+    const semana = resumirDias(asistencias.filter(a => controlados.some(c => c.id === a.empleado_id)), entradasProgramadas(turnos));
     const semanaMin = semana.reduce((s, d) => s + (d.trabajado ?? 0), 0);
     const conEntrada = semana.filter(d => d.entrada);
     const puntualSemana = conEntrada.length ? Math.round((conEntrada.filter(d => !d.tarde).length / conEntrada.length) * 100) : null;
@@ -137,7 +137,6 @@ export async function GET() {
     const vencimientos: { empleado_id: string; nombre: string; tipo: string; fecha: string; dias: number }[] = [];
     for (const f of fichas) {
       if (f.visa_vencimiento) vencimientos.push({ empleado_id: f.empleado_id, nombre: nombre.get(f.empleado_id) ?? "", tipo: "Permiso de trabajo", fecha: f.visa_vencimiento, dias: diasEntre(hoy, f.visa_vencimiento) });
-      if (f.manipulador_alimentos && f.manipulador_vencimiento) vencimientos.push({ empleado_id: f.empleado_id, nombre: nombre.get(f.empleado_id) ?? "", tipo: "Manipulador de alimentos", fecha: f.manipulador_vencimiento, dias: diasEntre(hoy, f.manipulador_vencimiento) });
     }
     const porVencer = vencimientos.filter(v => v.dias <= 90).sort((a, b) => a.dias - b.dias);
 

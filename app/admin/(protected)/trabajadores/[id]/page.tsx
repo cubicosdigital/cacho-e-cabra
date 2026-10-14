@@ -6,7 +6,7 @@ import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, ROJO, AZUL
 import { contratoCompleto, type Ficha } from "../../../../../lib/fichas";
 import { LATIDO_VIGENCIA_S, type Comando, type EstadoTerminal, type TipoComando } from "../../../../../lib/terminal";
 import {
-  DIAS_SEMANA, MESES, agruparPorPeriodo, fmtHoraMin, fmtHoras, minutos, parseFecha, resumirDias, type Marca,
+  DIAS_SEMANA, MESES, agruparPorPeriodo, entradasProgramadas, fmtHoraMin, fmtHoras, minutos, parseFecha, resumirDias, type Marca,
 } from "../../../../../lib/asistencia";
 import { BarrasVerticales, FiltroFechas, Kpi, Panel, botonVolver, tarjeta } from "../../asistencia/graficos";
 
@@ -18,6 +18,7 @@ const TEMPORADA = "invierno-2026";
 interface Empleado {
   id: string; nombre: string; rut: string | null; cargo: string | null; departamento: string;
   tipo_contrato: string; control_asistencia: boolean; zk_id: number | null; activo: boolean;
+  jornada_tipo: "ordinaria" | "art22"; fecha_baja?: string | null; motivo_baja?: "despido" | "renuncia" | "otro" | null; detalle_baja?: string | null;
 }
 interface Turno { id: string; empleado_id: string; dia_semana: string; hora_entrada: string | null; hora_salida: string | null; horas: number; nota: string | null }
 type DiaDraft = { entrada: string; salida: string; horas: string; nota: string };
@@ -32,6 +33,7 @@ const TABS = [
 ] as const;
 type TabId = typeof TABS[number]["id"];
 
+const MOTIVO_LABEL = { despido: "Despedido", renuncia: "Renunció", otro: "Otro" } as const;
 const fmtFecha = (f: string | null) => (f ? f.split("-").reverse().join("/") : null);
 const siNo = (v: boolean | null) => (v == null ? null : v ? "Sí" : "No");
 
@@ -103,8 +105,8 @@ export default function FichaTrabajadorPage({ params }: { params: Promise<{ id: 
     const [res, resRut] = await Promise.all([fetch("/api/empleados"), fetch(`/api/trabajadores/${id}/ficha`)]);
     if (res.ok) {
       const base = (await res.json() as Empleado[]).find(e => e.id === id) ?? null;
-      const rut = resRut.ok ? ((await resRut.json()).empleado?.rut ?? null) : null;
-      setEmpleado(base ? { ...base, rut } : null);
+      const extra = resRut.ok ? (await resRut.json()).empleado : null;
+      setEmpleado(base ? { ...base, rut: extra?.rut ?? null, fecha_baja: extra?.fecha_baja ?? null, motivo_baja: extra?.motivo_baja ?? null, detalle_baja: extra?.detalle_baja ?? null } : null);
     }
     setLoading(false);
   }, [id]);
@@ -129,14 +131,14 @@ export default function FichaTrabajadorPage({ params }: { params: Promise<{ id: 
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900, overflowWrap: "anywhere" }}>{empleado.nombre}</div>
             {!empleado.activo && (
-              <span style={{ fontSize: 14, fontWeight: 700, color: ROJO, border: `1px solid ${ROJO}`, borderRadius: 999, padding: "3px 12px" }}>Dado de baja</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: ROJO, border: `1px solid ${ROJO}`, borderRadius: 999, padding: "3px 12px" }}>Dado de baja{empleado.motivo_baja ? ` · ${MOTIVO_LABEL[empleado.motivo_baja]}` : ""}</span>
             )}
           </div>
           <div style={{ fontSize: 17, color: TEXT3 }}>{empleado.cargo} · {empleado.departamento} · RUT {empleado.rut ?? "—"}</div>
         </div>
 
         <div className="adm-scroll-x" style={{ display: "flex", gap: 6, flexWrap: "wrap", borderBottom: `1px solid ${BORDER}` }}>
-          {TABS.map(t => (
+          {TABS.filter(t => !(t.id === "turnos" && empleado.jornada_tipo === "art22")).map(t => (
             <button key={t.id} onClick={() => irA(t.id)} style={{
               background: "none", border: "none", cursor: "pointer", fontFamily: FONT,
               padding: "10px 16px", fontSize: 17, fontWeight: 700, whiteSpace: "nowrap", color: tab === t.id ? AMR : TEXT3,
@@ -149,7 +151,7 @@ export default function FichaTrabajadorPage({ params }: { params: Promise<{ id: 
         {tab === "contrato" && <TabContrato id={id} inp={inp} empleado={empleado} onGuardado={cargarEmpleado} />}
         {tab === "terminal" && <TabTerminal id={id} empleado={empleado} />}
         {tab === "asistencia" && <TabAsistencia id={id} empleado={empleado} />}
-        {tab === "turnos" && <TabTurnos id={id} empleado={empleado} />}
+        {tab === "turnos" && empleado.jornada_tipo !== "art22" && <TabTurnos id={id} empleado={empleado} />}
       </div>
     </div>
   );
@@ -162,7 +164,9 @@ function TabDatos({ empleado, inp, onGuardado, cargando, setCargando }: {
   cargando: boolean; setCargando: (v: boolean) => void;
 }) {
   const router = useRouter();
-  const [d, setD] = useState({ nombre: empleado.nombre, rut: empleado.rut ?? "", cargo: empleado.cargo ?? "", departamento: empleado.departamento, tipo_contrato: empleado.tipo_contrato, control_asistencia: empleado.control_asistencia });
+  const [d, setD] = useState({ nombre: empleado.nombre, rut: empleado.rut ?? "", cargo: empleado.cargo ?? "", departamento: empleado.departamento, tipo_contrato: empleado.tipo_contrato, control_asistencia: empleado.control_asistencia, jornada_tipo: empleado.jornada_tipo ?? "ordinaria" });
+  const [bajaAbierta, setBajaAbierta] = useState(false);
+  const [baja, setBaja] = useState({ motivo: "renuncia" as "despido" | "renuncia" | "otro", detalle: "", fecha: new Date().toISOString().slice(0, 10) });
   const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null);
   const [confirmarBorrado, setConfirmarBorrado] = useState(false);
 
@@ -170,7 +174,7 @@ function TabDatos({ empleado, inp, onGuardado, cargando, setCargando }: {
     setCargando(true); setMsg(null);
     const res = await fetch(`/api/empleados/${empleado.id}`, {
       method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre: d.nombre, rut: d.rut || null, cargo: d.cargo || null, departamento: d.departamento, tipo_contrato: d.tipo_contrato, control_asistencia: d.control_asistencia }),
+      body: JSON.stringify({ nombre: d.nombre, rut: d.rut || null, cargo: d.cargo || null, departamento: d.departamento, tipo_contrato: d.tipo_contrato, jornada_tipo: d.jornada_tipo, control_asistencia: d.jornada_tipo === "art22" ? false : d.control_asistencia }),
     });
     const data = await res.json();
     setCargando(false);
@@ -178,14 +182,19 @@ function TabDatos({ empleado, inp, onGuardado, cargando, setCargando }: {
     else setMsg({ ok: false, texto: data.error });
   }
 
-  async function toggleActivo() {
+  async function cambiarActivo(cuerpo: Record<string, unknown>) {
     setCargando(true); setMsg(null);
     const res = await fetch(`/api/empleados/${empleado.id}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activo: !empleado.activo }),
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo),
     });
     setCargando(false);
-    if (res.ok) await onGuardado();
+    if (res.ok) { setBajaAbierta(false); await onGuardado(); }
     else setMsg({ ok: false, texto: (await res.json()).error });
+  }
+
+  function darDeBaja() {
+    if (baja.motivo === "otro" && !baja.detalle.trim()) { setMsg({ ok: false, texto: "Escribe el motivo de la baja." }); return; }
+    cambiarActivo({ activo: false, motivo_baja: baja.motivo, detalle_baja: baja.detalle.trim() || null, fecha_baja: baja.fecha || null });
   }
 
   async function eliminar() {
@@ -218,8 +227,13 @@ function TabDatos({ empleado, inp, onGuardado, cargando, setCargando }: {
               <option value="full_time">Full time</option>
               <option value="part_time">Part time</option>
             </select></label>
-          <label style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 20 }}>
-            <input type="checkbox" checked={d.control_asistencia} onChange={e => setD({ ...d, control_asistencia: e.target.checked })} style={{ width: 20, height: 20, accentColor: AMR, cursor: "pointer" }} />
+          <label><div style={{ fontSize: 13, color: TEXT3, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>Tipo de jornada</div>
+            <select value={d.jornada_tipo} onChange={e => setD({ ...d, jornada_tipo: e.target.value as "ordinaria" | "art22", control_asistencia: e.target.value === "art22" ? false : d.control_asistencia })} style={inp}>
+              <option value="ordinaria">Ordinaria (con turnos y asistencia)</option>
+              <option value="art22">Art. 22 (sin control de jornada)</option>
+            </select></label>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 20, opacity: d.jornada_tipo === "art22" ? 0.5 : 1 }}>
+            <input type="checkbox" disabled={d.jornada_tipo === "art22"} checked={d.control_asistencia} onChange={e => setD({ ...d, control_asistencia: e.target.checked })} style={{ width: 20, height: 20, accentColor: AMR, cursor: "pointer" }} />
             <span style={{ fontSize: 16, color: TEXT2 }}>Debe registrar asistencia</span>
           </label>
         </div>
@@ -232,18 +246,58 @@ function TabDatos({ empleado, inp, onGuardado, cargando, setCargando }: {
       </div>
 
       <div style={{ ...tarjeta, borderColor: ROJO }}>
-        <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 6 }}>Zona de riesgo</div>
-        <div style={{ fontSize: 15, color: TEXT3, marginBottom: 14 }}>
-          Solo el super admin puede dar de baja o eliminar a un trabajador. Dar de baja es reversible y conserva su historial; eliminar es permanente y solo se permite si no tiene turnos ni asistencias guardadas.
-        </div>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <button onClick={toggleActivo} disabled={cargando}
-            style={{ background: SURF2, color: empleado.activo ? AMR : VERDE, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "9px 20px", fontWeight: 700, fontSize: 16, cursor: "pointer", fontFamily: FONT }}>
-            {empleado.activo ? "Dar de baja" : "Reactivar"}
-          </button>
+        <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 6 }}>{empleado.activo ? "Dar de baja" : "Trabajador dado de baja"}</div>
+        {empleado.activo ? (
+          <>
+            <div style={{ fontSize: 15, color: TEXT3, marginBottom: 14 }}>
+              La baja saca a la persona de las listas y del terminal activo, pero conserva todo su historial (turnos, asistencia y ficha). Podrás verla en Trabajadores → Dados de baja y reactivarla si vuelve.
+            </div>
+            {!bajaAbierta ? (
+              <button onClick={() => setBajaAbierta(true)} disabled={cargando}
+                style={{ background: SURF2, color: AMR, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "9px 20px", fontWeight: 700, fontSize: 16, cursor: "pointer", fontFamily: FONT }}>
+                Dar de baja
+              </button>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 14 }}>
+                <label><div style={{ fontSize: 13, color: TEXT3, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>Motivo</div>
+                  <select value={baja.motivo} onChange={e => setBaja({ ...baja, motivo: e.target.value as "despido" | "renuncia" | "otro" })} style={inp}>
+                    <option value="renuncia">Renunció</option>
+                    <option value="despido">Despedido</option>
+                    <option value="otro">Otro</option>
+                  </select></label>
+                <label><div style={{ fontSize: 13, color: TEXT3, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>Fecha de baja</div>
+                  <input type="date" value={baja.fecha} onChange={e => setBaja({ ...baja, fecha: e.target.value })} style={inp} /></label>
+                <label style={{ gridColumn: "1 / -1" }}><div style={{ fontSize: 13, color: TEXT3, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>{baja.motivo === "otro" ? "Detalle del motivo (obligatorio)" : "Detalle (opcional)"}</div>
+                  <input value={baja.detalle} onChange={e => setBaja({ ...baja, detalle: e.target.value })} style={inp} placeholder="Ej. término de contrato, mutuo acuerdo…" /></label>
+                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <button onClick={darDeBaja} disabled={cargando} style={{ background: ROJO, color: "#fff", border: "none", borderRadius: 8, padding: "9px 20px", fontWeight: 700, fontSize: 16, cursor: "pointer", fontFamily: FONT }}>Confirmar baja</button>
+                  <button onClick={() => setBajaAbierta(false)} style={{ background: SURF2, color: TEXT2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "9px 20px", fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Cancelar</button>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "12px 32px", marginBottom: 14 }}>
+              <Dato etiqueta="Motivo" valor={empleado.motivo_baja ? MOTIVO_LABEL[empleado.motivo_baja] : null} />
+              <Dato etiqueta="Fecha de baja" valor={fmtFecha(empleado.fecha_baja ?? null)} />
+              <Dato etiqueta="Detalle" valor={empleado.detalle_baja} />
+            </div>
+            <button onClick={() => cambiarActivo({ activo: true, motivo_baja: null, detalle_baja: null, fecha_baja: null })} disabled={cargando}
+              style={{ background: SURF2, color: VERDE, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "9px 20px", fontWeight: 700, fontSize: 16, cursor: "pointer", fontFamily: FONT }}>
+              Reactivar trabajador
+            </button>
+          </>
+        )}
+        {msg && !msg.ok && <div style={{ color: ROJO, fontSize: 15, marginTop: 12 }}>{msg.texto}</div>}
+
+        <div style={{ borderTop: `1px solid ${BORDER}`, marginTop: 18, paddingTop: 14 }}>
+          <div style={{ fontSize: 14, color: TEXT3, marginBottom: 10 }}>
+            Eliminar borra a la persona para siempre y solo se permite si nunca tuvo turnos ni asistencia (por ejemplo, un registro creado por error). Si ya trabajó, usa la baja.
+          </div>
           {!confirmarBorrado ? (
             <button onClick={() => setConfirmarBorrado(true)} disabled={cargando}
-              style={{ background: "none", color: ROJO, border: `1px solid ${ROJO}`, borderRadius: 8, padding: "9px 20px", fontWeight: 700, fontSize: 16, cursor: "pointer", fontFamily: FONT }}>
+              style={{ background: "none", color: ROJO, border: `1px solid ${ROJO}`, borderRadius: 8, padding: "8px 18px", fontWeight: 700, fontSize: 15, cursor: "pointer", fontFamily: FONT }}>
               Eliminar trabajador
             </button>
           ) : (
@@ -389,7 +443,6 @@ function TabContrato({ id, inp, empleado, onGuardado }: { id: string; inp: React
         <Dato etiqueta="Número" valor={ficha.numero_cuenta} />
       </Seccion>
       <Seccion titulo="Otros">
-        <Dato etiqueta="Manipulador de alimentos" valor={ficha.manipulador_alimentos == null ? null : ficha.manipulador_alimentos ? `Sí${ficha.manipulador_vencimiento ? ` · vence ${fmtFecha(ficha.manipulador_vencimiento)}` : ""}` : "No"} />
         <Dato etiqueta="Consentimiento datos personales" valor={ficha.consentimiento ? `Aceptado el ${ficha.consentimiento_fecha ? new Date(ficha.consentimiento_fecha).toLocaleDateString("es-CL") : ""}` : "No aceptado"} />
         <Dato etiqueta="Ficha enviada" valor={ficha.registrado_at ? new Date(ficha.registrado_at).toLocaleString("es-CL") : null} />
       </Seccion>
@@ -510,7 +563,14 @@ function TabAsistencia({ id, empleado }: { id: string; empleado: Empleado }) {
     })();
   }, [id, desde, hasta]);
 
-  const dias = useMemo(() => resumirDias(registros).sort((a, b) => b.fecha.localeCompare(a.fecha)), [registros]);
+  const [programadas, setProgramadas] = useState<ReturnType<typeof entradasProgramadas>>(new Map());
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("/api/turnos");
+      if (res.ok) setProgramadas(entradasProgramadas(((await res.json()) as Turno[]).filter(t => t.empleado_id === id)));
+    })();
+  }, [id]);
+  const dias = useMemo(() => resumirDias(registros, programadas).sort((a, b) => b.fecha.localeCompare(a.fecha)), [registros, programadas]);
   const stats = useMemo(() => {
     const totalMin = dias.reduce((s, d) => s + (d.trabajado ?? 0), 0);
     const completos = dias.filter(d => d.trabajado != null);

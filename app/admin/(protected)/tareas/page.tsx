@@ -68,13 +68,13 @@ export default function TareasPage() {
   const hoy = new Date().toISOString().slice(0, 10);
   const vencidas = visibles.filter(t => t.fecha_limite && t.fecha_limite < hoy && t.estado !== "completada").length;
 
-  const inp: React.CSSProperties = { background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", color: TEXT1, fontFamily: FONT, fontSize: 17 };
+  const inp: React.CSSProperties = { background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", color: TEXT1, fontFamily: FONT, fontSize: 17, maxWidth: "100%", boxSizing: "border-box" };
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1000, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Tareas</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Tareas</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>{esAdmin ? "Vista completa · admin" : `Mis tareas · ${rol}`}</div>
         </div>
 
@@ -100,9 +100,9 @@ export default function TareasPage() {
               const vencida = t.fecha_limite && t.fecha_limite < hoy && t.estado !== "completada";
               return (
                 <div key={t.id} style={{ padding: "14px 20px", borderTop: idx === 0 ? "none" : `1px solid ${BORDER}` }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
                     <div style={{ width: 9, height: 9, borderRadius: 99, background: est.color, marginTop: 6, flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
+                    <div style={{ flex: "1 1 220px", minWidth: 0, overflowWrap: "anywhere" }}>
                       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 4 }}>
                         <span style={{ fontWeight: 700, fontSize: 19 }}>{t.titulo}</span>
                         <span style={{ fontSize: 16, color: TEXT3, background: SURF2, borderRadius: 6, padding: "2px 8px" }}>{t.prioridad}</span>
@@ -113,7 +113,7 @@ export default function TareasPage() {
                       {t.descripcion && <div style={{ fontSize: 17, color: TEXT2 }}>{t.descripcion}</div>}
                       {t.fecha_limite && <div style={{ fontSize: 16, color: TEXT3, marginTop: 2 }}>Vence: {t.fecha_limite}</div>}
                     </div>
-                    <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end", maxWidth: 220 }}>
+                    <div className="adm-full" style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end", maxWidth: 220 }}>
                       {ESTADOS.filter(e => e.value !== t.estado).map(e => (
                         <button key={e.value} onClick={() => cambiarEstado(t.id, e.value)}
                           style={{ fontSize: 16, color: TEXT3, background: SURF2, border: "none", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontFamily: FONT }}>

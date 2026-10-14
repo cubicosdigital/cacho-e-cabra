@@ -146,10 +146,10 @@ export default function TerminalZkPage() {
   const sincronizando = conectado && ultimaSyncS < 12;
 
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
+    <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
         <div>
-          <div style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Configuración del terminal ZK</div>
+          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Configuración del terminal ZK</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>Controla el terminal de huellas a distancia. Se actualiza solo cada pocos segundos.</div>
         </div>
 
@@ -163,7 +163,7 @@ export default function TerminalZkPage() {
             {conectado ? "Conectado" : esperando ? "Conectando…" : "Sin conexión"}
           </span>
           <style>{`@keyframes pulso { 0%,100% { opacity: 1 } 50% { opacity: .3 } } @keyframes girar { to { transform: rotate(360deg) } }`}</style>
-          <div style={{ flex: 1, minWidth: 260 }}>
+          <div style={{ flex: 1, minWidth: "min(100%, 260px)" }}>
             <div style={{ fontFamily: TITLE, fontSize: 22, fontWeight: 900, color }}>{titulo}</div>
             <div style={{ fontSize: 16, color: TEXT2 }}>{detalle}</div>
           </div>
@@ -177,7 +177,7 @@ export default function TerminalZkPage() {
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
             <input id="ip-manual" value={ipManual} onChange={e => setIpManual(e.target.value)} placeholder="Ej. 192.168.1.98"
-              style={{ background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "9px 12px", color: TEXT1, fontFamily: FONT, fontSize: 16, width: 200 }} />
+              style={{ background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "9px 12px", color: TEXT1, fontFamily: FONT, fontSize: 16, width: 200, maxWidth: "100%" }} />
             <button onClick={guardarIpManual} disabled={guardandoIp} style={boton(!guardandoIp, true)}>
               {guardandoIp ? <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Spinner size={14} /> Conectando…</span> : "Conectar a IP"}
             </button>
@@ -225,7 +225,7 @@ export default function TerminalZkPage() {
                 <input type="checkbox" checked={sel.has(e.id)} aria-label={`Seleccionar a ${e.nombre}`}
                   onChange={() => setSel(prev => { const n = new Set(prev); if (n.has(e.id)) n.delete(e.id); else n.add(e.id); return n; })}
                   style={{ width: 22, height: 22, accentColor: AMR, cursor: "pointer", flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 240 }}>
+                <div style={{ flex: 1, minWidth: "min(100%, 240px)" }}>
                   <div style={{ fontWeight: 700, fontSize: 18 }}>{e.nombre}</div>
                   <div style={{ fontSize: 14, color: TEXT3 }}>
                     {e.cargo} · ID terminal: {e.zk_id ?? "sin asignar"}{!e.control_asistencia && " · no necesita registrar"}
@@ -257,11 +257,11 @@ export default function TerminalZkPage() {
             return (
               <div key={c.id} style={{ display: "flex", gap: 14, alignItems: "baseline", padding: "8px 0", borderTop: `1px solid ${BORDER}`, flexWrap: "wrap" }}>
                 <div style={{ width: 70, fontSize: 14, color: TEXT3 }}>{new Date(c.created_at).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</div>
-                <div style={{ fontWeight: 700, fontSize: 16, minWidth: 220 }}>{NOMBRE_COMANDO[c.tipo]}{quien}</div>
+                <div style={{ fontWeight: 700, fontSize: 16, minWidth: "min(100%, 220px)" }}>{NOMBRE_COMANDO[c.tipo]}{quien}</div>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: col, border: `1px solid ${col}`, borderRadius: 999, padding: "2px 10px" }}>
                   {(c.estado === "en_proceso" || c.estado === "pendiente") && <Spinner color={col} size={11} />}{txt}
                 </span>
-                <div style={{ flex: 1, minWidth: 200, fontSize: 15, color: TEXT2 }}>{c.resultado}</div>
+                <div style={{ flex: 1, minWidth: "min(100%, 200px)", overflowWrap: "anywhere", fontSize: 15, color: TEXT2 }}>{c.resultado}</div>
                 {c.estado === "error" && (
                   <button disabled={!conectado || ocupado(c.tipo)} onClick={() => reintentar(c)} style={boton(conectado && !ocupado(c.tipo))}>Reintentar</button>
                 )}
