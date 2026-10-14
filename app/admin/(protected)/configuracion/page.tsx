@@ -156,7 +156,7 @@ function Usuarios({ yoId }: { yoId: string }) {
   const [empleados, setEmpleados] = useState<EmpleadoSimple[]>([]);
   const [f, setF] = useState({ nombre: "", email: "", telefono: "", rol: "mesero" as Rol, empleado_id: "" });
   const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null);
-  const [creado, setCreado] = useState<{ nombre: string; email: string } | null>(null);
+  const [creado, setCreado] = useState<{ nombre: string; email: string; rol: Rol } | null>(null);
   const [copiado, setCopiado] = useState(false);
 
   const cargar = useCallback(async () => {
@@ -171,7 +171,7 @@ function Usuarios({ yoId }: { yoId: string }) {
     const res = await fetch("/api/usuarios-admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...f, empleado_id: f.empleado_id || null }) });
     const d = await res.json();
     if (!res.ok) { setMsg({ ok: false, texto: d.error }); return; }
-    setCreado({ nombre: d.nombre, email: d.email });
+    setCreado({ nombre: d.nombre, email: d.email, rol: d.rol });
     setF({ nombre: "", email: "", telefono: "", rol: "mesero", empleado_id: "" });
     await cargar();
   }
@@ -184,7 +184,7 @@ function Usuarios({ yoId }: { yoId: string }) {
   }
 
   const instrucciones = creado
-    ? `Hola ${creado.nombre.split(" ")[0]}, te creamos un acceso al sistema de Cacho Cabra. Entra a ${window.location.origin}/admin/login, pulsa «Soy trabajador: entrar con código», escribe ${creado.email} y luego el código que te llegará al correo.`
+    ? `Hola ${creado.nombre.split(" ")[0]}, te creamos un acceso de ${creado.rol === "admin" ? "administrador" : ROL_LABEL[creado.rol].toLowerCase()} al sistema de Cacho Cabra. Entra a ${window.location.origin}/admin/login, pulsa «Entrar con código al correo», escribe ${creado.email} y luego el código que te llegará al correo.`
     : "";
 
   const libres = empleados.filter(e => !e.usuario_admin_id);

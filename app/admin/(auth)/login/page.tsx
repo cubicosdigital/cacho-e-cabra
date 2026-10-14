@@ -140,7 +140,7 @@ export default function LoginPage() {
 
         <p style={{ textAlign: "center", marginTop: 20 }}>
           <button type="button" onClick={cambiarModo} style={{ background: "none", border: "none", color: AMR, fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: FONT }}>
-            {modo === "password" ? "Soy trabajador: entrar con código" : "Volver a entrar con contraseña"}
+            {modo === "password" ? "Entrar con código al correo" : "Volver a entrar con contraseña"}
           </button>
         </p>
         <p style={{ textAlign: "center", marginTop: 8 }}>
