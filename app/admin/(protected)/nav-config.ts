@@ -57,7 +57,7 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
     items: [
       { href: "/admin/trabajadores", label: "Trabajadores", icon: Users, acceso: ["trabajadores", "r"] },
       { href: "/admin/postulaciones", label: "Postulaciones", icon: Briefcase, acceso: ["postulaciones", "r"] },
-      { href: "/admin/turnos", label: "Turnos de la semana", icon: CalendarClock, acceso: ["turnos", "u"] },
+      { href: "/admin/turnos", label: "Malla de turnos", icon: CalendarClock, acceso: ["turnos", "u"] },
       { href: "/admin/mi-horario", label: "Mi horario", icon: CalendarDays, acceso: "todos" },
       { href: "/admin/asistencia", label: "Asistencia", icon: Fingerprint, acceso: ["asistencia", "r"] },
       { href: "/admin/terminal-zk", label: "Config. Terminal ZK", icon: Settings2, acceso: "admin" },
