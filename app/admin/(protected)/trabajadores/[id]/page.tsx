@@ -653,6 +653,26 @@ function TabAsistencia({ id, empleado }: { id: string; empleado: Empleado }) {
 
 // ---------- Turnos ----------
 
+// Selector de hora en formato 24 h (el campo type="time" del navegador usa AM/PM según el idioma).
+function Hora24({ value, onChange, estilo }: { value: string; onChange: (v: string) => void; estilo: React.CSSProperties }) {
+  const [h, m] = value ? value.split(":") : ["", ""];
+  const cambiar = (nh: string, nm: string) => onChange(nh === "" ? "" : `${nh}:${nm || "00"}`);
+  const sel: React.CSSProperties = { ...estilo, width: 72, padding: "6px 6px", textAlign: "center" };
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+      <select value={h} onChange={e => cambiar(e.target.value, m)} style={sel} aria-label="Hora">
+        <option value="">--</option>
+        {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0")).map(x => <option key={x} value={x}>{x}</option>)}
+      </select>
+      <span style={{ color: TEXT3 }}>:</span>
+      <select value={h ? m || "00" : ""} disabled={!h} onChange={e => cambiar(h, e.target.value)} style={sel} aria-label="Minutos">
+        {!h && <option value="">--</option>}
+        {[...new Set([...Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0")), ...(m ? [m] : [])])].sort().map(x => <option key={x} value={x}>{x}</option>)}
+      </select>
+    </span>
+  );
+}
+
 const COLACION_H = 0.5;
 
 // Horas trabajadas = salida - entrada (si la salida es de madrugada, cruza la medianoche) menos la colación.
@@ -743,9 +763,9 @@ function TabTurnos({ id, empleado }: { id: string; empleado: Empleado }) {
           {DIAS.map(dia => (
             <div key={dia} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <span style={{ width: 36, fontSize: 16, color: TEXT3, fontWeight: 700 }}>{DIA_LABEL[dia]}</span>
-              <input type="time" value={draft[dia]?.entrada ?? ""} onChange={e => cambiarHorario(dia, "entrada", e.target.value)} style={{ ...inp, width: 150 }} />
+              <Hora24 value={draft[dia]?.entrada ?? ""} onChange={v => cambiarHorario(dia, "entrada", v)} estilo={inp} />
               <span style={{ color: TEXT3 }}>→</span>
-              <input type="time" value={draft[dia]?.salida ?? ""} onChange={e => cambiarHorario(dia, "salida", e.target.value)} style={{ ...inp, width: 150 }} />
+              <Hora24 value={draft[dia]?.salida ?? ""} onChange={v => cambiarHorario(dia, "salida", v)} estilo={inp} />
               <input type="number" step="0.5" placeholder="hrs" value={draft[dia]?.horas ?? "0"} onChange={e => setDraft(d => ({ ...d, [dia]: { ...d[dia], horas: e.target.value } }))} style={{ ...inp, width: 70 }} />
               <input type="text" placeholder="nota (opcional)" value={draft[dia]?.nota ?? ""} onChange={e => setDraft(d => ({ ...d, [dia]: { ...d[dia], nota: e.target.value } }))} style={{ ...inp, flex: 1, minWidth: 120 }} />
             </div>
