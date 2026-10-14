@@ -18,7 +18,7 @@ const TEMPORADA = "invierno-2026";
 interface Empleado {
   id: string; nombre: string; rut: string | null; cargo: string | null; departamento: string;
   tipo_contrato: string; control_asistencia: boolean; zk_id: number | null; activo: boolean;
-  jornada_tipo: "ordinaria" | "art22"; fecha_baja?: string | null; motivo_baja?: "despido" | "renuncia" | "otro" | null; detalle_baja?: string | null;
+  jornada_tipo: "ordinaria" | "art22"; colacion_min?: number; fecha_baja?: string | null; motivo_baja?: "despido" | "renuncia" | "otro" | null; detalle_baja?: string | null;
 }
 interface Turno { id: string; empleado_id: string; dia_semana: string; hora_entrada: string | null; hora_salida: string | null; horas: number; nota: string | null }
 type DiaDraft = { entrada: string; salida: string; horas: string; nota: string };
@@ -673,20 +673,21 @@ function Hora24({ value, onChange, estilo }: { value: string; onChange: (v: stri
   );
 }
 
-const COLACION_H = 0.5;
+const COLACIONES = [[0, "Sin colación"], [30, "30 minutos"], [45, "45 minutos"], [60, "1 hora"], [90, "1 hora 30 min"], [120, "2 horas"]] as const;
 
 // Horas trabajadas = salida - entrada (si la salida es de madrugada, cruza la medianoche) menos la colación.
-function horasDeTurno(entrada: string, salida: string): number | null {
+function horasDeTurno(entrada: string, salida: string, colacionMin: number): number | null {
   if (!entrada || !salida) return null;
   const min = (h: string) => { const [a, b] = h.split(":").map(Number); return a * 60 + b; };
   let dif = min(salida) - min(entrada);
   if (dif <= 0) dif += 24 * 60;
-  return Math.max(0, Math.round((dif / 60 - COLACION_H) * 2) / 2);
+  return Math.max(0, Math.round(((dif - colacionMin) / 60) * 4) / 4);
 }
 
 function TabTurnos({ id, empleado }: { id: string; empleado: Empleado }) {
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [loading, setLoading] = useState(true);
+  const [colacion, setColacion] = useState(empleado.colacion_min ?? 30);
   const [draft, setDraft] = useState<Record<string, DiaDraft>>({});
   const [guardando, setGuardando] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null);
@@ -726,11 +727,21 @@ function TabTurnos({ id, empleado }: { id: string; empleado: Empleado }) {
   function cambiarHorario(dia: string, campo: "entrada" | "salida", valor: string) {
     setDraft(d => {
       const nuevo = { ...d[dia], [campo]: valor };
-      const h = horasDeTurno(nuevo.entrada, nuevo.salida);
+      const h = horasDeTurno(nuevo.entrada, nuevo.salida, colacion);
       if (h != null) nuevo.horas = String(h);
       else if (!nuevo.entrada && !nuevo.salida) nuevo.horas = "0";
       return { ...d, [dia]: nuevo };
     });
+  }
+
+  async function cambiarColacion(min: number) {
+    setColacion(min);
+    setDraft(d => Object.fromEntries(Object.entries(d).map(([dia, v]) => {
+      const h = horasDeTurno(v.entrada, v.salida, min);
+      return [dia, h != null ? { ...v, horas: String(h) } : v];
+    })));
+    const res = await fetch(`/api/empleados/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ colacion_min: min }) });
+    setMsg(res.ok ? { ok: true, texto: "Colación actualizada. Guarda la semana para aplicar las horas." } : { ok: false, texto: (await res.json()).error });
   }
 
   const inp: React.CSSProperties = { background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "6px 10px", color: TEXT1, fontFamily: FONT, fontSize: 17, colorScheme: "dark" };
@@ -751,13 +762,20 @@ function TabTurnos({ id, empleado }: { id: string; empleado: Empleado }) {
             {total === meta ? "Semana completa" : total > meta ? `Se pasa por ${total - meta} h` : `Faltan ${meta - total} h`}
           </span>
         </div>
+        <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.04em" }}>Horario de colación</span>
+          <select value={colacion} onChange={e => cambiarColacion(Number(e.target.value))} style={{ ...inp, minWidth: 180 }}>
+            {COLACIONES.map(([min, label]) => <option key={min} value={min}>{label}</option>)}
+          </select>
+          <span style={{ fontSize: 14, color: TEXT3 }}>Se descuenta de cada turno.</span>
+        </label>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, fontWeight: 700, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.04em" }}>
             <span style={{ width: 36 }}>Día</span>
             <span style={{ width: 150 }}>Entrada</span>
             <span style={{ width: 12 }} />
             <span style={{ width: 150 }}>Salida</span>
-            <span style={{ width: 70 }} title="Se calcula solo (descuenta 30 min de colación). Puedes corregirlo a mano.">Horas</span>
+            <span style={{ width: 70 }} title="Se calcula solo (descuenta la colación elegida). Puedes corregirlo a mano.">Horas</span>
             <span style={{ flex: 1 }}>Nota</span>
           </div>
           {DIAS.map(dia => (
@@ -766,7 +784,7 @@ function TabTurnos({ id, empleado }: { id: string; empleado: Empleado }) {
               <Hora24 value={draft[dia]?.entrada ?? ""} onChange={v => cambiarHorario(dia, "entrada", v)} estilo={inp} />
               <span style={{ color: TEXT3 }}>→</span>
               <Hora24 value={draft[dia]?.salida ?? ""} onChange={v => cambiarHorario(dia, "salida", v)} estilo={inp} />
-              <input type="number" step="0.5" placeholder="hrs" value={draft[dia]?.horas ?? "0"} onChange={e => setDraft(d => ({ ...d, [dia]: { ...d[dia], horas: e.target.value } }))} style={{ ...inp, width: 70 }} />
+              <input type="number" step="0.25" placeholder="hrs" value={draft[dia]?.horas ?? "0"} onChange={e => setDraft(d => ({ ...d, [dia]: { ...d[dia], horas: e.target.value } }))} style={{ ...inp, width: 70 }} />
               <input type="text" placeholder="nota (opcional)" value={draft[dia]?.nota ?? ""} onChange={e => setDraft(d => ({ ...d, [dia]: { ...d[dia], nota: e.target.value } }))} style={{ ...inp, flex: 1, minWidth: 120 }} />
             </div>
           ))}
