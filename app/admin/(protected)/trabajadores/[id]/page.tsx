@@ -653,23 +653,35 @@ function TabAsistencia({ id, empleado }: { id: string; empleado: Empleado }) {
 
 // ---------- Turnos ----------
 
-// Selector de hora en formato 24 h (el campo type="time" del navegador usa AM/PM según el idioma).
+// Hora en formato 24 h: se puede escribir (1630, 16:30, 9) o elegir de la lista. El campo type="time" del navegador usa AM/PM.
+const HORAS_LISTA = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, "0")}:${i % 2 ? "30" : "00"}`);
+
+function normalizarHora(t: string): string | null {
+  const d = t.replace(/\D/g, "");
+  if (!d) return "";
+  let h: number, m: number;
+  if (t.includes(":")) { const [a, b = "0"] = t.split(":"); h = parseInt(a, 10); m = parseInt(b.slice(0, 2).padEnd(2, "0"), 10); }
+  else if (d.length <= 2) { h = parseInt(d, 10); m = 0; }
+  else { h = parseInt(d.slice(0, d.length - 2), 10); m = parseInt(d.slice(-2), 10); }
+  if (!(h >= 0 && h <= 23 && m >= 0 && m <= 59)) return null;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
 function Hora24({ value, onChange, estilo }: { value: string; onChange: (v: string) => void; estilo: React.CSSProperties }) {
-  const [h, m] = value ? value.split(":") : ["", ""];
-  const cambiar = (nh: string, nm: string) => onChange(nh === "" ? "" : `${nh}:${nm || "00"}`);
-  const sel: React.CSSProperties = { ...estilo, width: 72, padding: "6px 6px", textAlign: "center" };
+  const [texto, setTexto] = useState<string | null>(null);
+  const mostrado = texto ?? value;
+  const valida = normalizarHora(mostrado) !== null;
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-      <select value={h} onChange={e => cambiar(e.target.value, m)} style={sel} aria-label="Hora">
-        <option value="">--</option>
-        {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0")).map(x => <option key={x} value={x}>{x}</option>)}
-      </select>
-      <span style={{ color: TEXT3 }}>:</span>
-      <select value={h ? m || "00" : ""} disabled={!h} onChange={e => cambiar(h, e.target.value)} style={sel} aria-label="Minutos">
-        {!h && <option value="">--</option>}
-        {[...new Set([...Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0")), ...(m ? [m] : [])])].sort().map(x => <option key={x} value={x}>{x}</option>)}
-      </select>
-    </span>
+    <>
+      <input
+        type="text" inputMode="numeric" list="horas-24" placeholder="--:--" maxLength={5} value={mostrado}
+        onChange={e => { setTexto(e.target.value); const n = normalizarHora(e.target.value); if (n !== null && /^\d{2}:\d{2}$|^$/.test(n) && (e.target.value.includes(":") ? e.target.value.length === 5 : e.target.value === "")) onChange(n); }}
+        onBlur={() => { const n = normalizarHora(texto ?? value); if (n !== null) onChange(n); setTexto(null); }}
+        onFocus={e => e.target.select()}
+        aria-label="Hora (24 h)"
+        style={{ ...estilo, width: 110, textAlign: "center", borderColor: valida ? undefined : "#e5484d" }}
+      />
+    </>
   );
 }
 
@@ -762,6 +774,7 @@ function TabTurnos({ id, empleado }: { id: string; empleado: Empleado }) {
             {total === meta ? "Semana completa" : total > meta ? `Se pasa por ${total - meta} h` : `Faltan ${meta - total} h`}
           </span>
         </div>
+        <datalist id="horas-24">{HORAS_LISTA.map(h => <option key={h} value={h} />)}</datalist>
         <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
           <span style={{ fontSize: 14, fontWeight: 700, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.04em" }}>Horario de colación</span>
           <select value={colacion} onChange={e => cambiarColacion(Number(e.target.value))} style={{ ...inp, minWidth: 180 }}>
@@ -772,9 +785,9 @@ function TabTurnos({ id, empleado }: { id: string; empleado: Empleado }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, fontWeight: 700, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.04em" }}>
             <span style={{ width: 36 }}>Día</span>
-            <span style={{ width: 150 }}>Entrada</span>
+            <span style={{ width: 110 }}>Entrada</span>
             <span style={{ width: 12 }} />
-            <span style={{ width: 150 }}>Salida</span>
+            <span style={{ width: 110 }}>Salida</span>
             <span style={{ width: 70 }} title="Se calcula solo (descuenta la colación elegida). Puedes corregirlo a mano.">Horas</span>
             <span style={{ flex: 1 }}>Nota</span>
           </div>
