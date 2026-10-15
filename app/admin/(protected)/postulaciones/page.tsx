@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { MessageCircle, FileText, Trash2 } from "lucide-react";
+import { MessageCircle, FileText, Download, Trash2 } from "lucide-react";
 import { CATEGORIAS_POSTULACION, type Postulacion, type EstadoPostulacion } from "../../../../lib/postulaciones";
 import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, ROJO, VERDE, FONT, TITLE } from "../../../../lib/tokens";
 
@@ -11,6 +11,13 @@ const ESTADOS: { value: EstadoPostulacion; label: string; color: string }[] = [
 ];
 
 /** Deja el teléfono en formato internacional sin signos para el link de WhatsApp. Si viene sin código de país, asume Chile (+56). */
+/** Nombre de descarga legible: "CV - Juan Pérez.pdf". */
+function nombreArchivoCv(p: Postulacion): string {
+  const ext = p.cv_url.split(".").pop() || "pdf";
+  const limpio = p.nombre.replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ").trim() || "postulante";
+  return `CV - ${limpio}.${ext}`;
+}
+
 function telefonoWhatsapp(telefono: string): string {
   const soloNumeros = telefono.replace(/\D/g, "");
   if (soloNumeros.startsWith("56")) return soloNumeros;
@@ -110,6 +117,13 @@ export default function PostulacionesAdminPage() {
                   color: TEXT1, textDecoration: "none", fontWeight: 700, fontSize: 14,
                 }}>
                   <FileText size={16} /> Ver currículum
+                </a>
+                <a href={p.cv_url} download={nombreArchivoCv(p)} style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "9px 14px",
+                  color: TEXT1, textDecoration: "none", fontWeight: 700, fontSize: 14,
+                }}>
+                  <Download size={16} /> Descargar
                 </a>
                 <a href={`https://wa.me/${telefonoWhatsapp(p.telefono)}?text=${encodeURIComponent(`Hola ${p.nombre.split(" ")[0]}, te escribimos de Cacho Cabra por tu postulación 🙂`)}`}
                   target="_blank" rel="noopener noreferrer" style={{
