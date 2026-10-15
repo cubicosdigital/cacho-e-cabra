@@ -79,6 +79,22 @@ export default function LoginPage() {
             Iniciar sesión
           </h1>
 
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
+            {([
+              ["password", "Con contraseña", "Usa tu correo y la contraseña que creaste."],
+              ["codigo", "Con código", "Te enviamos un código al correo. No necesitas recordar ninguna contraseña."],
+            ] as const).map(([m, titulo, ayuda]) => (
+              <div key={m}>
+                <button type="button" onClick={() => { if (modo !== m) cambiarModo(); }} style={{
+                  width: "100%", padding: "11px 8px", borderRadius: 10, cursor: "pointer", fontFamily: FONT, fontSize: 16, fontWeight: 800,
+                  background: modo === m ? AMR : "transparent", color: modo === m ? "#1a1200" : TEXT1,
+                  border: `1.5px solid ${modo === m ? AMR : BORDER}`,
+                }}>{titulo}</button>
+                <div style={{ fontSize: 13, color: modo === m ? TEXT1 : TEXT3, lineHeight: 1.4, marginTop: 6, textAlign: "center" }}>{ayuda}</div>
+              </div>
+            ))}
+          </div>
+
           <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 18 }}>
             <div>
               <div style={{ fontSize: 16, color: TEXT3, fontWeight: 600, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Email</div>
@@ -139,11 +155,6 @@ export default function LoginPage() {
         </div>
 
         <p style={{ textAlign: "center", marginTop: 20 }}>
-          <button type="button" onClick={cambiarModo} style={{ background: "none", border: "none", color: AMR, fontSize: 16, fontWeight: 600, cursor: "pointer", fontFamily: FONT }}>
-            {modo === "password" ? "Entrar con código al correo" : "Volver a entrar con contraseña"}
-          </button>
-        </p>
-        <p style={{ textAlign: "center", marginTop: 8 }}>
           <a href="/admin/recuperar" style={{ color: TEXT3, fontSize: 14, textDecoration: "none" }}>
             ¿Olvidaste tu contraseña?
           </a>
