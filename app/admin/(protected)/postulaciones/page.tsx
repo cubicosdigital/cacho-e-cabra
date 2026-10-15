@@ -18,6 +18,9 @@ function nombreArchivoCv(p: Postulacion): string {
   return `CV - ${limpio}.${ext}`;
 }
 
+const selChico: React.CSSProperties = { background: SURF2, border: `1px solid ${BORDER}`, color: TEXT1, borderRadius: 8, padding: "5px 8px", fontFamily: FONT, fontSize: 13, fontWeight: 700 };
+const btnIcono: React.CSSProperties = { display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, color: TEXT1, textDecoration: "none" };
+
 function telefonoWhatsapp(telefono: string): string {
   const soloNumeros = telefono.replace(/\D/g, "");
   if (soloNumeros.startsWith("56")) return soloNumeros;
@@ -73,7 +76,7 @@ export default function PostulacionesAdminPage() {
 
   return (
     <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 10 }}>
         <div>
           <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Postulaciones</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>
@@ -101,59 +104,29 @@ export default function PostulacionesAdminPage() {
         ) : visibles.map(p => {
           const est = ESTADOS.find(e => e.value === p.estado)!;
           return (
-            <div key={p.id} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderLeft: `4px solid ${est.color}`, borderRadius: 14, padding: 20, display: "flex", gap: 16, flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: 220 }}>
-                <div style={{ fontSize: 18, fontWeight: 800, color: TEXT1, marginBottom: 4 }}>{p.nombre}</div>
-                <div style={{ fontSize: 14, color: TEXT3 }}>{p.correo} · {p.telefono}</div>
-                <div style={{ fontSize: 13, color: TEXT3, marginTop: 6 }}>
+            <div key={p.id} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderLeft: `4px solid ${est.color}`, borderRadius: 12, padding: "10px 14px", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: 200, lineHeight: 1.35 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: TEXT1 }}>{p.nombre}</div>
+                <div style={{ fontSize: 13, color: TEXT3 }}>{p.correo} · {p.telefono}</div>
+                <div style={{ fontSize: 12, color: TEXT3 }}>
                   {new Date(p.created_at).toLocaleString("es-CL", { dateStyle: "medium", timeStyle: "short" })}
                 </div>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 160 }} className="adm-full">
-                <a href={p.cv_url} target="_blank" rel="noopener noreferrer" style={{
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "9px 14px",
-                  color: TEXT1, textDecoration: "none", fontWeight: 700, fontSize: 14,
-                }}>
-                  <FileText size={16} /> Ver currículum
-                </a>
-                <a href={p.cv_url} download={nombreArchivoCv(p)} style={{
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "9px 14px",
-                  color: TEXT1, textDecoration: "none", fontWeight: 700, fontSize: 14,
-                }}>
-                  <Download size={16} /> Descargar
-                </a>
-                <a href={`https://wa.me/${telefonoWhatsapp(p.telefono)}?text=${encodeURIComponent(`Hola ${p.nombre.split(" ")[0]}, te escribimos de Cacho Cabra por tu postulación 🙂`)}`}
-                  target="_blank" rel="noopener noreferrer" style={{
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                    background: "#1f8a3d", border: "none", borderRadius: 8, padding: "9px 14px",
-                    color: "#fff", textDecoration: "none", fontWeight: 700, fontSize: 14,
-                  }}>
-                  <MessageCircle size={16} /> Escribir por WhatsApp
-                </a>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 150 }} className="adm-full">
-                <select value={p.categoria ?? ""} onChange={e => categorizar(p.id, e.target.value)} style={{
-                  background: SURF2, border: `1px solid ${BORDER}`, color: TEXT1, borderRadius: 8, padding: "7px 8px", fontFamily: FONT, fontSize: 14, fontWeight: 700,
-                }}>
+              <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                <select value={p.categoria ?? ""} onChange={e => categorizar(p.id, e.target.value)} title="Categoría" style={selChico}>
                   <option value="">Sin categoría</option>
                   {CATEGORIAS_POSTULACION.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                 </select>
-                {ESTADOS.map(e => (
-                  <button key={e.value} onClick={() => actualizar(p.id, { estado: e.value })} style={{
-                    fontSize: 13, fontWeight: 700, borderRadius: 8, padding: "6px 10px", border: "none", cursor: "pointer", fontFamily: FONT,
-                    background: p.estado === e.value ? e.color : SURF2, color: p.estado === e.value ? "#1a1200" : TEXT3,
-                  }}>
-                    {e.label}
-                  </button>
-                ))}
-                <button onClick={() => eliminar(p)} style={{
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 4,
-                  background: "none", border: `1px solid ${BORDER}`, color: "#fca5a5", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontFamily: FONT, fontSize: 13, fontWeight: 700,
-                }}><Trash2 size={14} /> Eliminar</button>
+                <select value={p.estado} onChange={e => actualizar(p.id, { estado: e.target.value as EstadoPostulacion })} title="Estado"
+                  style={{ ...selChico, background: est.color, color: "#1a1200", border: "none" }}>
+                  {ESTADOS.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
+                </select>
+                <a href={p.cv_url} target="_blank" rel="noopener noreferrer" title="Ver currículum" style={btnIcono}><FileText size={15} /></a>
+                <a href={p.cv_url} download={nombreArchivoCv(p)} title="Descargar currículum" style={btnIcono}><Download size={15} /></a>
+                <a href={`https://wa.me/${telefonoWhatsapp(p.telefono)}?text=${encodeURIComponent(`Hola ${p.nombre.split(" ")[0]}, te escribimos de Cacho Cabra por tu postulación 🙂`)}`}
+                  target="_blank" rel="noopener noreferrer" title="Escribir por WhatsApp" style={{ ...btnIcono, background: "#1f8a3d", border: "none", color: "#fff" }}><MessageCircle size={15} /></a>
+                <button onClick={() => eliminar(p)} title="Eliminar postulación" style={{ ...btnIcono, color: "#fca5a5", cursor: "pointer" }}><Trash2 size={15} /></button>
               </div>
             </div>
           );
