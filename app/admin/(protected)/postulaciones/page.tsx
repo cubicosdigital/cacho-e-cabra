@@ -122,7 +122,7 @@ export default function PostulacionesAdminPage() {
                   style={{ ...selChico, background: est.color, color: "#1a1200", border: "none" }}>
                   {ESTADOS.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
                 </select>
-                <a href={p.cv_url} target="_blank" rel="noopener noreferrer" title="Ver currículum" style={btnIcono}><FileText size={15} /></a>
+                <a href={p.cv_url} target="_blank" rel="noopener noreferrer" title="Ver currículum" style={{ ...btnIcono, width: "auto", padding: "0 10px", gap: 6, fontSize: 13, fontWeight: 700 }}><FileText size={15} /> Ver CV</a>
                 <a href={p.cv_url} download={nombreArchivoCv(p)} title="Descargar currículum" style={btnIcono}><Download size={15} /></a>
                 <a href={`https://wa.me/${telefonoWhatsapp(p.telefono)}?text=${encodeURIComponent(`Hola ${p.nombre.split(" ")[0]}, te escribimos de Cacho Cabra por tu postulación 🙂`)}`}
                   target="_blank" rel="noopener noreferrer" title="Escribir por WhatsApp" style={{ ...btnIcono, background: "#1f8a3d", border: "none", color: "#fff" }}><MessageCircle size={15} /></a>
