@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [verPassword, setVerPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [modo, setModo] = useState<"password" | "codigo">("password");
+  const [modo, setModo] = useState<"password" | "codigo" | null>(null);
   const [codigoEnviado, setCodigoEnviado] = useState(false);
   const [codigo, setCodigo] = useState("");
 
@@ -53,8 +53,8 @@ export default function LoginPage() {
     router.refresh();
   }
 
-  function cambiarModo() {
-    setModo(m => (m === "password" ? "codigo" : "password"));
+  function elegirModo(m: "password" | "codigo" | null) {
+    setModo(m);
     setCodigoEnviado(false); setCodigo(""); setError("");
   }
 
@@ -79,21 +79,27 @@ export default function LoginPage() {
             Iniciar sesión
           </h1>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
-            {([
-              ["password", "Con contraseña", "Usa tu correo y la contraseña que creaste."],
-              ["codigo", "Con código", "Te enviamos un código al correo. No necesitas recordar ninguna contraseña."],
-            ] as const).map(([m, titulo, ayuda]) => (
-              <div key={m}>
-                <button type="button" onClick={() => { if (modo !== m) cambiarModo(); }} style={{
-                  width: "100%", padding: "11px 8px", borderRadius: 10, cursor: "pointer", fontFamily: FONT, fontSize: 16, fontWeight: 800,
-                  background: modo === m ? AMR : "transparent", color: modo === m ? "#1a1200" : TEXT1,
-                  border: `1.5px solid ${modo === m ? AMR : BORDER}`,
-                }}>{titulo}</button>
-                <div style={{ fontSize: 13, color: modo === m ? TEXT1 : TEXT3, lineHeight: 1.4, marginTop: 6, textAlign: "center" }}>{ayuda}</div>
-              </div>
-            ))}
-          </div>
+          {modo === null ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {([
+                ["password", "Entrar con contraseña", "Usa tu correo y la contraseña que creaste."],
+                ["codigo", "Entrar con código", "Te enviamos un código al correo. No necesitas recordar ninguna contraseña."],
+              ] as const).map(([m, titulo, ayuda]) => (
+                <div key={m}>
+                  <button type="button" onClick={() => elegirModo(m)} style={{
+                    width: "100%", padding: "14px 8px", borderRadius: 10, cursor: "pointer", fontFamily: FONT, fontSize: 19, fontWeight: 800,
+                    background: m === "password" ? AMR : "transparent", color: m === "password" ? "#1a1200" : TEXT1,
+                    border: `1.5px solid ${m === "password" ? AMR : BORDER}`,
+                  }}>{titulo}</button>
+                  <div style={{ fontSize: 14, color: TEXT3, lineHeight: 1.4, marginTop: 8, textAlign: "center" }}>{ayuda}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+          <>
+          <button type="button" onClick={() => elegirModo(null)} style={{ background: "none", border: "none", color: AMR, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: FONT, padding: 0, marginBottom: 16 }}>
+            ← Cambiar forma de entrar
+          </button>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 18 }}>
             <div>
@@ -152,6 +158,8 @@ export default function LoginPage() {
             style={{ width: "100%", padding: "13px", background: AMR, color: "#1a1200", border: "none", borderRadius: 10, fontWeight: 800, fontSize: 19, cursor: "pointer", fontFamily: FONT, opacity: loading ? 0.7 : 1 }}>
             {loading ? "Un momento..." : modo === "password" ? "Entrar" : codigoEnviado ? "Entrar" : "Enviar código a mi correo"}
           </button>
+          </>
+          )}
         </div>
 
         <p style={{ textAlign: "center", marginTop: 20 }}>
