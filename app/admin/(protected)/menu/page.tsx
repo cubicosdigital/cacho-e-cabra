@@ -21,7 +21,6 @@ const PESTAÑAS: { id: string; label: string; incluye: string[] }[] = [
 ];
 const CATEGORIAS = ["comida", "tragos", "cafeteria", "brunch", "postres", "chef"];
 
-const plata = (n: number) => `$${n.toLocaleString("es-CL")}`;
 const inp: React.CSSProperties = { background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "9px 12px", color: TEXT1, fontFamily: FONT, fontSize: 16, width: "100%", boxSizing: "border-box" };
 const vacio = (categoria: string): Borrador => ({ nombre: "", descripcion: "", precio: 0, categoria, subcategoria: "", foto: "", badge: "" });
 
@@ -64,6 +63,37 @@ function EditorDescripcion({ valor, onChange }: { valor: string; onChange: (v: s
         </div>
       )}
     </div>
+  );
+}
+
+/** Precio editable directo en la lista: se escribe y se guarda al salir del campo o con Enter (Esc cancela). */
+function PrecioEditable({ precio, onGuardar }: { precio: number; onGuardar: (nuevo: number) => Promise<boolean> }) {
+  const [texto, setTexto] = useState(String(precio));
+  const [estado, setEstado] = useState<"" | "guardando" | "error">("");
+
+  async function confirmar() {
+    const n = Number(texto);
+    if (texto.trim() === "" || !Number.isInteger(n) || n <= 0) { setTexto(String(precio)); return; }
+    if (n === precio) return;
+    setEstado("guardando");
+    const ok = await onGuardar(n);
+    if (ok) setEstado(""); else { setEstado("error"); setTexto(String(precio)); }
+  }
+
+  return (
+    <label onClick={e => e.stopPropagation()} title="Edita el precio aquí y presiona Enter" style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 2, background: SURF2, border: `1px solid ${estado === "error" ? ROJO : BORDER}`, borderRadius: 8, padding: "4px 8px", cursor: "text", opacity: estado === "guardando" ? 0.6 : 1 }}>
+      <span style={{ fontFamily: TITLE, fontWeight: 900, fontSize: 19, color: AMR }}>$</span>
+      <input type="number" inputMode="numeric" min={1} step={100} value={texto} disabled={estado === "guardando"}
+        onChange={e => { setTexto(e.target.value); setEstado(""); }}
+        onBlur={confirmar}
+        onFocus={e => e.target.select()}
+        onKeyDown={e => {
+          if (e.key === "Enter") e.currentTarget.blur();
+          if (e.key === "Escape") { setTexto(String(precio)); e.currentTarget.blur(); }
+        }}
+        aria-label="Precio"
+        style={{ width: 84, background: "transparent", border: "none", outline: "none", color: AMR, fontFamily: TITLE, fontWeight: 900, fontSize: 19, textAlign: "right", MozAppearance: "textfield" }} />
+    </label>
   );
 }
 
@@ -157,6 +187,14 @@ export default function MenuPage() {
     if (d) { setProductos(prev => prev.map(x => x.id === id ? d : x)); setAbierto(null); }
   }
 
+  async function cambiarPrecio(p: Producto, precio: number): Promise<boolean> {
+    const d = await llamar(`/api/productos/${p.id}`, "PATCH", { precio });
+    if (!d) return false;
+    setProductos(prev => prev.map(x => x.id === p.id ? { ...x, precio: d.precio } : x));
+    if (abierto === p.id) setBorrador(b => ({ ...b, precio: d.precio }));
+    return true;
+  }
+
   async function crear() {
     if (!nuevo) return;
     setGuardando(true);
@@ -194,7 +232,7 @@ export default function MenuPage() {
         </div>
 
         <div style={{ fontSize: 15, color: TEXT3, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "10px 14px" }}>
-          Se ve como la carta del sitio. Toca un producto para editar su foto, precio y descripción. El botón <strong style={{ color: VERDE }}>Disponible</strong> / <strong style={{ color: ROJO }}>Agotado</strong> es el stock: un producto agotado se oculta de la carta pública hasta que lo vuelvas a marcar.
+          Se ve como la carta del sitio. Toca un producto para editar su foto y descripción. El precio lo puedes cambiar directo en la lista: escribe el nuevo valor y presiona Enter. El botón <strong style={{ color: VERDE }}>Disponible</strong> / <strong style={{ color: ROJO }}>Agotado</strong> es el stock: un producto agotado se oculta de la carta pública hasta que lo vuelvas a marcar.
         </div>
 
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
@@ -244,7 +282,7 @@ export default function MenuPage() {
                           {p.descripcion ? <TextoRico texto={p.descripcion.replace(/\n/g, " ")} /> : <em>Sin descripción · toca para agregar</em>}
                         </div>
                       </div>
-                      <div style={{ fontFamily: TITLE, fontWeight: 900, fontSize: 19, color: AMR, flexShrink: 0 }}>{plata(p.precio)}</div>
+                      <PrecioEditable key={p.precio} precio={p.precio} onGuardar={n => cambiarPrecio(p, n)} />
                       <button onClick={e => { e.stopPropagation(); alternar(p, "popular"); }} title="Mostrar en los destacados del home"
                         style={{ flexShrink: 0, fontSize: 15, fontWeight: 700, borderRadius: 8, padding: "6px 10px", border: "none", cursor: "pointer", fontFamily: FONT, background: p.popular ? "#3a2f10" : SURF2, color: p.popular ? AMR : TEXT3 }}>{p.popular ? "★" : "☆"}</button>
                       <button onClick={e => { e.stopPropagation(); alternar(p, "disponible"); }}

@@ -11,6 +11,7 @@ export const MODULOS = [
   { k: "delivery", label: "Pedidos delivery", grupo: "Ventas" },
   { k: "ventas", label: "Resumen de ventas", grupo: "Ventas", solo: ["r"] },
   { k: "presupuestos", label: "Presupuestos", grupo: "Ventas" },
+  { k: "giftcards", label: "Gift cards", grupo: "Ventas" },
   { k: "pos", label: "POS en caja (cobros)", grupo: "Ventas" },
   { k: "mesas", label: "Mesas", grupo: "Local" },
   { k: "menu", label: "Menú carta y sugerencias del chef", grupo: "Local" },
@@ -43,14 +44,14 @@ export const PERMISOS_POR_ROL: Record<Rol, Permisos> = {
   admin: Object.fromEntries(MODULOS.map(m => [m.k, accionesDe(m.k)])) as Permisos,
   supervisor: {
     pedidos: ["c", "r", "u"], delivery: TODO, pos: ["c", "r", "u"], mesas: ["r", "u"], menu: TODO, banner: TODO, galeria: TODO, eventos: TODO,
-    invitados: ["r", "u"], tareas: TODO, turnos: ["r"], denuncias: ["c"], postulaciones: ["r", "u"],
+    invitados: ["r", "u"], tareas: TODO, turnos: ["r"], denuncias: ["c"], postulaciones: ["r", "u"], giftcards: ["c", "r", "u"],
   },
   mesero: { ...basicoStaff, pedidos: ["c", "r", "u"], mesas: ["r"] },
   runner: { ...basicoStaff, pedidos: ["r", "u"], mesas: ["r"] },
   barra: { ...basicoStaff },
   coperia: { ...basicoStaff },
   cocina: { ...basicoStaff },
-  caja: { ...basicoStaff, ventas: ["r"], pos: ["c", "r", "u"] },
+  caja: { ...basicoStaff, ventas: ["r"], pos: ["c", "r", "u"], giftcards: ["r", "u"] },
   recepcionista: { ...basicoStaff, pedidos: ["r"], mesas: ["c", "r", "u"], reclamos: ["r", "u"] },
 };
 

@@ -1,7 +1,7 @@
 import {
   Receipt, Bike, TrendingUp, FileText, Table2, UtensilsCrossed, ChefHat,
   AlertTriangle, Inbox, MessageSquare, CalendarClock, CalendarDays, Users,
-  Image as ImageIcon, PartyPopper, ClipboardList, ListChecks, Megaphone, HandPlatter, Film, Fingerprint, Bell, Settings2, LayoutDashboard, SlidersHorizontal, CreditCard, Briefcase,
+  Image as ImageIcon, PartyPopper, ClipboardList, ListChecks, Megaphone, HandPlatter, Film, Fingerprint, Bell, Settings2, LayoutDashboard, SlidersHorizontal, CreditCard, Briefcase, Gift,
   type LucideIcon,
 } from "lucide-react";
 import type { Rol } from "../../../lib/roles";
@@ -39,6 +39,7 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
       { href: "/admin/pos", label: "POS (Caja)", corto: "Caja", icon: CreditCard, acceso: ["pos", "r"] },
       { href: "/admin/ventas", label: "Resumen de ventas", corto: "Ventas", icon: TrendingUp, acceso: ["ventas", "r"] },
       { href: "/admin/presupuestos", label: "Presupuestos", icon: FileText, acceso: ["presupuestos", "r"] },
+      { href: "/admin/giftcards", label: "Gift cards", icon: Gift, acceso: ["giftcards", "r"] },
     ],
   },
   {

@@ -34,6 +34,7 @@ export default function PostulacionesAdminPage() {
   const [sinAcceso, setSinAcceso] = useState(false);
   const [filtro, setFiltro] = useState<string>("todas");
   const [error, setError] = useState("");
+  const [descargando, setDescargando] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -55,6 +56,19 @@ export default function PostulacionesAdminPage() {
     setPostulaciones(prev => prev.map(p => p.id === id ? { ...p, categoria: categoria || null } : p));
     const res = await fetch(`/api/postulaciones/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ categoria: categoria || null }) });
     if (!res.ok) { setPostulaciones(previo); setError("No se pudo guardar la categoría. ¿Corriste la migración 017 en Supabase?"); }
+  }
+
+  async function descargarTodos() {
+    setError(""); setDescargando(true);
+    const res = await fetch(`/api/postulaciones/cvs?categoria=${encodeURIComponent(filtro)}`);
+    setDescargando(false);
+    if (!res.ok) { setError((await res.json().catch(() => ({}))).error || "No se pudo armar el PDF."); return; }
+    const omitidos = decodeURIComponent(res.headers.get("X-Omitidos") || "");
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement("a");
+    a.href = url; a.download = "curriculums.pdf"; a.click();
+    URL.revokeObjectURL(url);
+    if (omitidos) setError(`No se incluyeron (no son PDF): ${omitidos}.`);
   }
 
   async function eliminar(p: Postulacion) {
@@ -92,6 +106,12 @@ export default function PostulacionesAdminPage() {
             }}>{c.label}</button>
           ))}
         </div>
+
+        {visibles.length > 0 && (
+          <button onClick={descargarTodos} disabled={descargando} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 8, background: AMR, color: "#1a1200", border: "none", borderRadius: 10, padding: "10px 18px", fontFamily: FONT, fontSize: 15, fontWeight: 800, cursor: "pointer", opacity: descargando ? 0.6 : 1 }}>
+            <Download size={16} /> {descargando ? "Armando PDF…" : `Descargar todos los CV en un PDF${filtro === "todas" ? "" : " (este filtro)"}`}
+          </button>
+        )}
 
         {error && <div style={{ background: "#2a1212", border: "1px solid #5c2626", color: "#fca5a5", borderRadius: 10, padding: "10px 16px", fontSize: 15 }}>{error}</div>}
 

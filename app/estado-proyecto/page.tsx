@@ -213,6 +213,19 @@ const MODULOS: Modulo[] = [
       { id: "re03", nombre: "Lunes Clandestinos — registro secreto", descripcion: "Landing sin menú. Solo registro por nombre. Gestión separada del sistema de reservas estándar.", estado: "pendiente", prioridad: "alta", tipo: "ambos" },
     ],
   },
+  {
+    id: "giftcards",
+    nombre: "Gift Cards",
+    emoji: "🎁",
+    descripcion: "Generador de gift cards en el admin (por $ o por %), con lotes correlativos, PDF para imprimir y envío por WhatsApp. Aún no se venden al público.",
+    nuevo: true,
+    reqs: [
+      { id: "g01", nombre: "Generador de gift cards + PDF + WhatsApp", descripcion: "Diseño con logo, mensaje, $ o %, lotes de hasta 100 con número correlativo y PDF de hojas A4 para recortar. Listo, falta subirlo a producción.", estado: "completado", prioridad: "alta", tipo: "admin" },
+      { id: "g02", nombre: "Escáner de QR para canjear (botón «Leer QR»)", descripcion: "Ya está construido en el admin (cámara, canje y número manual), pero queda pendiente probarlo en el local con el celular y ponerlo en uso cuando se empiecen a vender las gift cards.", estado: "pendiente", prioridad: "media", tipo: "admin" },
+      { id: "g03", nombre: "Venta de gift cards al público", descripcion: "Aún no se venden. Por definir: dónde se compran y cómo se pagan.", estado: "pendiente", prioridad: "media", tipo: "ambos" },
+      { id: "g04", nombre: "PIN de seguridad en gift cards de %", descripcion: "Los códigos correlativos se pueden adivinar y las de % no llevan QR. Opcional: agregar un PIN corto al canje.", estado: "pendiente", prioridad: "baja", tipo: "admin" },
+    ],
+  },
 ];
 
 export default function EstadoProyectoPage() {
