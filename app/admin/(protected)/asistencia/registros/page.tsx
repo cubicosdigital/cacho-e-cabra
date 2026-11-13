@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { BG, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, ROJO, FONT, TITLE } from "../../../../../lib/tokens";
+import { BG, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, ROJO, AZUL, FONT, TITLE } from "../../../../../lib/tokens";
 import {
-  HORA_ENTRADA_ESPERADA, TOLERANCIA_MIN, DIAS_SEMANA, agruparPorPeriodo, entradasProgramadas, fmtHoras, estadoDia, parseFecha, resumirDias, type Marca,
+  HORA_ENTRADA_ESPERADA, TOLERANCIA_MIN, DIAS_SEMANA, agruparPorPeriodo, entradasProgramadas, fmtHoras, AUSENCIA_LABEL, enAusencia, estadoDia, parseFecha, resumirDias, type Marca,
 } from "../../../../../lib/asistencia";
 import { BarrasHorizontales, BarrasVerticales, FiltroFechas, Kpi, Panel, botonVolver, tarjeta } from "../graficos";
 
-interface Empleado { id: string; nombre: string; control_asistencia: boolean }
+interface Empleado { id: string; nombre: string; control_asistencia: boolean; ausencia_tipo?: string | null; ausencia_desde?: string | null; ausencia_hasta?: string | null }
 interface Asistencia extends Marca {
   id: string;
   empleados: { nombre: string; cargo: string | null; departamento: string } | null;
@@ -89,9 +89,10 @@ export default function RegistrosGeneralesPage() {
     const ids = new Set([...controlados.map(e => e.id), ...dias.map(d => d.empleado_id)]);
     return [...ids].map(id => ({
       id, nombre: empleados.find(e => e.id === id)?.nombre ?? asistencias.find(a => a.empleado_id === id)?.empleados?.nombre ?? "—",
+      ausencia: (() => { const e = empleados.find(x => x.id === id); return e ? enAusencia(e, hasta) ?? enAusencia(e, desde) : null; })(),
       dias: dias.filter(d => d.empleado_id === id).sort((a, b) => b.fecha.localeCompare(a.fecha)),
     })).map(g => ({ ...g, min: g.dias.reduce((s, d) => s + (d.trabajado ?? 0), 0) })).sort((a, b) => a.nombre.localeCompare(b.nombre));
-  }, [controlados, dias, empleados, asistencias]);
+  }, [controlados, dias, empleados, asistencias, desde, hasta]);
 
   const rankingHoras = [...porTrabajador].sort((a, b) => b.min - a.min);
   const rankingPuntualidad = [...porTrabajador].filter(t => t.dias > 0).sort((a, b) => b.puntualidad - a.puntualidad);
@@ -155,8 +156,8 @@ export default function RegistrosGeneralesPage() {
                 <div key={g.id} style={{ borderTop: `1px solid ${BORDER}`, padding: "12px 0" }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginBottom: 6 }}>
                     <Link href={`/admin/trabajadores/${g.id}?tab=asistencia`} style={{ fontFamily: TITLE, fontSize: 19, fontWeight: 900, color: TEXT1, textDecoration: "none", overflowWrap: "anywhere" }}>{g.nombre}</Link>
-                    <span style={{ fontSize: 15, color: g.dias.length === 0 ? ROJO : TEXT3, fontWeight: g.dias.length === 0 ? 700 : 400 }}>
-                      {g.dias.length === 0 ? "Sin marcas en este rango" : `${g.dias.length} turno${g.dias.length > 1 ? "s" : ""} · ${fmtHoras(g.min)}`}
+                    <span style={{ fontSize: 15, color: g.dias.length === 0 ? (g.ausencia ? AZUL : ROJO) : TEXT3, fontWeight: g.dias.length === 0 ? 700 : 400 }}>
+                      {g.dias.length === 0 ? (g.ausencia ? AUSENCIA_LABEL[g.ausencia] : "Sin marcas en este rango") : `${g.dias.length} turno${g.dias.length > 1 ? "s" : ""} · ${fmtHoras(g.min)}`}
                     </span>
                   </div>
                   {g.dias.map(d => (

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getSupabase } from "@/lib/supabase";
-import { HORA_ENTRADA_ESPERADA, TOLERANCIA_MIN, entradasProgramadas, minutos, resumirDias, type Marca } from "@/lib/asistencia";
+import { HORA_ENTRADA_ESPERADA, TOLERANCIA_MIN, enAusencia, entradasProgramadas, fechaDeTurno, minutos, resumirDias, type Marca } from "@/lib/asistencia";
 import { contratoCompleto, type Ficha } from "@/lib/fichas";
 import { LATIDO_VIGENCIA_S } from "@/lib/terminal";
 import { MINUTOS_ALERTA, detalles } from "@/lib/pos";
@@ -46,7 +46,7 @@ export async function GET() {
       traer<{ nombre: string; categoria: string; cantidad: number; precio_unitario: number; pedidos: { created_at: string; estado: string } | { created_at: string; estado: string }[] }>((a, b) =>
         db.from("items_pedido").select("nombre,categoria,cantidad,precio_unitario,pedidos!inner(created_at,estado)").gte("pedidos.created_at", desdeVentas).range(a, b)),
       traer<{ nombre: string; categoria: string; disponible: boolean }>((a, b) => db.from("productos").select("nombre,categoria,disponible").range(a, b)),
-      traer<{ id: string; nombre: string; cargo: string | null; departamento: string; control_asistencia: boolean }>((a, b) => db.from("empleados").select("id,nombre,cargo,departamento,control_asistencia").eq("activo", true).order("nombre").range(a, b)),
+      traer<{ id: string; nombre: string; cargo: string | null; departamento: string; control_asistencia: boolean; ausencia_tipo: string | null; ausencia_desde: string | null; ausencia_hasta: string | null }>((a, b) => db.from("empleados").select("id,nombre,cargo,departamento,control_asistencia,ausencia_tipo,ausencia_desde,ausencia_hasta").eq("activo", true).order("nombre").range(a, b)),
       traer<Ficha>((a, b) => db.from("fichas_empleado").select("*").range(a, b)),
       traer<{ empleado_id: string; dia_semana: string; hora_entrada: string | null; horas: number }>((a, b) => db.from("turnos").select("empleado_id,dia_semana,hora_entrada,horas").range(a, b)),
       traer<Marca>((a, b) => db.from("asistencias").select("empleado_id,fecha,hora,tipo").gte("fecha", desdeSemana).range(a, b)),
@@ -105,22 +105,27 @@ export async function GET() {
 
     // ── Equipo ────────────────────────────────────────────────────────
     const controlados = empleados.filter(e => e.control_asistencia);
-    const diaSemana = NOMBRE_DIA[new Date(`${hoy}T12:00:00Z`).getUTCDay()];
+    // En un bar el turno se cuenta por el día de ingreso: de madrugada (antes de las 06:00) "hoy" sigue siendo el día anterior.
+    const horaTexto = hora(ahora);
+    const jornada = fechaDeTurno(hoy, `${horaTexto}:00`.slice(0, 8).padEnd(8, ":00"));
+    const diaSemana = NOMBRE_DIA[new Date(`${jornada}T12:00:00Z`).getUTCDay()];
     const turnoHoy = new Map(turnos.filter(t => t.dia_semana === diaSemana && t.horas > 0).map(t => [t.empleado_id, t]));
-    const horaAhora = minutos(hora(ahora));
+    const horaAhora = minutos(horaTexto) + (jornada !== hoy ? 1440 : 0);
 
     const equipoHoy = controlados.map(e => {
-      const marcas = asistencias.filter(a => a.empleado_id === e.id && a.fecha === hoy).sort((x, y) => x.hora.localeCompare(y.hora));
+      const marcas = asistencias.filter(a => a.empleado_id === e.id && fechaDeTurno(a.fecha, a.hora) === jornada)
+        .sort((x, y) => `${x.fecha} ${x.hora}`.localeCompare(`${y.fecha} ${y.hora}`));
       const primera = marcas.find(m => m.tipo === "entrada");
       const turno = turnoHoy.get(e.id);
       const entradaEsperada = turno?.hora_entrada ? minutos(turno.hora_entrada) : minutos(HORA_ENTRADA_ESPERADA);
-      const estado = marcas.length === 0 ? "sin_marcar" : marcas[marcas.length - 1].tipo === "entrada" ? "dentro" : "salio";
+      const ausencia = marcas.length === 0 ? enAusencia(e, jornada) : null;
+      const estado = ausencia ? "ausencia" : marcas.length === 0 ? "sin_marcar" : marcas[marcas.length - 1].tipo === "entrada" ? "dentro" : "salio";
       return {
         id: e.id, nombre: e.nombre, cargo: e.cargo, estado,
         desde: primera ? primera.hora.slice(0, 5) : null,
         tarde: primera ? minutos(primera.hora) > entradaEsperada + TOLERANCIA_MIN : false,
-        esperado: !!turno,
-        ausente: !!turno && marcas.length === 0 && horaAhora > entradaEsperada + 15,
+        esperado: !!turno && !ausencia, ausencia,
+        ausente: !ausencia && !!turno && marcas.length === 0 && horaAhora > entradaEsperada + 15,
       };
     });
 

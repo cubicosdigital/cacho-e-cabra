@@ -6,7 +6,7 @@ import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, ROJO, AZUL
 import { contratoCompleto, type Ficha } from "../../../../../lib/fichas";
 import { LATIDO_VIGENCIA_S, type Comando, type EstadoTerminal, type TipoComando } from "../../../../../lib/terminal";
 import {
-  DIAS_SEMANA, MESES, agruparPorPeriodo, entradasProgramadas, fmtHoraMin, fmtHoras, minutos, estadoDia, parseFecha, resumirDias, type Marca,
+  DIAS_SEMANA, MESES, agruparPorPeriodo, entradasProgramadas, fmtHoraMin, fmtHoras, minutos, AUSENCIA_LABEL, estadoDia, parseFecha, resumirDias, type Marca,
 } from "../../../../../lib/asistencia";
 import { BarrasVerticales, FiltroFechas, Kpi, Panel, botonVolver, tarjeta } from "../../asistencia/graficos";
 
@@ -18,7 +18,7 @@ const TEMPORADA = "invierno-2026";
 interface Empleado {
   id: string; nombre: string; rut: string | null; cargo: string | null; departamento: string;
   tipo_contrato: string; control_asistencia: boolean; zk_id: number | null; activo: boolean;
-  jornada_tipo: "ordinaria" | "art22"; colacion_min?: number; fecha_baja?: string | null; motivo_baja?: "despido" | "renuncia" | "otro" | null; detalle_baja?: string | null;
+  jornada_tipo: "ordinaria" | "art22"; colacion_min?: number; ausencia_tipo?: "vacaciones" | "licencia" | "permiso" | null; ausencia_desde?: string | null; ausencia_hasta?: string | null; fecha_baja?: string | null; motivo_baja?: "despido" | "renuncia" | "otro" | null; detalle_baja?: string | null;
 }
 interface Turno { id: string; empleado_id: string; dia_semana: string; hora_entrada: string | null; hora_salida: string | null; horas: number; nota: string | null }
 type DiaDraft = { entrada: string; salida: string; horas: string; nota: string };
@@ -131,6 +131,9 @@ export default function FichaTrabajadorPage({ params }: { params: Promise<{ id: 
             onClick={e => { if (window.history.length > 1) { e.preventDefault(); router.back(); } }}>← Volver</Link>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900, overflowWrap: "anywhere" }}>{empleado.nombre}</div>
+            {empleado.ausencia_tipo && (
+              <span style={{ fontSize: 14, fontWeight: 700, color: AZUL, border: `1px solid ${AZUL}`, borderRadius: 999, padding: "3px 12px" }}>{AUSENCIA_LABEL[empleado.ausencia_tipo]}</span>
+            )}
             {!empleado.activo && (
               <span style={{ fontSize: 14, fontWeight: 700, color: ROJO, border: `1px solid ${ROJO}`, borderRadius: 999, padding: "3px 12px" }}>Dado de baja{empleado.motivo_baja ? ` · ${MOTIVO_LABEL[empleado.motivo_baja]}` : ""}</span>
             )}
@@ -166,6 +169,7 @@ function TabDatos({ empleado, inp, onGuardado, cargando, setCargando }: {
 }) {
   const router = useRouter();
   const [d, setD] = useState({ nombre: empleado.nombre, rut: empleado.rut ?? "", cargo: empleado.cargo ?? "", departamento: empleado.departamento, tipo_contrato: empleado.tipo_contrato, control_asistencia: empleado.control_asistencia, jornada_tipo: empleado.jornada_tipo ?? "ordinaria" });
+  const [aus, setAus] = useState({ tipo: "vacaciones" as "vacaciones" | "licencia" | "permiso", desde: new Date().toISOString().slice(0, 10), hasta: "" });
   const [bajaAbierta, setBajaAbierta] = useState(false);
   const [baja, setBaja] = useState({ motivo: "renuncia" as "despido" | "renuncia" | "otro", detalle: "", fecha: new Date().toISOString().slice(0, 10) });
   const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null);
@@ -245,6 +249,37 @@ function TabDatos({ empleado, inp, onGuardado, cargando, setCargando }: {
           {msg && <span style={{ color: msg.ok ? VERDE : ROJO, fontSize: 16 }}>{msg.texto}</span>}
         </div>
       </div>
+
+      {empleado.activo && (
+        <div style={tarjeta}>
+          <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 6 }}>Vacaciones, licencia o permiso</div>
+          {empleado.ausencia_tipo ? (
+            <>
+              <div style={{ fontSize: 16, color: TEXT2, marginBottom: 12 }}>
+                {AUSENCIA_LABEL[empleado.ausencia_tipo]} desde el {fmtFecha(empleado.ausencia_desde ?? null)}{empleado.ausencia_hasta ? ` hasta el ${fmtFecha(empleado.ausencia_hasta)}` : ""}.
+                {!empleado.ausencia_hasta && " Termina sola cuando vuelva a marcar en el terminal."} Mientras tanto no cuenta como ausencia ni da alertas.
+              </div>
+              <button onClick={() => cambiarActivo({ ausencia_tipo: null, ausencia_desde: null, ausencia_hasta: null })} disabled={cargando}
+                style={{ background: SURF2, color: VERDE, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "9px 20px", fontWeight: 700, fontSize: 16, cursor: "pointer", fontFamily: FONT }}>Ya volvió</button>
+            </>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 14 }}>
+              <label><div style={{ fontSize: 13, color: TEXT3, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>Tipo</div>
+                <select value={aus.tipo} onChange={e => setAus({ ...aus, tipo: e.target.value as "vacaciones" | "licencia" | "permiso" })} style={inp}>
+                  <option value="vacaciones">Vacaciones</option><option value="licencia">Licencia médica</option><option value="permiso">Permiso</option>
+                </select></label>
+              <label><div style={{ fontSize: 13, color: TEXT3, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>Desde</div>
+                <input type="date" value={aus.desde} onChange={e => setAus({ ...aus, desde: e.target.value })} style={inp} /></label>
+              <label><div style={{ fontSize: 13, color: TEXT3, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>Hasta (opcional)</div>
+                <input type="date" value={aus.hasta} onChange={e => setAus({ ...aus, hasta: e.target.value })} style={inp} /></label>
+              <div style={{ display: "flex", alignItems: "flex-end" }}>
+                <button onClick={() => cambiarActivo({ ausencia_tipo: aus.tipo, ausencia_desde: aus.desde, ausencia_hasta: aus.hasta || null })} disabled={cargando}
+                  style={{ background: AMR, color: "#1a1200", border: "none", borderRadius: 8, padding: "10px 22px", fontWeight: 700, fontSize: 16, cursor: "pointer", fontFamily: FONT }}>Registrar</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div style={{ ...tarjeta, borderColor: ROJO }}>
         <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 6 }}>{empleado.activo ? "Dar de baja" : "Trabajador dado de baja"}</div>

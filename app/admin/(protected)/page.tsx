@@ -9,7 +9,7 @@ import { fmtHoras } from "../../../lib/asistencia";
 interface DiaVenta { fecha: string; local: number; delivery: number; pedidos: number }
 interface ItemVenta { fecha: string; nombre: string; categoria: string; cantidad: number; monto: number }
 interface Aviso { nivel: "rojo" | "ambar" | "info"; texto: string; href: string }
-interface Persona { id: string; nombre: string; cargo: string | null; estado: "dentro" | "salio" | "sin_marcar"; desde: string | null; tarde: boolean; esperado: boolean; ausente: boolean }
+interface Persona { id: string; nombre: string; cargo: string | null; estado: "dentro" | "salio" | "sin_marcar" | "ausencia"; ausencia?: "vacaciones" | "licencia" | "permiso" | null; desde: string | null; tarde: boolean; esperado: boolean; ausente: boolean }
 interface Vencimiento { empleado_id: string; nombre: string; tipo: string; fecha: string; dias: number }
 interface EventoDash { id: string; titulo: string; emoji: string; registrados: number; cupos: number; precio: number; estado: string; porConfirmar: number }
 interface Datos {
@@ -346,6 +346,7 @@ export default function DashboardPage() {
                     </div>
                     {p.estado === "dentro" && <Pastilla color={p.tarde ? AMR : VERDE}>{p.tarde ? "Llegó tarde" : "En el local"} · {p.desde}</Pastilla>}
                     {p.estado === "salio" && <Pastilla color={TEXT3}>Salió</Pastilla>}
+                    {p.estado === "ausencia" && <Pastilla color={AZUL}>{p.ausencia === "licencia" ? "Con licencia" : p.ausencia === "permiso" ? "Con permiso" : "De vacaciones"}</Pastilla>}
                     {p.estado === "sin_marcar" && (p.ausente ? <Pastilla color={ROJO}>No ha marcado</Pastilla> : p.esperado ? <Pastilla color={AMR}>Aún no llega</Pastilla> : <Pastilla color={TEXT3}>Sin turno hoy</Pastilla>)}
                   </Link>
                 ))}

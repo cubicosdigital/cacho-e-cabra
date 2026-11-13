@@ -112,3 +112,14 @@ export function agruparPorPeriodo(dias: DiaTrabajado[], valor: (d: DiaTrabajado)
     .map(([f, v]) => ({ etiqueta: fmtFechaCorta(f), valor: v, detalle: `${porSemana ? "Semana del " : ""}${fmtFechaCorta(f)}` }));
   return { barras, porSemana };
 }
+
+export const AUSENCIA_LABEL = { vacaciones: "De vacaciones", licencia: "Con licencia", permiso: "Con permiso" } as const;
+export type AusenciaTipo = keyof typeof AUSENCIA_LABEL;
+
+/** ¿Está ausente justificadamente en esa fecha (día de turno)? Termina el día "hasta"; sin "hasta" dura hasta que vuelva a marcar. */
+export function enAusencia(e: { ausencia_tipo?: string | null; ausencia_desde?: string | null; ausencia_hasta?: string | null }, fecha: string): AusenciaTipo | null {
+  if (!e.ausencia_tipo || !e.ausencia_desde) return null;
+  if (fecha < e.ausencia_desde) return null;
+  if (e.ausencia_hasta && fecha > e.ausencia_hasta) return null;
+  return e.ausencia_tipo as AusenciaTipo;
+}

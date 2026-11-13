@@ -43,6 +43,11 @@ export async function guardarMarcas(marcas: Marca[]) {
     }
     guardadas += filas.length;
   }
+  // Si alguien con vacaciones/licencia marca de nuevo, volvió: se cierra la ausencia.
+  for (const [empleadoId, lista] of nuevas) {
+    const ultima = lista.map(x => x.fecha).sort().at(-1)!;
+    await db.from("empleados").update({ ausencia_tipo: null, ausencia_desde: null, ausencia_hasta: null }).eq("id", empleadoId).not("ausencia_desde", "is", null).lte("ausencia_desde", ultima);
+  }
   return { guardadas, sinMapear: [...sinMapear], invalidas };
 }
 

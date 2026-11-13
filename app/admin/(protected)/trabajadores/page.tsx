@@ -9,7 +9,7 @@ const DEPARTAMENTOS = ["cocina", "barra", "garzones", "coperia"] as const;
 interface Trabajador {
   id: string; nombre: string; rut: string | null; cargo: string | null; departamento: string;
   estado: EstadoTrabajador; telefono: string | null;
-  activo: boolean; fecha_baja: string | null; motivo_baja: "despido" | "renuncia" | "otro" | null; detalle_baja: string | null; jornada_tipo: "ordinaria" | "art22";
+  activo: boolean; fecha_baja: string | null; motivo_baja: "despido" | "renuncia" | "otro" | null; detalle_baja: string | null; jornada_tipo: "ordinaria" | "art22"; ausencia_tipo?: "vacaciones" | "licencia" | "permiso" | null;
 }
 const MOTIVO_LABEL = { despido: "Despedido", renuncia: "Renunció", otro: "Otro" } as const;
 
@@ -101,7 +101,7 @@ export default function TrabajadoresPage() {
               <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 240 }}>
                   <div style={{ fontWeight: 700, fontSize: 19 }}>{t.nombre}</div>
-                  <div style={{ fontSize: 15, color: TEXT3 }}>{t.cargo} · RUT {t.rut ?? "—"}{t.jornada_tipo === "art22" && " · Art. 22"}</div>
+                  <div style={{ fontSize: 15, color: TEXT3 }}>{t.cargo} · RUT {t.rut ?? "—"}{t.jornada_tipo === "art22" && " · Art. 22"}{t.ausencia_tipo && <span style={{ color: AZUL, fontWeight: 700 }}> · {{ vacaciones: "De vacaciones", licencia: "Con licencia", permiso: "Con permiso" }[t.ausencia_tipo]}</span>}</div>
                   {!t.activo && (
                     <div style={{ fontSize: 14, color: ROJO, marginTop: 2 }}>
                       {t.motivo_baja ? MOTIVO_LABEL[t.motivo_baja] : "Dado de baja"}{t.fecha_baja && ` · ${t.fecha_baja.split("-").reverse().join("/")}`}{t.detalle_baja && ` · ${t.detalle_baja}`}
