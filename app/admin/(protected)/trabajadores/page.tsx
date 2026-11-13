@@ -119,9 +119,14 @@ export default function TrabajadoresPage() {
                 <Link href={`/admin/trabajadores/${t.id}?tab=asistencia`} style={{ background: SURF2, color: TEXT2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 16px", fontSize: 16, fontWeight: 700, textDecoration: "none" }}>
                   Asistencia
                 </Link>
-                <Link href={`/admin/trabajadores/${t.id}`} style={{ background: t.estado === "registrado" ? AMR : SURF2, color: t.estado === "registrado" ? "#1a1200" : TEXT2, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 16px", fontSize: 16, fontWeight: 700, textDecoration: "none" }}>
-                  {t.estado === "registrado" ? "Completar contrato" : "Ver ficha"}
+                <Link href={`/admin/trabajadores/${t.id}`} style={{ background: SURF2, color: TEXT1, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 16px", fontSize: 16, fontWeight: 700, textDecoration: "none" }}>
+                  Ver ficha
                 </Link>
+                {t.estado === "registrado" && (
+                  <Link href={`/admin/trabajadores/${t.id}?tab=contrato`} style={{ background: AMR, color: "#1a1200", borderRadius: 6, padding: "4px 10px", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
+                    Llenar contrato
+                  </Link>
+                )}
               </div>
 
               {abierto === t.id && (
