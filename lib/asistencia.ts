@@ -1,6 +1,8 @@
+import { CORTE_TURNO, fechaDeTurno } from "./terminal";
 /** Hora a la que se espera que entren y minutos de gracia antes de contar un atraso. */
 export const HORA_ENTRADA_ESPERADA = "08:00";
 export const TOLERANCIA_MIN = 10;
+export { CORTE_TURNO, fechaDeTurno } from "./terminal";
 
 export const DIAS_SEMANA = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 export const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -53,23 +55,26 @@ export function entradasProgramadas(turnos: { empleado_id: string; dia_semana: s
  * cuenta desde la hora programada; lo que trabaja después de la salida programada sí se suma.
  */
 export function resumirDias(marcas: Marca[], programadas?: EntradasProgramadas): DiaTrabajado[] {
+  // Se agrupa por turno: lo marcado de madrugada (antes de las 06:00) es la salida del turno del día anterior.
   const grupos = new Map<string, Marca[]>();
   for (const m of marcas) {
-    const k = `${m.empleado_id}|${m.fecha}`;
+    const k = `${m.empleado_id}|${fechaDeTurno(m.fecha, m.hora)}`;
     if (!grupos.has(k)) grupos.set(k, []);
     grupos.get(k)!.push(m);
   }
   const limite = minutos(HORA_ENTRADA_ESPERADA) + TOLERANCIA_MIN;
   return [...grupos.values()].map(rs => {
-    const entrada = rs.filter(r => r.tipo === "entrada").map(r => r.hora).sort()[0] ?? null;
-    const salida = rs.filter(r => r.tipo === "salida").map(r => r.hora).sort().at(-1) ?? null;
-    const dia = DIAS_TURNO[parseFecha(rs[0].fecha).getDay()];
+    const fechaTurno = fechaDeTurno(rs[0].fecha, rs[0].hora);
+    const aj = (h: string) => minutos(h) + (h < CORTE_TURNO ? 1440 : 0); // la madrugada cuenta como "día siguiente"
+    const entrada = rs.filter(r => r.tipo === "entrada").map(r => r.hora).sort((a, b) => aj(a) - aj(b))[0] ?? null;
+    const salida = rs.filter(r => r.tipo === "salida").map(r => r.hora).sort((a, b) => aj(a) - aj(b)).at(-1) ?? null;
+    const dia = DIAS_TURNO[parseFecha(fechaTurno).getDay()];
     const prog = programadas?.get(`${rs[0].empleado_id}|${dia}`);
-    const inicioContado = entrada ? (prog ? Math.max(minutos(entrada), minutos(prog)) : minutos(entrada)) : null;
+    const inicioContado = entrada ? (prog ? Math.max(aj(entrada), minutos(prog)) : aj(entrada)) : null;
     return {
-      empleado_id: rs[0].empleado_id, fecha: rs[0].fecha, entrada, salida,
-      trabajado: inicioContado != null && salida ? Math.max(0, minutos(salida) - inicioContado) : null,
-      tarde: entrada ? minutos(entrada) > (prog ? minutos(prog) + TOLERANCIA_MIN : limite) : false,
+      empleado_id: rs[0].empleado_id, fecha: fechaTurno, entrada, salida,
+      trabajado: inicioContado != null && salida ? Math.max(0, aj(salida) - inicioContado) : null,
+      tarde: entrada ? aj(entrada) > (prog ? minutos(prog) + TOLERANCIA_MIN : limite) : false,
     };
   });
 }

@@ -22,6 +22,35 @@ export function nombreParaTerminal(nombreCompleto: string) {
   return corto.slice(0, 24);
 }
 
+/** Las marcas de madrugada (antes de esta hora) son la salida del turno que empezó el día anterior. */
+export const CORTE_TURNO = "06:00:00";
+
+export function fechaDeTurno(fecha: string, hora: string): string {
+  if (hora >= CORTE_TURNO) return fecha;
+  const [y, m, d] = fecha.split("-").map(Number);
+  const prev = new Date(Date.UTC(y, m - 1, d - 1));
+  return prev.toISOString().slice(0, 10);
+}
+
+/**
+ * Igual que asignarTipos, pero agrupando por turno y no por día calendario: un turno de 16:30 a 02:00 queda
+ * como entrada 16:30 (día D) y salida 02:00 (día D+1). Devuelve cada marca con su fecha real.
+ */
+export function asignarTiposPorTurno(marcas: { fecha: string; hora: string }[]): { fecha: string; hora: string; tipo: "entrada" | "salida" }[] {
+  const unicas = [...new Map(marcas.map(m => [`${m.fecha} ${m.hora.slice(0, 8)}`, { fecha: m.fecha, hora: m.hora.slice(0, 8) }])).values()]
+    .sort((a, b) => `${a.fecha} ${a.hora}`.localeCompare(`${b.fecha} ${b.hora}`));
+  const seg = (m: { fecha: string; hora: string }) => { const [a, b, c] = m.hora.split(":").map(Number); return Date.parse(m.fecha + "T00:00:00Z") / 1000 + a * 3600 + b * 60 + (c || 0); };
+  const validas: typeof unicas = [];
+  for (const m of unicas) if (validas.length === 0 || seg(m) - seg(validas[validas.length - 1]) >= 60) validas.push(m);
+  const contador = new Map<string, number>();
+  return validas.map(m => {
+    const turno = fechaDeTurno(m.fecha, m.hora);
+    const i = contador.get(turno) ?? 0;
+    contador.set(turno, i + 1);
+    return { ...m, tipo: i % 2 === 0 ? "entrada" : "salida" };
+  });
+}
+
 export interface Marca { user_id: string; timestamp: string } // timestamp local: "YYYY-MM-DD HH:MM:SS"
 
 /**
