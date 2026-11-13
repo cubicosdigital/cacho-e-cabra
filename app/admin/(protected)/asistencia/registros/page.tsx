@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { BG, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, ROJO, FONT, TITLE } from "../../../../../lib/tokens";
 import {
-  HORA_ENTRADA_ESPERADA, TOLERANCIA_MIN, DIAS_SEMANA, agruparPorPeriodo, entradasProgramadas, fmtHoras, parseFecha, resumirDias, type Marca,
+  HORA_ENTRADA_ESPERADA, TOLERANCIA_MIN, DIAS_SEMANA, agruparPorPeriodo, entradasProgramadas, fmtHoras, estadoDia, parseFecha, resumirDias, type Marca,
 } from "../../../../../lib/asistencia";
 import { BarrasHorizontales, BarrasVerticales, FiltroFechas, Kpi, Panel, botonVolver, tarjeta } from "../graficos";
 
@@ -13,6 +13,7 @@ interface Asistencia extends Marca {
   empleados: { nombre: string; cargo: string | null; departamento: string } | null;
 }
 
+const ESTADO_TXT = { en_turno: ["En turno", "#4da3ff"], no_marco_salida: ["NO MARCÓ SALIDA", "#e5484d"], no_marco_entrada: ["NO MARCÓ ENTRADA", "#e5484d"] } as const;
 function hoyISO() { return new Date().toISOString().slice(0, 10); }
 function haceUnMesISO() { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().slice(0, 10); }
 
@@ -25,6 +26,7 @@ function conDia(fecha: string) {
 export default function RegistrosGeneralesPage() {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [asistencias, setAsistencias] = useState<Asistencia[]>([]);
+  const [ahora] = useState(() => Date.now());
   const [programadas, setProgramadas] = useState<ReturnType<typeof entradasProgramadas>>(new Map());
   const [loading, setLoading] = useState(true);
   const [desde, setDesde] = useState(haceUnMesISO());
@@ -160,9 +162,9 @@ export default function RegistrosGeneralesPage() {
                   {g.dias.map(d => (
                     <div key={d.fecha} style={{ display: "flex", flexWrap: "wrap", gap: "2px 14px", padding: "5px 4px", fontSize: 16 }}>
                       <div style={{ width: 190, maxWidth: "100%", color: TEXT2 }}>{conDia(d.fecha)}</div>
-                      <div style={{ width: 110, color: d.tarde ? ROJO : VERDE, fontWeight: 700 }}>Entrada {d.entrada?.slice(0, 5) ?? "—"}</div>
+                      <div style={{ width: 110, color: d.entrada ? (d.tarde ? ROJO : VERDE) : ROJO, fontWeight: 700 }}>Entrada {d.entrada?.slice(0, 5) ?? "—"}</div>
                       <div style={{ width: 110, color: d.salida ? AMR : ROJO, fontWeight: 700 }}>Salida {d.salida?.slice(0, 5) ?? "—"}</div>
-                      <div style={{ flex: "1 1 80px", color: TEXT3 }}>{d.trabajado != null ? fmtHoras(d.trabajado) : "sin salida marcada"}</div>
+                      {(() => { const e = estadoDia(d, ahora); return <div style={{ flex: "1 1 80px", color: e === "ok" ? TEXT3 : ESTADO_TXT[e][1], fontWeight: e === "ok" ? 400 : 800 }}>{e === "ok" ? (d.trabajado != null ? fmtHoras(d.trabajado) : "") : ESTADO_TXT[e][0]}</div>; })()}
                     </div>
                   ))}
                 </div>

@@ -1,8 +1,8 @@
-import { CORTE_TURNO, fechaDeTurno } from "./terminal";
+import { CORTE_TURNO, MAX_TURNO_H, fechaDeTurno } from "./terminal";
 /** Hora a la que se espera que entren y minutos de gracia antes de contar un atraso. */
 export const HORA_ENTRADA_ESPERADA = "08:00";
 export const TOLERANCIA_MIN = 10;
-export { CORTE_TURNO, fechaDeTurno } from "./terminal";
+export { CORTE_TURNO, MAX_TURNO_H, fechaDeTurno } from "./terminal";
 
 export const DIAS_SEMANA = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 export const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -77,6 +77,19 @@ export function resumirDias(marcas: Marca[], programadas?: EntradasProgramadas):
       tarde: entrada ? aj(entrada) > (prog ? minutos(prog) + TOLERANCIA_MIN : limite) : false,
     };
   });
+}
+
+/**
+ * Estado de la salida de un turno: "en_turno" si aún cabe dentro del máximo (puede estar trabajando todavía),
+ * "no_marco_salida" si ya pasó ese máximo sin salida, "no_marco_entrada" si hay salida pero no entrada.
+ */
+export function estadoDia(d: DiaTrabajado, ahoraMs: number): "ok" | "en_turno" | "no_marco_salida" | "no_marco_entrada" {
+  if (!d.entrada) return d.salida ? "no_marco_entrada" : "ok";
+  if (d.salida) return "ok";
+  const [y, m, dia] = d.fecha.split("-").map(Number);
+  const [hh, mm] = d.entrada.split(":").map(Number);
+  const inicio = new Date(y, m - 1, dia, hh, mm).getTime();
+  return (ahoraMs - inicio) / 3600000 <= MAX_TURNO_H ? "en_turno" : "no_marco_salida";
 }
 
 export interface Barra { etiqueta: string; valor: number; detalle?: string }

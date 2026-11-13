@@ -6,7 +6,7 @@ import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, ROJO, AZUL
 import { contratoCompleto, type Ficha } from "../../../../../lib/fichas";
 import { LATIDO_VIGENCIA_S, type Comando, type EstadoTerminal, type TipoComando } from "../../../../../lib/terminal";
 import {
-  DIAS_SEMANA, MESES, agruparPorPeriodo, entradasProgramadas, fmtHoraMin, fmtHoras, minutos, parseFecha, resumirDias, type Marca,
+  DIAS_SEMANA, MESES, agruparPorPeriodo, entradasProgramadas, fmtHoraMin, fmtHoras, minutos, estadoDia, parseFecha, resumirDias, type Marca,
 } from "../../../../../lib/asistencia";
 import { BarrasVerticales, FiltroFechas, Kpi, Panel, botonVolver, tarjeta } from "../../asistencia/graficos";
 
@@ -33,6 +33,7 @@ const TABS = [
 ] as const;
 type TabId = typeof TABS[number]["id"];
 
+const ESTADO_TXT = { en_turno: ["En turno", "#4da3ff"], no_marco_salida: ["NO MARCÓ SALIDA", "#e5484d"], no_marco_entrada: ["NO MARCÓ ENTRADA", "#e5484d"] } as const;
 const MOTIVO_LABEL = { despido: "Despedido", renuncia: "Renunció", otro: "Otro" } as const;
 const fmtFecha = (f: string | null) => (f ? f.split("-").reverse().join("/") : null);
 const siNo = (v: boolean | null) => (v == null ? null : v ? "Sí" : "No");
@@ -563,6 +564,7 @@ function TabAsistencia({ id, empleado }: { id: string; empleado: Empleado }) {
     })();
   }, [id, desde, hasta]);
 
+  const [ahora] = useState(() => Date.now());
   const [programadas, setProgramadas] = useState<ReturnType<typeof entradasProgramadas>>(new Map());
   useEffect(() => {
     (async () => {
@@ -639,7 +641,7 @@ function TabAsistencia({ id, empleado }: { id: string; empleado: Empleado }) {
                     <div style={{ width: 190, color: TEXT2 }}>{conDia(d.fecha)}</div>
                     <div style={{ width: 90, color: d.tarde ? ROJO : VERDE, fontWeight: 700 }}>{d.entrada?.slice(0, 5) ?? "—"}</div>
                     <div style={{ width: 90, color: AMR, fontWeight: 700 }}>{d.salida?.slice(0, 5) ?? "—"}</div>
-                    <div style={{ flex: 1, color: TEXT2 }}>{d.trabajado != null ? fmtHoras(d.trabajado) : "incompleto"}</div>
+                    {(() => { const e = estadoDia(d, ahora); return <div style={{ flex: 1, color: e === "ok" ? TEXT2 : ESTADO_TXT[e][1], fontWeight: e === "ok" ? 400 : 800 }}>{e === "ok" ? (d.trabajado != null ? fmtHoras(d.trabajado) : "") : ESTADO_TXT[e][0]}</div>; })()}
                   </div>
                 ))}
               </div>

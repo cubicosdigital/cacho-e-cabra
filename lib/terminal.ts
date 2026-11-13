@@ -24,6 +24,8 @@ export function nombreParaTerminal(nombreCompleto: string) {
 
 /** Las marcas de madrugada (antes de esta hora) son la salida del turno que empezó el día anterior. */
 export const CORTE_TURNO = "06:00:00";
+/** Horas máximas entre entrada y salida de un turno; más que eso se considera que no marcó la salida. */
+export const MAX_TURNO_H = 12;
 
 export function fechaDeTurno(fecha: string, hora: string): string {
   if (hora >= CORTE_TURNO) return fecha;
@@ -42,12 +44,14 @@ export function asignarTiposPorTurno(marcas: { fecha: string; hora: string }[]):
   const seg = (m: { fecha: string; hora: string }) => { const [a, b, c] = m.hora.split(":").map(Number); return Date.parse(m.fecha + "T00:00:00Z") / 1000 + a * 3600 + b * 60 + (c || 0); };
   const validas: typeof unicas = [];
   for (const m of unicas) if (validas.length === 0 || seg(m) - seg(validas[validas.length - 1]) >= 60) validas.push(m);
-  const contador = new Map<string, number>();
+  // Un turno no dura más que MAX_TURNO_H: si pasa más tiempo desde la entrada, esa persona no marcó salida
+  // y la marca siguiente es una entrada nueva. Una marca de madrugada sin entrada abierta es una salida huérfana.
+  let abierta: { fecha: string; hora: string } | null = null;
   return validas.map(m => {
-    const turno = fechaDeTurno(m.fecha, m.hora);
-    const i = contador.get(turno) ?? 0;
-    contador.set(turno, i + 1);
-    return { ...m, tipo: i % 2 === 0 ? "entrada" : "salida" };
+    if (abierta && (seg(m) - seg(abierta)) / 3600 <= MAX_TURNO_H) { abierta = null; return { ...m, tipo: "salida" as const }; }
+    if (!abierta && m.hora < CORTE_TURNO) return { ...m, tipo: "salida" as const };
+    abierta = m;
+    return { ...m, tipo: "entrada" as const };
   });
 }
 
