@@ -83,6 +83,14 @@ export default function RegistrosGeneralesPage() {
     });
   }, [dias, controlados, empleados]);
 
+  const gruposPorTrabajador = useMemo(() => {
+    const ids = new Set([...controlados.map(e => e.id), ...dias.map(d => d.empleado_id)]);
+    return [...ids].map(id => ({
+      id, nombre: empleados.find(e => e.id === id)?.nombre ?? asistencias.find(a => a.empleado_id === id)?.empleados?.nombre ?? "—",
+      dias: dias.filter(d => d.empleado_id === id).sort((a, b) => b.fecha.localeCompare(a.fecha)),
+    })).map(g => ({ ...g, min: g.dias.reduce((s, d) => s + (d.trabajado ?? 0), 0) })).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }, [controlados, dias, empleados, asistencias]);
+
   const rankingHoras = [...porTrabajador].sort((a, b) => b.min - a.min);
   const rankingPuntualidad = [...porTrabajador].filter(t => t.dias > 0).sort((a, b) => b.puntualidad - a.puntualidad);
   const colorPunt = (p: number) => (p >= 90 ? VERDE : p >= 75 ? AMR : ROJO);
@@ -137,19 +145,28 @@ export default function RegistrosGeneralesPage() {
             </Panel>
 
             <div style={tarjeta}>
-              <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, marginBottom: 14 }}>Registros</div>
-              {asistencias.length === 0 && <div style={{ color: TEXT3, fontSize: 16 }}>Sin registros en este rango.</div>}
-              {asistencias.slice(0, 200).map(a => (
-                <div key={a.id} style={{ display: "flex", flexWrap: "wrap", gap: "2px 14px", padding: "8px 4px", borderBottom: `1px solid ${BORDER}`, fontSize: 16 }}>
-                  <div style={{ width: 190, maxWidth: "100%", color: TEXT3 }}>{conDia(a.fecha)}</div>
-                  <div style={{ width: 70, color: TEXT3 }}>{a.hora.slice(0, 5)}</div>
-                  <div style={{ width: 90, color: a.tipo === "entrada" ? VERDE : AMR, fontWeight: 700, textTransform: "capitalize" }}>{a.tipo}</div>
-                  <div style={{ flex: "1 1 120px", minWidth: 0, color: TEXT2 }}>{a.empleados?.nombre}</div>
+              <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900 }}>Registro de marcadas por trabajador</div>
+              <div style={{ fontSize: 15, color: TEXT3, marginBottom: 14 }}>
+                Cada turno con su entrada y su salida. Si la salida es de madrugada, queda en el turno del día en que empezó.
+              </div>
+              {gruposPorTrabajador.map(g => (
+                <div key={g.id} style={{ borderTop: `1px solid ${BORDER}`, padding: "12px 0" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginBottom: 6 }}>
+                    <Link href={`/admin/trabajadores/${g.id}?tab=asistencia`} style={{ fontFamily: TITLE, fontSize: 19, fontWeight: 900, color: TEXT1, textDecoration: "none", overflowWrap: "anywhere" }}>{g.nombre}</Link>
+                    <span style={{ fontSize: 15, color: g.dias.length === 0 ? ROJO : TEXT3, fontWeight: g.dias.length === 0 ? 700 : 400 }}>
+                      {g.dias.length === 0 ? "Sin marcas en este rango" : `${g.dias.length} turno${g.dias.length > 1 ? "s" : ""} · ${fmtHoras(g.min)}`}
+                    </span>
+                  </div>
+                  {g.dias.map(d => (
+                    <div key={d.fecha} style={{ display: "flex", flexWrap: "wrap", gap: "2px 14px", padding: "5px 4px", fontSize: 16 }}>
+                      <div style={{ width: 190, maxWidth: "100%", color: TEXT2 }}>{conDia(d.fecha)}</div>
+                      <div style={{ width: 110, color: d.tarde ? ROJO : VERDE, fontWeight: 700 }}>Entrada {d.entrada?.slice(0, 5) ?? "—"}</div>
+                      <div style={{ width: 110, color: d.salida ? AMR : ROJO, fontWeight: 700 }}>Salida {d.salida?.slice(0, 5) ?? "—"}</div>
+                      <div style={{ flex: "1 1 80px", color: TEXT3 }}>{d.trabajado != null ? fmtHoras(d.trabajado) : "sin salida marcada"}</div>
+                    </div>
+                  ))}
                 </div>
               ))}
-              {asistencias.length > 200 && (
-                <div style={{ color: TEXT3, fontSize: 15, marginTop: 10 }}>Mostrando los 200 más recientes de {asistencias.length}.</div>
-              )}
             </div>
           </>
         )}

@@ -596,12 +596,13 @@ function TabAsistencia({ id, empleado }: { id: string; empleado: Empleado }) {
   }, [dias]);
   const colorPunt = (p: number) => (p >= 90 ? VERDE : p >= 75 ? AMR : ROJO);
 
-  if (!empleado.control_asistencia) {
-    return <div style={{ ...tarjeta, color: TEXT3, fontSize: 16 }}>Este trabajador no está marcado para registrar asistencia.</div>;
-  }
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {!empleado.control_asistencia && (
+        <div style={{ ...tarjeta, color: TEXT3, fontSize: 15 }}>
+          Esta persona no está marcada como «debe registrar asistencia», pero aquí ves igual lo que haya marcado en el terminal.
+        </div>
+      )}
       <div className="adm-scroll-x" style={{ display: "flex", justifyContent: "flex-end" }}>
         <FiltroFechas desde={desde} hasta={hasta} onAplicar={(d, h) => { setDesde(d); setHasta(h); }} />
       </div>
