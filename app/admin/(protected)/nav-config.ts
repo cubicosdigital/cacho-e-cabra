@@ -47,6 +47,7 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
     items: [
       { href: "/admin/mesas", label: "Mesas", icon: Table2, acceso: ["mesas", "r"] },
       { href: "/admin/menu", label: "Menú carta", icon: UtensilsCrossed, acceso: ["menu", "r"] },
+      { href: "/admin/menu-dia", label: "Menú del día", icon: CalendarDays, acceso: ["menu", "r"] },
       { href: "/admin/sugerencias-chef", label: "Sugerencias Chef", icon: ChefHat, acceso: ["menu", "r"] },
       { href: "/admin/denuncias/nueva", label: "Denunciar", icon: AlertTriangle, acceso: ["denuncias", "c"] },
       { href: "/admin/denuncias", label: "Bandeja de entrada", icon: Inbox, acceso: ["denuncias", "r"] },

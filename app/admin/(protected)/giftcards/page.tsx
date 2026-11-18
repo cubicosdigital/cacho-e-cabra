@@ -1,13 +1,13 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Gift, MessageCircle, Download, Copy, ExternalLink, Trash2, Check, QrCode, Printer, ChevronDown, ChevronUp, CheckCircle2, AlertTriangle, Layers } from "lucide-react";
+import { Gift, MessageCircle, Download, Copy, ExternalLink, Trash2, Check, QrCode, Printer, ChevronDown, ChevronUp, CheckCircle2, AlertTriangle, Layers, Snowflake } from "lucide-react";
 import { useAdminNav } from "../AdminNavProvider";
 import LectorQr from "./LectorQr";
 import { puede, type Accion } from "../../../../lib/permisos";
 import {
-  CANTIDAD_MAX, CONDICIONES, ESTADO_META, MENSAJE_MAX, MENSAJE_POR_DEFECTO, PARA_MAX, VALOR_MAX_MONTO,
-  estaVencida, fechaCorta, hoyChile, idDesdeQr, linkWhatsapp, porCodigo, rangoCodigos, soloDigitos, valorTexto,
-  type EstadoGiftcard, type Giftcard, type TipoGiftcard,
+  CAMPANA_NAVIDAD, CANTIDAD_MAX, ESTADO_META, MENSAJE_MAX, MENSAJE_NAVIDAD_POR_DEFECTO, MENSAJE_POR_DEFECTO, VALOR_MAX_MONTO,
+  avisoDiaCanje, condicionesDe, estaVencida, fechaCorta, fechaLarga, hoyChile, idDesdeQr, linkWhatsapp, porCodigo, rangoCodigos, soloDigitos, valorTexto,
+  type EstadoGiftcard, type Giftcard, type TemaGiftcard, type TipoGiftcard,
 } from "../../../../lib/giftcards";
 import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, FONT, TITLE } from "../../../../lib/tokens";
 
@@ -25,7 +25,7 @@ const btnSec: React.CSSProperties = { ...btnBase, background: SURF2, color: TEXT
 const ATAJOS: Record<TipoGiftcard, number[]> = { monto: [10000, 20000, 30000, 50000], porcentaje: [10, 15, 20, 30, 50] };
 const ATAJOS_CANTIDAD = [1, 10, 20, 50];
 
-const FORM_INICIAL = { tipo: "monto" as TipoGiftcard, valor: "", cantidad: "1", mensaje: MENSAJE_POR_DEFECTO, para: "", telefono: "", vence: "" };
+const FORM_INICIAL = { tema: "clasico" as TemaGiftcard, tipo: "monto" as TipoGiftcard, valor: "", cantidad: "1", mensaje: MENSAJE_POR_DEFECTO, para: "", telefono: "", vence: "" };
 type Form = typeof FORM_INICIAL;
 
 type Resultado = { tarjetas: Giftcard[]; lote: string | null };
@@ -37,7 +37,7 @@ type Lectura =
 type Item = { tipo: "una"; g: Giftcard } | { tipo: "lote"; lote: string; tarjetas: Giftcard[] };
 
 function urlPrevia(f: Form) {
-  return `/api/giftcards/preview?${new URLSearchParams({ tipo: f.tipo, valor: f.valor, mensaje: f.mensaje, para: f.para, vence: f.vence })}`;
+  return `/api/giftcards/preview?${new URLSearchParams({ tema: f.tema, tipo: f.tipo, valor: f.valor, mensaje: f.mensaje, para: f.para, vence: f.vence })}`;
 }
 
 function errorDeValor(f: Form): string | null {
@@ -46,6 +46,7 @@ function errorDeValor(f: Form): string | null {
   if (!Number.isInteger(n) || n <= 0) return "Escribe un número entero mayor a 0";
   if (f.tipo === "porcentaje" && n > 100) return "El descuento no puede superar el 100%";
   if (f.tipo === "monto" && n > VALOR_MAX_MONTO) return `El monto no puede superar $${VALOR_MAX_MONTO.toLocaleString("es-CL")}`;
+  if (f.tema === "navidad" && !(CAMPANA_NAVIDAD.montos as readonly number[]).includes(n)) return "La gift card navideña es de $30.000 o $50.000";
   return null;
 }
 
@@ -109,6 +110,13 @@ export default function GiftcardsPage() {
   }, [form]);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm(f => ({ ...f, [k]: v }));
+
+  /** La navideña es solo en $ (lleva QR), con los dos montos y el vencimiento de la campaña. */
+  function cambiarTema(tema: TemaGiftcard) {
+    setForm(f => tema === "navidad"
+      ? { ...f, tema, tipo: "monto", valor: "", vence: CAMPANA_NAVIDAD.vence, mensaje: f.mensaje === MENSAJE_POR_DEFECTO ? MENSAJE_NAVIDAD_POR_DEFECTO : f.mensaje }
+      : { ...f, tema, valor: "", vence: "", mensaje: f.mensaje === MENSAJE_NAVIDAD_POR_DEFECTO ? MENSAJE_POR_DEFECTO : f.mensaje });
+  }
   const errValor = errorDeValor(form);
   const errCantidad = errorDeCantidad(form);
   const cantidad = errCantidad ? 1 : Number(form.cantidad);
@@ -127,6 +135,20 @@ export default function GiftcardsPage() {
     setImgCargando(true); setImgError(false);
     setResultado(data);
     setLista(prev => [...(data.tarjetas as Giftcard[]), ...prev]);
+    // Un lote es para imprimir: el PDF se baja solo (si no parte, queda el botón de abajo).
+    if (data.lote) {
+      descargarPdfLote(data.lote);
+      setAviso(`Se crearon ${data.tarjetas.length} gift cards. Preparando el PDF para imprimir (puede tardar unos segundos)…`);
+    }
+  }
+
+  function descargarPdfLote(lote: string) {
+    const a = document.createElement("a");
+    a.href = `/api/giftcards/lote/${lote}/pdf`;
+    a.download = "";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   }
 
   function otra() {
@@ -211,7 +233,7 @@ export default function GiftcardsPage() {
   // ── Historial: un lote se muestra como un solo bloque; buscando, se ven las tarjetas sueltas ──
   const items = useMemo<Item[]>(() => {
     const q = filtro.trim().toLowerCase();
-    if (q) return lista.filter(g => g.codigo.toLowerCase().includes(q) || g.para.toLowerCase().includes(q)).map(g => ({ tipo: "una", g }));
+    if (q) return lista.filter(g => g.codigo.toLowerCase().includes(q)).map(g => ({ tipo: "una", g }));
     const porLote = new Map<string, Giftcard[]>();
     const out: Item[] = [];
     for (const g of lista) {
@@ -246,6 +268,7 @@ export default function GiftcardsPage() {
             <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: 1.5 }}>N° {g.codigo}</span>
             <span style={{ background: meta.bg, color: meta.color, borderRadius: 999, padding: "2px 10px", fontSize: 13, fontWeight: 800 }}>{meta.label}</span>
             {g.tipo === "monto" && <span title="Lleva código QR" style={{ display: "inline-flex", alignItems: "center", gap: 4, color: TEXT3, fontSize: 13 }}><QrCode size={14} /> QR</span>}
+            {g.tema === "navidad" && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#93c5fd", fontSize: 13, fontWeight: 700 }}><Snowflake size={14} /> Navideña</span>}
           </div>
           <div style={{ fontSize: 14, color: TEXT3, marginTop: 4 }}>
             {g.para ? `Para ${g.para} · ` : ""}Creada {fechaDia(g.creadaEn)}
@@ -277,6 +300,7 @@ export default function GiftcardsPage() {
           <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
             <span style={{ fontFamily: TITLE, fontSize: 22, fontWeight: 900, color: AMR }}>{valorTexto(primera.tipo, primera.valor)}</span>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 16, fontWeight: 700 }}><Layers size={16} /> Lote de {tarjetas.length} gift cards</span>
+            {primera.tema === "navidad" && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#93c5fd", fontSize: 13, fontWeight: 700 }}><Snowflake size={14} /> Navideña</span>}
             <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: 1.5 }}>N° {rangoCodigos(tarjetas)}</span>
           </div>
           <div style={{ fontSize: 14, color: TEXT3, marginTop: 4 }}>
@@ -313,6 +337,39 @@ export default function GiftcardsPage() {
           </button>
         )}
 
+        {puedo("r") && (
+          <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900, display: "flex", alignItems: "center", gap: 10 }}><Snowflake size={22} color="#93c5fd" /> Gráficas para redes · Gift Card Navideña</div>
+              <div style={{ fontSize: 15, color: TEXT3, marginTop: 2 }}>
+                “{CAMPANA_NAVIDAD.lema}” · {CAMPANA_NAVIDAD.montos.map(m => valorTexto("monto", m)).join(" o ")} · válida hasta el {fechaLarga(CAMPANA_NAVIDAD.vence)}. Descárgalas en JPG y súbelas a Instagram.
+              </div>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "flex-start" }}>
+              {([
+                { formato: "historia", titulo: "Historia", medidas: "1080 × 1920", ancho: 220, ratio: "1080 / 1920" },
+                { formato: "post", titulo: "Post", medidas: "1080 × 1350", ancho: 276, ratio: "1080 / 1350" },
+              ] as const).map(f => (
+                <div key={f.formato} style={{ display: "flex", flexDirection: "column", gap: 10, width: f.ancho, maxWidth: "100%" }}>
+                  <div style={{ background: SURF2, border: `1px solid ${BORDER}`, borderRadius: 12, overflow: "hidden", aspectRatio: f.ratio }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/api/giftcards/promo?formato=${f.formato}`} alt={`Gráfica ${f.titulo}`} loading="lazy" style={{ width: "100%", height: "100%", display: "block", objectFit: "cover" }} />
+                  </div>
+                  <a href={`/api/giftcards/promo?formato=${f.formato}&descargar=1`} download style={{ ...btnBase, background: AMR, color: "#1a1200" }}>
+                    <Download size={16} /> {f.titulo} · JPG
+                  </a>
+                  <div style={{ fontSize: 13, color: TEXT3, textAlign: "center" }}>{f.medidas} px</div>
+                </div>
+              ))}
+              <div style={{ flex: 1, minWidth: 220, display: "flex", flexDirection: "column", gap: 10, fontSize: 15, color: TEXT2, lineHeight: 1.55 }}>
+                <div>La página de compra para compartir en la bio o en la historia es:</div>
+                <a href="/regala" target="_blank" rel="noopener noreferrer" style={{ ...btnSec, alignSelf: "flex-start" }}><ExternalLink size={16} /> cachocabrabar.cl/regala</a>
+                <div style={{ fontSize: 14, color: TEXT3 }}>Los botones de esa página abren WhatsApp con el monto elegido. Cuando alguien compre, crea la gift card aquí abajo con el estilo “Navideña”.</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {aviso && <div style={{ background: "#1a2e1a", border: "1px solid #2d5a2d", color: VERDE, borderRadius: 10, padding: "10px 16px", fontSize: 16 }}>{aviso}</div>}
         {error && <div style={{ background: "#2a1212", border: "1px solid #5c2626", color: "#fca5a5", borderRadius: 10, padding: "10px 16px", fontSize: 16 }}>{error}</div>}
 
@@ -324,6 +381,23 @@ export default function GiftcardsPage() {
               <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900 }}>Diseña tu gift card</div>
 
               <div>
+                <div style={label}>Estilo</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {(["clasico", "navidad"] as TemaGiftcard[]).map(t => (
+                    <button key={t} type="button" onClick={() => cambiarTema(t)}
+                      style={{ ...btnBase, flex: 1, background: form.tema === t ? AMR : SURF2, color: form.tema === t ? "#1a1200" : TEXT2, border: `1px solid ${form.tema === t ? AMR : BORDER}` }}>
+                      {t === "navidad" && <Snowflake size={16} />}{t === "clasico" ? "Clásica" : "Navideña"}
+                    </button>
+                  ))}
+                </div>
+                {form.tema === "navidad" && (
+                  <div style={{ fontSize: 13, color: TEXT3, marginTop: 6 }}>
+                    Campaña de Navidad: $30.000 o $50.000, con QR, válida hasta el {fechaLarga(CAMPANA_NAVIDAD.vence)} y para canjear de {CAMPANA_NAVIDAD.diasTexto}.
+                  </div>
+                )}
+              </div>
+
+              {form.tema === "clasico" && <div>
                 <div style={label}>Tipo</div>
                 <div style={{ display: "flex", gap: 8 }}>
                   {(["monto", "porcentaje"] as TipoGiftcard[]).map(t => (
@@ -334,9 +408,23 @@ export default function GiftcardsPage() {
                   ))}
                 </div>
                 <div style={{ fontSize: 13, color: TEXT3, marginTop: 6 }}>{form.tipo === "monto" ? "Las gift cards en $ llevan un código QR para canjearlas." : "Las de descuento no llevan QR: se canjean por su número."}</div>
-              </div>
+              </div>}
 
-              <div>
+              {form.tema === "navidad" && (
+                <div>
+                  <div style={label}>Monto</div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {CAMPANA_NAVIDAD.montos.map(n => (
+                      <button key={n} type="button" onClick={() => set("valor", String(n))}
+                        style={{ ...btnBase, flex: 1, fontFamily: TITLE, fontSize: 20, fontWeight: 900, background: form.valor === String(n) ? "#3a2f10" : SURF2, color: form.valor === String(n) ? AMR : TEXT2, border: `1px solid ${form.valor === String(n) ? AMR : BORDER}` }}>
+                        {valorTexto("monto", n)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {form.tema === "clasico" && <div>
                 <div style={label}>{form.tipo === "monto" ? "Valor de la gift card" : "Porcentaje de descuento"}</div>
                 <div style={{ position: "relative" }}>
                   <input type="number" inputMode="numeric" min={1} max={form.tipo === "porcentaje" ? 100 : VALOR_MAX_MONTO} step={1}
@@ -353,10 +441,10 @@ export default function GiftcardsPage() {
                     </button>
                   ))}
                 </div>
-              </div>
+              </div>}
 
               <div>
-                <div style={label}>Cantidad de gift cards</div>
+                <div style={label}>¿Cuántas quieres generar?</div>
                 <input type="number" inputMode="numeric" min={1} max={CANTIDAD_MAX} step={1} value={form.cantidad} onChange={e => set("cantidad", e.target.value)} style={inputBase} />
                 {errCantidad && <div style={{ color: "#fca5a5", fontSize: 14, marginTop: 6 }}>{errCantidad}</div>}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
@@ -368,19 +456,13 @@ export default function GiftcardsPage() {
                   ))}
                 </div>
                 <div style={{ fontSize: 13, color: TEXT3, marginTop: 6 }}>
-                  {esLote ? `Se crean ${cantidad} gift cards con números correlativos y un PDF para imprimir y recortar (10 por hoja).` : "Con más de 1 se crea un lote con números correlativos y un PDF para imprimir."}
+                  {esLote ? `Se crean ${cantidad} gift cards, cada una con su número y su QR distintos, y se descarga el PDF para imprimir y recortar (10 por hoja, ${Math.ceil(cantidad / 10)} ${Math.ceil(cantidad / 10) === 1 ? "hoja" : "hojas"}).` : "Con más de 1 se crea un lote con números correlativos y se descarga un PDF para imprimir (10 por hoja)."}
                 </div>
               </div>
 
               <div>
                 <div style={{ ...label, display: "flex", justifyContent: "space-between" }}><span>Mensaje</span><span style={{ fontWeight: 500 }}>{form.mensaje.length}/{MENSAJE_MAX}</span></div>
                 <textarea rows={3} maxLength={MENSAJE_MAX} value={form.mensaje} onChange={e => set("mensaje", e.target.value)} placeholder="Escribe un mensaje para quien la recibe" style={{ ...inputBase, resize: "vertical" }} />
-              </div>
-
-              <div>
-                <div style={label}>Para (opcional)</div>
-                <input value={form.para} maxLength={PARA_MAX} onChange={e => set("para", e.target.value)} placeholder="Nombre de quien la recibe" style={inputBase} />
-                {esLote && <div style={{ fontSize: 13, color: TEXT3, marginTop: 5 }}>Si lo escribes, aparece en todas las tarjetas del lote.</div>}
               </div>
 
               {!esLote && (
@@ -394,16 +476,24 @@ export default function GiftcardsPage() {
                 </>
               )}
 
-              <div>
-                <div style={label}>Válida hasta (opcional)</div>
-                <input type="date" min={hoyChile()} value={form.vence} onChange={e => set("vence", e.target.value)} style={inputBase} />
-              </div>
+              {form.tema === "clasico" ? (
+                <div>
+                  <div style={label}>Válida hasta (opcional)</div>
+                  <input type="date" min={hoyChile()} value={form.vence} onChange={e => set("vence", e.target.value)} style={inputBase} />
+                </div>
+              ) : (
+                <div>
+                  <div style={label}>Válida hasta</div>
+                  <div style={{ ...inputBase, opacity: 0.8 }}>{fechaLarga(CAMPANA_NAVIDAD.vence)}</div>
+                  <div style={{ fontSize: 13, color: TEXT3, marginTop: 5 }}>Es la misma para todas las gift cards navideñas.</div>
+                </div>
+              )}
 
-              <div style={{ fontSize: 13, color: TEXT3, borderLeft: `3px solid ${AMR}`, paddingLeft: 10 }}>{CONDICIONES}</div>
+              <div style={{ fontSize: 13, color: TEXT3, borderLeft: `3px solid ${AMR}`, paddingLeft: 10 }}>{condicionesDe(form.tema)}</div>
 
               <button type="button" onClick={crear} disabled={!formOk || guardando}
                 style={{ ...btnBase, background: AMR, color: "#1a1200", fontSize: 17, padding: "13px 16px", opacity: !formOk || guardando ? 0.5 : 1, cursor: !formOk || guardando ? "not-allowed" : "pointer" }}>
-                {guardando ? "Generando…" : esLote ? `Generar ${cantidad} gift cards` : "Generar gift card"}
+                {guardando ? "Generando…" : esLote ? `Generar ${cantidad} gift cards y descargar PDF` : "Generar gift card"}
               </button>
             </fieldset>
 
@@ -461,7 +551,7 @@ export default function GiftcardsPage() {
               <div style={{ fontFamily: TITLE, fontSize: 20, fontWeight: 900 }}>Gift cards creadas</div>
               <div style={{ fontSize: 15, color: TEXT3 }}>{lista.length} en total · {lista.filter(g => g.estado === "activa").length} activas</div>
             </div>
-            <input value={filtro} onChange={e => setFiltro(e.target.value)} placeholder="Buscar por número o nombre" style={{ ...inputBase, width: 260 }} />
+            <input value={filtro} onChange={e => setFiltro(e.target.value)} placeholder="Buscar por número" style={{ ...inputBase, width: 260 }} />
           </div>
 
           {cargando ? <div style={{ color: TEXT3 }}>Cargando…</div>
@@ -514,7 +604,13 @@ export default function GiftcardsPage() {
                     </div>
                   </div>
 
-                  <div style={{ fontSize: 14, color: TEXT2, borderLeft: `3px solid ${AMR}`, paddingLeft: 10 }}>{CONDICIONES}</div>
+                  {usable && !lectura.canjeadaAhora && avisoDiaCanje(t.tema) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#3a2f10", border: `1px solid ${AMR}`, color: AMR, borderRadius: 12, padding: "10px 14px", fontSize: 15, fontWeight: 700 }}>
+                      <AlertTriangle size={22} style={{ flexShrink: 0 }} /> {avisoDiaCanje(t.tema)}
+                    </div>
+                  )}
+
+                  <div style={{ fontSize: 14, color: TEXT2, borderLeft: `3px solid ${AMR}`, paddingLeft: 10 }}>{condicionesDe(t.tema)}</div>
 
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                     {usable && puedo("u") && !lectura.canjeadaAhora && (

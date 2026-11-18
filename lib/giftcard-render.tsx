@@ -1,9 +1,8 @@
 /* eslint-disable @next/next/no-img-element -- Satori (ImageResponse) solo entiende <img>, no next/image. */
 import { ImageResponse } from "next/og";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
-import { CONDICIONES, fechaCorta, miles, urlGiftcard, type DatosTarjeta } from "./giftcards";
+import { CAMPANA_NAVIDAD, CONDICIONES, fechaCorta, miles, urlGiftcard, type DatosTarjeta } from "./giftcards";
 import { qrSvgDataUri } from "./giftcard-qr";
+import { AMBAR, ROJO, TEXTO, TENUE, aceboUri, bolaUri, copoUri, estrellaUri, recursos, type Recursos } from "./diseno";
 
 // Diseño de la gift card. Se dibuja UNA sola vez, en el servidor, y de ahí salen
 // la vista previa del admin, el link público, el PDF y la imagen que ve WhatsApp:
@@ -14,42 +13,6 @@ import { qrSvgDataUri } from "./giftcard-qr";
 
 export const ANCHO = 1200;
 export const ALTO = 630;
-
-const AMBAR = "#FBBF24";
-const ROJO = "#c4262e";
-const TEXTO = "#f5f2ee";
-const TENUE = "#b0a89f";
-
-type Fuentes = NonNullable<NonNullable<ConstructorParameters<typeof ImageResponse>[1]>["fonts"]>;
-interface Recursos { fuentes: Fuentes; logo: string; cachos: string }
-
-let cache: Promise<Recursos> | null = null;
-
-async function cargar(): Promise<Recursos> {
-  const raiz = process.cwd();
-  const [raleway, dm500, dm700, logo, cachos] = await Promise.all([
-    readFile(join(raiz, "assets/fonts/raleway-latin-900-normal.woff")),
-    readFile(join(raiz, "assets/fonts/dm-sans-latin-500-normal.woff")),
-    readFile(join(raiz, "assets/fonts/dm-sans-latin-700-normal.woff")),
-    readFile(join(raiz, "public/LogoCachoEcabra-white.png")),
-    readFile(join(raiz, "public/giftcard-cachos.png")),
-  ]);
-  return {
-    fuentes: [
-      { name: "Raleway", data: raleway, weight: 900, style: "normal" },
-      { name: "DM Sans", data: dm500, weight: 500, style: "normal" },
-      { name: "DM Sans", data: dm700, weight: 700, style: "normal" },
-    ],
-    logo: `data:image/png;base64,${logo.toString("base64")}`,
-    cachos: `data:image/png;base64,${cachos.toString("base64")}`,
-  };
-}
-
-/** Los recursos no cambian entre peticiones: se leen una vez. Si falla, se reintenta en la siguiente. */
-function recursos(): Promise<Recursos> {
-  if (!cache) cache = cargar().catch(e => { cache = null; throw e; });
-  return cache;
-}
 
 /** Cuanto más largo el monto, más chico se dibuja para que siempre quepa. */
 function tamanoValor(texto: string, max: number) {
@@ -68,9 +31,9 @@ function tamanoCodigo(codigo: string, conQr: boolean) {
   return conQr ? 30 : 33;
 }
 
-function Etiqueta({ children, margen = 0 }: { children: string; margen?: number }) {
+function Etiqueta({ children, margen = 0, color = TENUE }: { children: string; margen?: number; color?: string }) {
   return (
-    <div style={{ display: "flex", fontSize: 17, fontWeight: 700, letterSpacing: 6, color: TENUE, marginTop: margen }}>
+    <div style={{ display: "flex", fontSize: 17, fontWeight: 700, letterSpacing: 6, color, marginTop: margen }}>
       {children}
     </div>
   );
@@ -81,12 +44,15 @@ function tarjeta(d: DatosTarjeta, r: Recursos, qr: string | null) {
   const textoMonto = `$${miles(d.valor)}`;
   const textoPct = `${d.valor}%`;
   const vence = fechaCorta(d.vence);
+  const esNavidad = d.tema === "navidad";
+  const copo = copoUri("#f5f2ee");
+  const tenueTab = esNavidad ? "#f6cfd2" : TENUE;
 
   return (
     <div
       style={{
         width: ANCHO, height: ALTO, display: "flex", position: "relative", fontFamily: "DM Sans", color: TEXTO,
-        backgroundImage: "linear-gradient(135deg, #2d2b27 0%, #1b1917 100%)",
+        backgroundImage: esNavidad ? "linear-gradient(135deg, #1f5a3a 0%, #0d2216 100%)" : "linear-gradient(135deg, #2d2b27 0%, #1b1917 100%)",
       }}
     >
       {/* Resplandor cálido detrás del valor */}
@@ -96,6 +62,33 @@ function tarjeta(d: DatosTarjeta, r: Recursos, qr: string | null) {
           backgroundImage: "radial-gradient(ellipse at center, rgba(251,191,36,0.14) 0%, rgba(251,191,36,0) 70%)",
         }}
       />
+
+      {/* Navidad: bolas colgando del marco, copos de nieve y una ramita de acebo */}
+      {esNavidad && (
+        <>
+          <div
+            style={{
+              position: "absolute", left: 360, top: 0, width: 520, height: 260, display: "flex",
+              backgroundImage: "radial-gradient(ellipse at 60% 0%, rgba(196,38,46,0.22) 0%, rgba(196,38,46,0) 70%)",
+            }}
+          />
+          {[
+            { x: 540, largo: 34, color: "#c4262e", claro: "#ff7a80" },
+            { x: 616, largo: 86, color: "#d4a017", claro: "#fde68a" },
+            { x: 694, largo: 54, color: "#2f7a4d", claro: "#86e0ac" },
+            { x: 770, largo: 112, color: "#c4262e", claro: "#ff7a80" },
+          ].map(b => (
+            <div key={b.x} style={{ position: "absolute", left: b.x, top: 24, width: 40, height: b.largo + 58, display: "flex" }}>
+              <div style={{ position: "absolute", left: 19, top: 0, width: 2, height: b.largo, display: "flex", backgroundColor: "rgba(251,191,36,0.6)" }} />
+              <img src={bolaUri(b.color, b.claro)} width={40} height={58} alt="" style={{ position: "absolute", left: 0, top: b.largo }} />
+            </div>
+          ))}
+          <img src={copo} width={30} height={30} alt="" style={{ position: "absolute", left: 420, top: 70, opacity: 0.4 }} />
+          <img src={copo} width={22} height={22} alt="" style={{ position: "absolute", left: 480, top: 150, opacity: 0.3 }} />
+          <img src={copo} width={34} height={34} alt="" style={{ position: "absolute", left: 818, top: 150, opacity: 0.38 }} />
+          <img src={aceboUri()} width={118} height={83} alt="" style={{ position: "absolute", left: 728, top: 520 }} />
+        </>
+      )}
 
       {/* Marco */}
       <div
@@ -109,7 +102,9 @@ function tarjeta(d: DatosTarjeta, r: Recursos, qr: string | null) {
       <div
         style={{
           position: "absolute", right: 24, top: 24, bottom: 24, width: 326, display: "flex", flexDirection: "column", alignItems: "center",
-          backgroundColor: "rgba(255,255,255,0.04)", borderLeft: "3px dashed rgba(251,191,36,0.45)",
+          ...(esNavidad
+            ? { backgroundImage: "linear-gradient(180deg, #b3232d 0%, #6e141b 100%)", borderLeft: "3px dashed rgba(251,191,36,0.8)" }
+            : { backgroundColor: "rgba(255,255,255,0.04)", borderLeft: "3px dashed rgba(251,191,36,0.45)" }),
           borderTopRightRadius: 28, borderBottomRightRadius: 28, paddingTop: qr ? 34 : 52,
         }}
       >
@@ -121,14 +116,14 @@ function tarjeta(d: DatosTarjeta, r: Recursos, qr: string | null) {
           <img src={r.cachos} width={190} height={65} alt="" />
         )}
 
-        <Etiqueta margen={qr ? 16 : 30}>CÓDIGO</Etiqueta>
+        <Etiqueta margen={qr ? 16 : 30} color={tenueTab}>CÓDIGO</Etiqueta>
         <div style={{ display: "flex", marginTop: qr ? 6 : 8, fontSize: tamanoCodigo(d.codigo, !!qr), fontWeight: 700, letterSpacing: d.codigo.length <= 8 ? 5 : 2, color: AMBAR }}>{d.codigo}</div>
 
         {!qr && <div style={{ display: "flex", width: 60, height: 2, marginTop: 24, backgroundColor: "rgba(251,191,36,0.4)" }} />}
 
         {d.para ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: qr ? 14 : 22 }}>
-            <Etiqueta>PARA</Etiqueta>
+            <Etiqueta color={tenueTab}>PARA</Etiqueta>
             <div style={{ display: "flex", justifyContent: "center", marginTop: 5, maxWidth: 270, maxHeight: qr ? 58 : 68, overflow: "hidden", fontSize: qr ? 24 : 28, fontWeight: 700, lineHeight: 1.2, textAlign: "center" }}>
               {d.para}
             </div>
@@ -137,7 +132,7 @@ function tarjeta(d: DatosTarjeta, r: Recursos, qr: string | null) {
 
         {vence ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: qr ? 12 : 20 }}>
-            <Etiqueta>VÁLIDA HASTA</Etiqueta>
+            <Etiqueta color={tenueTab}>VÁLIDA HASTA</Etiqueta>
             <div style={{ display: "flex", marginTop: 5, fontSize: qr ? 23 : 26, fontWeight: 700 }}>{vence}</div>
           </div>
         ) : null}
@@ -148,9 +143,14 @@ function tarjeta(d: DatosTarjeta, r: Recursos, qr: string | null) {
         </div>
       </div>
 
-      {/* Condiciones de uso (letra chica) */}
-      <div style={{ position: "absolute", left: 74, bottom: 30, display: "flex", fontSize: 21, fontWeight: 700, color: TENUE }}>
-        {CONDICIONES}
+      {/* Condiciones de uso (letra chica). La navideña destaca los días de canje. */}
+      <div style={{ position: "absolute", left: 74, bottom: 30, display: "flex", flexDirection: "column", fontSize: 21, fontWeight: 700, color: TENUE }}>
+        {esNavidad && (
+          <div style={{ display: "flex", color: AMBAR, marginBottom: 4 }}>
+            {`Canje de ${CAMPANA_NAVIDAD.diasTexto} en Cacho Cabra.`}
+          </div>
+        )}
+        <div style={{ display: "flex" }}>{CONDICIONES}</div>
       </div>
 
       {/* Lengüeta roja de marca en el borde */}
@@ -162,7 +162,8 @@ function tarjeta(d: DatosTarjeta, r: Recursos, qr: string | null) {
 
         <div style={{ display: "flex", alignItems: "center", marginTop: 28 }}>
           <div style={{ display: "flex", width: 36, height: 4, backgroundColor: ROJO, marginRight: 14 }} />
-          <div style={{ display: "flex", fontSize: 24, fontWeight: 700, letterSpacing: 9, color: AMBAR }}>GIFT CARD</div>
+          <div style={{ display: "flex", fontSize: 24, fontWeight: 700, letterSpacing: esNavidad ? 7 : 9, color: AMBAR }}>{esNavidad ? "GIFT CARD NAVIDEÑA" : "GIFT CARD"}</div>
+          {esNavidad && <img src={estrellaUri()} width={24} height={24} alt="" style={{ marginLeft: 4 }} />}
         </div>
 
         {esPorcentaje ? (

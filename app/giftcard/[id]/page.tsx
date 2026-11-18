@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { obtenerGiftcard } from "../../../lib/giftcards-db";
-import { CONDICIONES, estaVencida, fechaCorta, valorTexto, mensajeWhatsapp, urlGiftcard } from "../../../lib/giftcards";
+import { condicionesDe, estaVencida, fechaCorta, nombreGiftcard, valorTexto, mensajeWhatsapp, urlGiftcard } from "../../../lib/giftcards";
 import { qrSvgDataUri } from "../../../lib/giftcard-qr";
 import { BG, SURFACE, BORDER, TEXT1, TEXT2, TEXT3, AMR, FONT, TITLE } from "../../../lib/tokens";
 
@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const g = await obtenerGiftcard(id);
   if (!g) return { title: "Gift Card · Cacho Cabra", robots: { index: false, follow: false } };
 
-  const titulo = "Tienes una Gift Card de Cacho Cabra";
+  const titulo = `Tienes una ${nombreGiftcard(g.tema)} de Cacho Cabra`;
   const descripcion = g.tipo === "porcentaje"
     ? `${g.valor}% de descuento en tu consumo. Ábrela para verla y descargarla.`
     : `${valorTexto(g.tipo, g.valor)} para canjear en tu consumo. Ábrela para verla y descargarla.`;
@@ -52,7 +52,7 @@ export default async function GiftcardPage({ params }: { params: Promise<{ id: s
   // Solo las gift cards en $ llevan QR (las de % se canjean por su código), y solo mientras se pueden usar.
   const qr = g.tipo === "monto" && g.estado === "activa" && !vencida ? qrSvgDataUri(urlGiftcard(g.id)) : null;
 
-  const wa = `https://wa.me/?text=${encodeURIComponent(mensajeWhatsapp({ para: "", tipo: g.tipo, valor: g.valor, codigo: g.codigo }, `${SITIO}/giftcard/${g.id}`))}`;
+  const wa = `https://wa.me/?text=${encodeURIComponent(mensajeWhatsapp({ para: "", tipo: g.tipo, valor: g.valor, codigo: g.codigo, tema: g.tema },`${SITIO}/giftcard/${g.id}`))}`;
 
   return (
     <div style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "40px 16px 64px" }}>
@@ -101,7 +101,7 @@ export default async function GiftcardPage({ params }: { params: Promise<{ id: s
             Muestra esta tarjeta o dicta tu código en caja: <strong style={{ color: AMR, letterSpacing: 1 }}>{g.codigo}</strong>.
             {g.vence ? <> Válida hasta el {fechaCorta(g.vence)}.</> : null}
           </div>
-          <div style={{ fontSize: 15, color: TEXT2, fontWeight: 700 }}>{CONDICIONES}</div>
+          <div style={{ fontSize: 15, color: TEXT2, fontWeight: 700 }}>{condicionesDe(g.tema)}</div>
           <div style={{ fontSize: 15, color: TEXT3 }}>Cacho Cabra · Del Canelo N° 439, Llolleo, San Antonio</div>
         </div>
 

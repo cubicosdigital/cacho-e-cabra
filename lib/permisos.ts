@@ -14,7 +14,7 @@ export const MODULOS = [
   { k: "giftcards", label: "Gift cards", grupo: "Ventas" },
   { k: "pos", label: "POS en caja (cobros)", grupo: "Ventas" },
   { k: "mesas", label: "Mesas", grupo: "Local" },
-  { k: "menu", label: "Menú carta y sugerencias del chef", grupo: "Local" },
+  { k: "menu", label: "Menú carta, sugerencias del chef y menú del día", grupo: "Local" },
   { k: "reclamos", label: "Reclamos de clientes", grupo: "Local", solo: ["r", "u"] },
   { k: "denuncias", label: "Denuncias (bandeja)", grupo: "Local", solo: ["c", "r", "u"] },
   { k: "turnos", label: "Turnos de la semana", grupo: "Personas" },

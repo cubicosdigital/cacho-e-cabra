@@ -4,6 +4,24 @@
 
 export type TipoGiftcard = "monto" | "porcentaje";
 export type EstadoGiftcard = "activa" | "canjeada" | "anulada";
+/** "clasico" es el diseño de siempre; "navidad" es la campaña de fin de año. */
+export type TemaGiftcard = "clasico" | "navidad";
+
+/** Reglas de la campaña navideña: es lo único que hay que cambiar para extenderla o reabrirla. */
+export const CAMPANA_NAVIDAD = {
+  montos: [30000, 50000],
+  /** Vencimiento de todas las gift cards navideñas (YYYY-MM-DD). */
+  vence: "2027-02-28",
+  /** Se cobran solo de martes a jueves (0 = domingo … 6 = sábado). */
+  diasCanje: [2, 3, 4],
+  diasTexto: "martes a jueves",
+  lema: "Compra y regala tu Gift Cacho Cabra",
+  /** WhatsApp del local, donde se compra. */
+  whatsapp: "56942968583",
+} as const;
+
+/** Sube cuando cambia el dibujo de la tarjeta navideña: así los navegadores no muestran la imagen vieja desde el caché. */
+export const DISENO_NAVIDAD = "3";
 
 export interface Giftcard {
   id: string;
@@ -18,6 +36,7 @@ export interface Giftcard {
   /** Fecha de vencimiento YYYY-MM-DD, o null si no vence. */
   vence: string | null;
   estado: EstadoGiftcard;
+  tema: TemaGiftcard;
   creadaPor: string;
   creadaEn: string;
   canjeadaEn: string | null;
@@ -35,16 +54,48 @@ export interface DatosTarjeta {
   mensaje: string;
   para: string;
   vence: string | null;
+  /** Diseño de la tarjeta. Si falta, "clasico". */
+  tema?: TemaGiftcard;
 }
 
 /** Condiciones de uso: van siempre en la tarjeta, en la página del cliente y en el panel de canje. */
 export const CONDICIONES = "Solo consumo en el local. No aplica descuento sobre descuento.";
+export const CONDICIONES_NAVIDAD = `Canje de ${CAMPANA_NAVIDAD.diasTexto} en Cacho Cabra. Solo consumo en el local. No aplica descuento sobre descuento.`;
+
+export function condicionesDe(tema: TemaGiftcard | undefined): string {
+  return tema === "navidad" ? CONDICIONES_NAVIDAD : CONDICIONES;
+}
+
+export function nombreGiftcard(tema: TemaGiftcard | undefined): string {
+  return tema === "navidad" ? "Gift Card Navideña" : "Gift Card";
+}
+
+/** Día de la semana en Chile (0 = domingo … 6 = sábado), según la hora de Chile y no la del servidor. */
+export function diaSemanaChile(ahora: Date = new Date()): number {
+  const dia = new Intl.DateTimeFormat("en-US", { timeZone: "America/Santiago", weekday: "short" }).format(ahora);
+  return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(dia);
+}
+
+const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+export const nombreDia = (n: number) => DIAS[n] ?? "";
+
+/**
+ * Aviso para quien canjea: la gift card navideña solo se cobra de martes a jueves.
+ * Es solo un aviso (el local decide); devuelve null si hoy se puede canjear con normalidad.
+ */
+export function avisoDiaCanje(tema: TemaGiftcard | undefined, ahora: Date = new Date()): string | null {
+  if (tema !== "navidad") return null;
+  const dia = diaSemanaChile(ahora);
+  if ((CAMPANA_NAVIDAD.diasCanje as readonly number[]).includes(dia)) return null;
+  return `Esta gift card solo se canjea de ${CAMPANA_NAVIDAD.diasTexto}. Hoy es ${nombreDia(dia)}.`;
+}
 export const CANTIDAD_MAX = 100;
 export const SITIO_URL = "https://cachocabrabar.cl";
 export const MENSAJE_MAX = 120;
 export const PARA_MAX = 30;
 export const VALOR_MAX_MONTO = 10_000_000;
 export const MENSAJE_POR_DEFECTO = "Un regalo para que disfrutes de buena comida y buenos tragos.";
+export const MENSAJE_NAVIDAD_POR_DEFECTO = "Feliz Navidad. Un regalo para que disfrutes de buena comida y buenos tragos.";
 
 export const ESTADO_META: Record<EstadoGiftcard, { label: string; color: string; bg: string }> = {
   activa: { label: "Activa", color: "#34d399", bg: "#1a2e1a" },
@@ -71,6 +122,17 @@ export function fechaCorta(iso: string | null | undefined): string {
   const mes = Number(m[2]);
   if (mes < 1 || mes > 12) return "";
   return `${Number(m[3])} ${MESES[mes - 1]} ${m[1]}`;
+}
+
+const MESES_LARGO = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+/** "2027-02-28" → "28 de febrero de 2027". Devuelve "" si no es una fecha válida. */
+export function fechaLarga(iso: string | null | undefined): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? "");
+  if (!m) return "";
+  const mes = Number(m[2]);
+  if (mes < 1 || mes > 12) return "";
+  return `${Number(m[3])} de ${MESES_LARGO[mes - 1]} de ${m[1]}`;
 }
 
 /** Hoy en formato YYYY-MM-DD, según la hora de Chile (no la del servidor). */
@@ -135,20 +197,27 @@ export function telefonoWhatsapp(tel: string): string {
   return d;
 }
 
-export function mensajeWhatsapp(g: Pick<Giftcard, "para" | "tipo" | "valor" | "codigo">, url: string): string {
+export function mensajeWhatsapp(g: Pick<Giftcard, "para" | "tipo" | "valor" | "codigo"> & { tema?: TemaGiftcard }, url: string): string {
   const saludo = g.para ? `Hola ${g.para}!` : "Hola!";
+  const nombre = g.tema === "navidad" ? "una Gift Card Navideña" : "una Gift Card";
   const regalo = g.tipo === "porcentaje"
-    ? `una Gift Card de Cacho Cabra con ${g.valor}% de descuento`
-    : `una Gift Card de Cacho Cabra por $${miles(g.valor)}`;
+    ? `${nombre} de Cacho Cabra con ${g.valor}% de descuento`
+    : `${nombre} de Cacho Cabra por $${miles(g.valor)}`;
   return `${saludo} 🎁 Te regalamos ${regalo}.\n\nMírala y descárgala aquí: ${url}\n\nCódigo: ${g.codigo}`;
 }
 
-export function linkWhatsapp(g: Pick<Giftcard, "para" | "tipo" | "valor" | "codigo" | "telefono">, url: string): string {
+/** Link a WhatsApp del local para comprar una gift card navideña del monto elegido. */
+export function linkCompraNavidad(monto: number): string {
+  const texto = `Hola! Quiero comprar una Gift Card Navideña de $${miles(monto)} para regalar.`;
+  return `https://wa.me/${CAMPANA_NAVIDAD.whatsapp}?text=${encodeURIComponent(texto)}`;
+}
+
+export function linkWhatsapp(g: Pick<Giftcard, "para" | "tipo" | "valor" | "codigo" | "telefono"> & { tema?: TemaGiftcard }, url: string): string {
   const tel = telefonoWhatsapp(g.telefono);
   return `https://wa.me/${tel}?text=${encodeURIComponent(mensajeWhatsapp(g, url))}`;
 }
 
-export type NuevaGiftcard = Pick<Giftcard, "tipo" | "valor" | "mensaje" | "para" | "telefono" | "vence">;
+export type NuevaGiftcard = Pick<Giftcard, "tipo" | "valor" | "mensaje" | "para" | "telefono" | "vence" | "tema">;
 
 /** Lo que se crea: los datos de la tarjeta y cuántas copias numeradas (1 a CANTIDAD_MAX). */
 export type PedidoGiftcards = NuevaGiftcard & { cantidad: number };
@@ -157,8 +226,11 @@ export type PedidoGiftcards = NuevaGiftcard & { cantidad: number };
 export function validarNueva(entrada: unknown, hoy: string = hoyChile()): { ok: true; datos: PedidoGiftcards } | { ok: false; error: string } {
   const b = (entrada && typeof entrada === "object" ? entrada : {}) as Record<string, unknown>;
 
+  const tema: TemaGiftcard = b.tema === "navidad" ? "navidad" : "clasico";
+
   const tipo = b.tipo;
   if (tipo !== "monto" && tipo !== "porcentaje") return { ok: false, error: "Elige si la gift card es por monto o por porcentaje" };
+  if (tema === "navidad" && tipo !== "monto") return { ok: false, error: "La gift card navideña es solo por monto" };
 
   const cantidad = b.cantidad === undefined || b.cantidad === "" ? 1 : Number(b.cantidad);
   if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > CANTIDAD_MAX) return { ok: false, error: `La cantidad debe ser un número entre 1 y ${CANTIDAD_MAX}` };
@@ -167,6 +239,9 @@ export function validarNueva(entrada: unknown, hoy: string = hoyChile()): { ok: 
   if (!Number.isInteger(valor) || valor <= 0) return { ok: false, error: "El valor debe ser un número entero mayor a 0" };
   if (tipo === "porcentaje" && valor > 100) return { ok: false, error: "El descuento no puede superar el 100%" };
   if (tipo === "monto" && valor > VALOR_MAX_MONTO) return { ok: false, error: `El monto no puede superar $${miles(VALOR_MAX_MONTO)}` };
+  if (tema === "navidad" && !(CAMPANA_NAVIDAD.montos as readonly number[]).includes(valor)) {
+    return { ok: false, error: `La gift card navideña es de ${CAMPANA_NAVIDAD.montos.map(m => `$${miles(m)}`).join(" o ")}` };
+  }
 
   const mensaje = String(b.mensaje ?? "").replace(/\s+/g, " ").trim();
   if (mensaje.length > MENSAJE_MAX) return { ok: false, error: `El mensaje no puede superar ${MENSAJE_MAX} caracteres` };
@@ -177,16 +252,19 @@ export function validarNueva(entrada: unknown, hoy: string = hoyChile()): { ok: 
   const telefono = soloDigitos(String(b.telefono ?? ""));
   if (telefono.length > 15) return { ok: false, error: "El teléfono es demasiado largo" };
 
-  const venceRaw = String(b.vence ?? "").trim();
+  // La navideña vence siempre en la fecha de la campaña: no se elige.
+  const venceRaw = tema === "navidad" ? CAMPANA_NAVIDAD.vence : String(b.vence ?? "").trim();
   let vence: string | null = null;
   if (venceRaw) {
     if (!fechaValida(venceRaw)) return { ok: false, error: "La fecha de vencimiento no es válida" };
-    if (venceRaw < hoy) return { ok: false, error: "La fecha de vencimiento no puede estar en el pasado" };
+    if (venceRaw < hoy) {
+      return { ok: false, error: tema === "navidad" ? `La campaña navideña terminó el ${fechaCorta(venceRaw)}` : "La fecha de vencimiento no puede estar en el pasado" };
+    }
     vence = venceRaw;
   }
 
   // En un lote el nombre (si se escribe) va en todas; el WhatsApp solo vale para una gift card.
-  return { ok: true, datos: { tipo, valor, mensaje, para, telefono: cantidad > 1 ? "" : telefono, vence, cantidad } };
+  return { ok: true, datos: { tipo, valor, mensaje, para, telefono: cantidad > 1 ? "" : telefono, vence, cantidad, tema } };
 }
 
 /**
@@ -194,11 +272,15 @@ export function validarNueva(entrada: unknown, hoy: string = hoyChile()): { ok: 
  * a medias no debe dar error, solo dibujarse lo mejor posible.
  */
 export function datosVistaPrevia(q: URLSearchParams): DatosTarjeta {
-  const tipo: TipoGiftcard = q.get("tipo") === "porcentaje" ? "porcentaje" : "monto";
+  const tema: TemaGiftcard = q.get("tema") === "navidad" ? "navidad" : "clasico";
+  const tipo: TipoGiftcard = tema === "navidad" || q.get("tipo") !== "porcentaje" ? "monto" : "porcentaje";
   let valor = Math.max(0, Math.round(Number(q.get("valor")) || 0));
   valor = tipo === "porcentaje" ? Math.min(valor, 100) : Math.min(valor, VALOR_MAX_MONTO);
-  const venceRaw = q.get("vence") ?? "";
+  // Antes de elegir monto, la navideña se muestra con el primero de la campaña en vez de "$0".
+  if (tema === "navidad" && !(CAMPANA_NAVIDAD.montos as readonly number[]).includes(valor)) valor = CAMPANA_NAVIDAD.montos[0];
+  const venceRaw = tema === "navidad" ? CAMPANA_NAVIDAD.vence : q.get("vence") ?? "";
   return {
+    tema,
     codigo: (q.get("codigo") ?? "000000").replace(/[^A-Za-z0-9-]/g, "").slice(0, 16) || "000000",
     tipo,
     valor,

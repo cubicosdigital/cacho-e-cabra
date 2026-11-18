@@ -1,6 +1,6 @@
 import { getSupabase } from "./supabase";
 import { txt, num } from "./coleccion";
-import { hoyChile, porCodigo, type EstadoGiftcard, type Giftcard, type PedidoGiftcards, type TipoGiftcard } from "./giftcards";
+import { hoyChile, porCodigo, type EstadoGiftcard, type Giftcard, type PedidoGiftcards, type TemaGiftcard, type TipoGiftcard } from "./giftcards";
 
 // Solo servidor. Usa la service key: las políticas de la tabla no dan acceso a `anon`.
 
@@ -14,7 +14,7 @@ function fallo(accion: string, e: { message: string; code?: string }): Error {
     return new Error("Falta crear la tabla de gift cards en Supabase: ejecuta las migraciones 020 y 021 en el SQL Editor.");
   }
   if (e.code === "PGRST202" || /Could not find the function/i.test(e.message)) {
-    return new Error("Falta la función de gift cards en Supabase: ejecuta la migración 021 en el SQL Editor.");
+    return new Error("Falta la función de gift cards en Supabase: ejecuta las migraciones 021 y 022 en el SQL Editor.");
   }
   return new Error(`${accion}: ${e.message}`);
 }
@@ -30,6 +30,8 @@ function aDominio(f: Record<string, unknown>): Giftcard {
     telefono: txt(f.telefono),
     vence: typeof f.vence === "string" ? f.vence.slice(0, 10) : null,
     estado: txt(f.estado, "activa") as EstadoGiftcard,
+    // Antes de la migración 022 la columna no existe: todas eran clásicas.
+    tema: (f.tema === "navidad" ? "navidad" : "clasico") as TemaGiftcard,
     creadaPor: txt(f.creada_por),
     creadaEn: txt(f.creada_en),
     canjeadaEn: typeof f.canjeada_en === "string" ? f.canjeada_en : null,
@@ -74,6 +76,8 @@ export async function crearGiftcards(datos: PedidoGiftcards, creadaPor: string):
     p_telefono: datos.telefono,
     p_vence: datos.vence,
     p_creada_por: creadaPor,
+    // Solo se envía si no es clásica: así crear gift cards de siempre funciona aunque la migración 022 aún no se haya corrido.
+    ...(datos.tema === "clasico" ? {} : { p_tema: datos.tema }),
   });
   if (error) throw fallo("No se pudo crear la gift card", error);
   return ((data ?? []) as Record<string, unknown>[]).map(aDominio).sort(porCodigo);

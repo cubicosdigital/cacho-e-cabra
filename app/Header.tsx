@@ -8,7 +8,9 @@ import { BORDER, TEXT1, TEXT2, AMR, FONT, TITLE } from "../lib/tokens";
 const LINKS = [
   { href: "/", label: "Inicio" },
   { href: "/carta", label: "Carta" },
+  { href: "/menu-del-dia", label: "Menú del día" },
   { href: "/eventos", label: "Eventos" },
+  { href: "/regala", label: "Gift Card" },
   { href: "/galeria", label: "Galería" },
   { href: "/trabajo", label: "Trabajo" },
   { href: "/#ubicacion", label: "Ubicación" },
