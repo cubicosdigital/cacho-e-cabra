@@ -49,17 +49,6 @@ export default async function Home() {
   // Solo los eventos marcados como destacados en el CMS llegan al home.
   const eventosDestacados = (await getEventos()).filter(e => e.publicado && e.destacado);
 
-  const eventoSlides: Slide[] = eventosDestacados.slice(0, 2).map(e => ({
-    id: `evento-${e.id}`,
-    nombre: e.titulo,
-    descripcion: e.descripcion,
-    foto: e.imagen,
-    precio: e.precio,
-    tipo: 'evento',
-    botonTexto: 'Quiero ser parte',
-    botonHref: `/eventos/${e.id}`,
-  }));
-
   // Si el admin armó slides en el CMS, esos mandan. Si no, el banner se arma solo.
   const slidesCms = (await getSlides()).filter(s => s.activo && s.imagen);
   const banner: Slide[] = slidesCms.length > 0
@@ -75,7 +64,6 @@ export default async function Home() {
         botonHref: s.botonHref,
       }))
     : [
-        ...eventoSlides,
         ...slidesFijos,
         ...(chef.length > 0 ? chef : destacados),
       ].slice(0, 6);
