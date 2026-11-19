@@ -9,7 +9,7 @@ import { SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, FONT } from "../../..
 
 import { ROL_LABEL, type Rol } from "../../../lib/roles";
 import type { PermisosGuardados } from "../../../lib/permisos";
-import { GRUPOS, visible, esActivo } from "./nav-config";
+import { GRUPOS, visible, itemActivo } from "./nav-config";
 import { useAdminNav } from "./AdminNavProvider";
 export type { Rol };
 
@@ -58,7 +58,7 @@ export default function Sidebar({ nombre, rol, permisos }: { nombre: string; rol
         const items = grupo.items.filter(i => visible(i, rol, permisos));
         if (items.length === 0) return null;
 
-        const hayActiva = items.some(i => i.href && esActivo(pathname, i.href));
+        const hayActiva = items.some(i => itemActivo(pathname, i));
         const abierto = !grupo.colapsable || hayActiva || !!abiertos[grupo.titulo];
         const pendientes = grupo.colapsable ? items.reduce((n, i) => n + (i.badge ? contadores[i.badge] : 0), 0) : 0;
 
@@ -96,7 +96,7 @@ export default function Sidebar({ nombre, rol, permisos }: { nombre: string; rol
                 );
               }
 
-              const active = esActivo(pathname, item.href);
+              const active = itemActivo(pathname, item);
               return (
                 <Link key={item.href} href={item.href} style={{
                   display: "flex", alignItems: "center", gap: 8, padding: "5px 10px", borderRadius: 8,

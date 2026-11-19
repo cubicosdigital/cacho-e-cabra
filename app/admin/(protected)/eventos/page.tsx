@@ -1,7 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { Evento, TipoEvento, EstadoEvento } from "../../../../lib/eventos";
+import Link from "next/link";
+import { Users } from "lucide-react";
 import SelectorFoto from "../SelectorFoto";
+import { useAdminNav } from "../AdminNavProvider";
+import { puede } from "../../../../lib/permisos";
 import { resolverImagen } from "../../../../lib/imagenes";
 import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, FONT, TITLE } from "../../../../lib/tokens";
 
@@ -16,6 +20,8 @@ const inputBase: React.CSSProperties = {
 };
 
 export default function EventosAdminPage() {
+  const { rol, permisos } = useAdminNav();
+  const puedeVerInvitados = puede(rol, permisos, "invitados", "r");
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
   const [editId, setEditId] = useState<string | null>(null);
@@ -110,11 +116,18 @@ export default function EventosAdminPage() {
     <div className="adm-page" style={{ minHeight: "100vh", background: BG, fontFamily: FONT, color: TEXT1, padding: "32px 40px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
 
-        <div>
-          <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Eventos</div>
-          <div style={{ fontSize: 17, color: TEXT3 }}>
-            {eventos.length} eventos · {eventos.filter(e => e.publicado).length} publicados · {eventos.filter(e => e.destacado).length} destacados en el home
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Eventos</div>
+            <div style={{ fontSize: 17, color: TEXT3 }}>
+              {eventos.length} eventos · {eventos.filter(e => e.publicado).length} publicados · {eventos.filter(e => e.destacado).length} destacados en el home
+            </div>
           </div>
+          {puedeVerInvitados && (
+            <Link href="/admin/invitados" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: AMR, color: "#1a1200", borderRadius: 10, padding: "10px 18px", fontSize: 16, fontWeight: 800, textDecoration: "none", fontFamily: FONT }}>
+              <Users size={18} /> Invitados por evento
+            </Link>
+          )}
         </div>
 
         {error && (

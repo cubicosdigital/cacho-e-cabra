@@ -1,7 +1,7 @@
 import {
   Receipt, Bike, TrendingUp, FileText, UtensilsCrossed, ChefHat,
   AlertTriangle, Inbox, MessageSquare, CalendarClock, CalendarDays, Users,
-  Image as ImageIcon, PartyPopper, ClipboardList, Megaphone, HandPlatter, Film, Fingerprint, Bell, Settings2, LayoutDashboard, SlidersHorizontal, CreditCard, Briefcase, Gift,
+  Image as ImageIcon, PartyPopper, Megaphone, HandPlatter, Film, Fingerprint, Bell, Settings2, LayoutDashboard, SlidersHorizontal, CreditCard, Briefcase, Gift,
   type LucideIcon,
 } from "lucide-react";
 import type { Rol } from "../../../lib/roles";
@@ -19,6 +19,8 @@ export type Item = {
   acceso: "admin" | "todos" | [Modulo, Accion];
   /** Módulo planificado, aún sin construir: se muestra apagado y sin link. */
   pronto?: boolean;
+  /** Otras rutas que cuelgan de este ítem (se muestra activo también en ellas). */
+  tambien?: string[];
   /** Muestra un contador de pendientes junto al link. */
   badge?: Badge;
 };
@@ -66,8 +68,7 @@ export const GRUPOS: Grupo[] = [
     items: [
       { href: "/admin/banner", label: "Banner principal", icon: ImageIcon, acceso: ["banner", "r"] },
       { href: "/admin/galeria", label: "Galería", icon: Film, acceso: ["galeria", "r"] },
-      { href: "/admin/eventos", label: "Eventos", icon: PartyPopper, acceso: ["eventos", "r"] },
-      { href: "/admin/invitados", label: "Invitados por evento", icon: ClipboardList, acceso: ["invitados", "r"] },
+      { href: "/admin/eventos", label: "Eventos", icon: PartyPopper, acceso: ["eventos", "r"], tambien: ["/admin/invitados"] },
     ],
   },
   {
@@ -111,6 +112,10 @@ export function visible(i: Item, rol: Rol, permisos: PermisosGuardados) {
 
 export function esActivo(pathname: string, href: string) {
   return pathname === href || (href !== "/admin" && pathname.startsWith(href + "/"));
+}
+
+export function itemActivo(pathname: string, item: Item) {
+  return !!item.href && [item.href, ...(item.tambien ?? [])].some(h => esActivo(pathname, h));
 }
 
 const TABS_POR_ROL: Partial<Record<Rol, string[]>> = {

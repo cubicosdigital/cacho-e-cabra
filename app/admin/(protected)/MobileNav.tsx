@@ -4,7 +4,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { BORDER, TEXT1, TEXT3, AMR, FONT, TITLE } from "../../../lib/tokens";
-import { GRUPOS, tabsPara, visible, esActivo } from "./nav-config";
+import { GRUPOS, tabsPara, visible, itemActivo } from "./nav-config";
 import { useAdminNav } from "./AdminNavProvider";
 
 const RUTA_MENU = "/admin/menu-app";
@@ -17,11 +17,11 @@ export default function MobileNav() {
   const enTabs = new Set(tabs.map(t => t.href));
   const itemsVisibles = GRUPOS.flatMap(g => g.items).filter(i => i.href && !i.pronto && visible(i, rol, permisos));
   const actual = itemsVisibles
-    .filter(i => esActivo(pathname, i.href!))
+    .filter(i => itemActivo(pathname, i))
     .sort((a, b) => b.href!.length - a.href!.length)[0];
 
   const enMenu = pathname === RUTA_MENU;
-  const menuActivo = enMenu || !tabs.some(t => esActivo(pathname, t.href!));
+  const menuActivo = enMenu || !tabs.some(t => itemActivo(pathname, t));
   const pendientesMenu = itemsVisibles
     .filter(i => i.badge && !enTabs.has(i.href))
     .reduce((n, i) => n + contadores[i.badge!], 0);
@@ -52,7 +52,7 @@ export default function MobileNav() {
       }}>
         {tabs.map(t => {
           const Icon = t.icon;
-          const activo = !enMenu && esActivo(pathname, t.href!);
+          const activo = !enMenu && itemActivo(pathname, t);
           const badge = t.badge ? contadores[t.badge] : 0;
           return (
             <Tab key={t.href} href={t.href!} label={t.corto ?? t.label} activo={activo} badge={badge}>

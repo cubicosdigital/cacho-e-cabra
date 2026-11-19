@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import type { Registro } from "../../../../lib/registros";
 import type { Evento } from "../../../../lib/eventos";
 import { BG, SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, VERDE, FONT, TITLE } from "../../../../lib/tokens";
@@ -79,6 +81,9 @@ export default function InvitadosPage() {
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
 
         <div>
+          <Link href="/admin/eventos" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: TEXT3, fontSize: 16, fontWeight: 700, textDecoration: "none", marginBottom: 10 }}>
+            <ArrowLeft size={17} /> Volver a Eventos
+          </Link>
           <div className="adm-h1" style={{ fontFamily: TITLE, fontSize: 32, fontWeight: 900 }}>Invitados por evento</div>
           <div style={{ fontSize: 17, color: TEXT3 }}>
             Confirma pagos y escribe por WhatsApp a los registrados.
