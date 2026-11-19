@@ -53,7 +53,6 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
     titulo: "Turnos",
     items: [
       { href: "/admin/trabajadores", label: "Trabajadores", icon: Users, acceso: ["trabajadores", "r"] },
-      { href: "/admin/postulaciones", label: "Postulaciones", icon: Briefcase, acceso: ["postulaciones", "r"] },
       { href: "/admin/turnos", label: "Malla de turnos", icon: CalendarClock, acceso: ["turnos", "u"] },
       { href: "/admin/mi-horario", label: "Mi horario", icon: CalendarDays, acceso: "todos" },
       { href: "/admin/asistencia", label: "Asistencia", icon: Fingerprint, acceso: ["asistencia", "r"] },
@@ -82,6 +81,7 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
       { href: "/admin/delivery", label: "Pedidos delivery", corto: "Delivery", icon: Bike, acceso: ["delivery", "r"], badge: "deliveryNuevos" },
       { href: "/admin/pos", label: "POS (Caja)", corto: "Caja", icon: CreditCard, acceso: ["pos", "r"] },
       { href: "/admin/ventas", label: "Resumen de ventas", corto: "Ventas", icon: TrendingUp, acceso: ["ventas", "r"] },
+      { href: "/admin/postulaciones", label: "Postulaciones", icon: Briefcase, acceso: ["postulaciones", "r"] },
     ],
   },
   {

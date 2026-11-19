@@ -12,7 +12,6 @@ const LINKS = [
   { href: "/eventos", label: "Eventos" },
   { href: "/regala", label: "Gift Card" },
   { href: "/galeria", label: "Galería" },
-  { href: "/trabajo", label: "Trabajo" },
   { href: "/#ubicacion", label: "Ubicación" },
 ];
 
