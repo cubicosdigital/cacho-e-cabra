@@ -35,13 +35,13 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
     titulo: "Ventas",
     items: [
       { href: "/admin/presupuestos", label: "Presupuestos", icon: FileText, acceso: ["presupuestos", "r"] },
-      { href: "/admin/giftcards", label: "Gift cards", icon: Gift, acceso: ["giftcards", "r"] },
+      { href: "/admin/giftcards", label: "Gift cards", corto: "Gift cards", icon: Gift, acceso: ["giftcards", "r"] },
     ],
   },
   {
     titulo: "Local",
     items: [
-      { href: "/admin/menu", label: "Menú carta", icon: UtensilsCrossed, acceso: ["menu", "r"] },
+      { href: "/admin/menu", label: "Menú carta", corto: "Carta", icon: UtensilsCrossed, acceso: ["menu", "r"] },
       { href: "/admin/menu-dia", label: "Menú del día", icon: CalendarDays, acceso: ["menu", "r"] },
       { href: "/admin/sugerencias-chef", label: "Sugerencias Chef", icon: ChefHat, acceso: ["menu", "r"] },
       { href: "/admin/denuncias/nueva", label: "Denunciar", icon: AlertTriangle, acceso: ["denuncias", "c"] },
@@ -111,14 +111,10 @@ export function esActivo(pathname: string, href: string) {
 }
 
 const TABS_POR_ROL: Partial<Record<Rol, string[]>> = {
-  admin: ["/admin", "/admin/pedidos", "/admin/ventas"],
-  caja: ["/admin/pos", "/admin/pedidos", "/admin/mi-horario"],
-  cocina: ["/admin/pedidos", "/admin/mi-horario"],
-  barra: ["/admin/pedidos", "/admin/mi-horario"],
-  coperia: ["/admin/pedidos", "/admin/mi-horario"],
+  admin: ["/admin", "/admin/menu", "/admin/giftcards"],
 };
-const TABS_POR_DEFECTO = ["/admin/pedidos", "/admin/mesas", "/admin/mi-horario"];
-const TABS_RELLENO = ["/admin/pedidos", "/admin/mesas", "/admin/mi-horario", "/admin/delivery", "/admin/pos"];
+const TABS_POR_DEFECTO = ["/admin/mi-horario", "/admin/menu", "/admin/giftcards"];
+const TABS_RELLENO = ["/admin/mi-horario", "/admin/menu", "/admin/giftcards", "/admin/galeria", "/admin/eventos"];
 
 /** Los 3 accesos fijos de la barra inferior, según el rol y lo que la persona puede ver. */
 export function tabsPara(rol: Rol, permisos: PermisosGuardados): Item[] {
