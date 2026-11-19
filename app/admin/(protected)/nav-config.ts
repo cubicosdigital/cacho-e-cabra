@@ -1,7 +1,7 @@
 import {
-  Receipt, Bike, TrendingUp, FileText, Table2, UtensilsCrossed, ChefHat,
+  Receipt, Bike, TrendingUp, FileText, UtensilsCrossed, ChefHat,
   AlertTriangle, Inbox, MessageSquare, CalendarClock, CalendarDays, Users,
-  Image as ImageIcon, PartyPopper, ClipboardList, ListChecks, Megaphone, HandPlatter, Film, Fingerprint, Bell, Settings2, LayoutDashboard, SlidersHorizontal, CreditCard, Briefcase, Gift,
+  Image as ImageIcon, PartyPopper, ClipboardList, Megaphone, HandPlatter, Film, Fingerprint, Bell, Settings2, LayoutDashboard, SlidersHorizontal, CreditCard, Briefcase, Gift,
   type LucideIcon,
 } from "lucide-react";
 import type { Rol } from "../../../lib/roles";
@@ -34,10 +34,6 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
   {
     titulo: "Ventas",
     items: [
-      { href: "/admin/pedidos", label: "Pedidos local", corto: "Pedidos", icon: Receipt, acceso: ["pedidos", "r"], badge: "pedidosNuevos" },
-      { href: "/admin/delivery", label: "Pedidos delivery", corto: "Delivery", icon: Bike, acceso: ["delivery", "r"], badge: "deliveryNuevos" },
-      { href: "/admin/pos", label: "POS (Caja)", corto: "Caja", icon: CreditCard, acceso: ["pos", "r"] },
-      { href: "/admin/ventas", label: "Resumen de ventas", corto: "Ventas", icon: TrendingUp, acceso: ["ventas", "r"] },
       { href: "/admin/presupuestos", label: "Presupuestos", icon: FileText, acceso: ["presupuestos", "r"] },
       { href: "/admin/giftcards", label: "Gift cards", icon: Gift, acceso: ["giftcards", "r"] },
     ],
@@ -45,7 +41,6 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
   {
     titulo: "Local",
     items: [
-      { href: "/admin/mesas", label: "Mesas", icon: Table2, acceso: ["mesas", "r"] },
       { href: "/admin/menu", label: "Menú carta", icon: UtensilsCrossed, acceso: ["menu", "r"] },
       { href: "/admin/menu-dia", label: "Menú del día", icon: CalendarDays, acceso: ["menu", "r"] },
       { href: "/admin/sugerencias-chef", label: "Sugerencias Chef", icon: ChefHat, acceso: ["menu", "r"] },
@@ -77,8 +72,16 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
   {
     titulo: "Operaciones",
     items: [
-      { href: "/admin/tareas", label: "Tareas Cacho Cabra", icon: ListChecks, acceso: ["tareas", "r"] },
       { label: "Tareas de marketing", icon: Megaphone, acceso: "admin", pronto: true },
+    ],
+  },
+  {
+    titulo: "Desarrollos nuevos",
+    items: [
+      { href: "/admin/pedidos", label: "Pedidos local", corto: "Pedidos", icon: Receipt, acceso: ["pedidos", "r"], badge: "pedidosNuevos" },
+      { href: "/admin/delivery", label: "Pedidos delivery", corto: "Delivery", icon: Bike, acceso: ["delivery", "r"], badge: "deliveryNuevos" },
+      { href: "/admin/pos", label: "POS (Caja)", corto: "Caja", icon: CreditCard, acceso: ["pos", "r"] },
+      { href: "/admin/ventas", label: "Resumen de ventas", corto: "Ventas", icon: TrendingUp, acceso: ["ventas", "r"] },
     ],
   },
   {
