@@ -1,7 +1,8 @@
 "use client";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { SURFACE, SURF2, BORDER, TEXT1, TEXT2, TEXT3, AMR, FONT } from "../../../lib/tokens";
@@ -21,6 +22,17 @@ export default function Sidebar({ nombre, rol, permisos }: { nombre: string; rol
   const pathname = usePathname();
   const asideRef = useRef<HTMLElement>(null);
   const { contadores } = useAdminNav();
+  const [abiertos, setAbiertos] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    try { setAbiertos(JSON.parse(localStorage.getItem("sidebar-grupos") ?? "{}")); } catch { /* sin storage */ }
+  }, []);
+
+  function alternar(titulo: string, abierto: boolean) {
+    const nuevo = { ...abiertos, [titulo]: !abierto };
+    setAbiertos(nuevo);
+    try { localStorage.setItem("sidebar-grupos", JSON.stringify(nuevo)); } catch { /* sin storage */ }
+  }
 
   useEffect(() => {
     try {
@@ -46,13 +58,28 @@ export default function Sidebar({ nombre, rol, permisos }: { nombre: string; rol
         const items = grupo.items.filter(i => visible(i, rol, permisos));
         if (items.length === 0) return null;
 
+        const hayActiva = items.some(i => i.href && esActivo(pathname, i.href));
+        const abierto = !grupo.colapsable || hayActiva || !!abiertos[grupo.titulo];
+        const pendientes = grupo.colapsable ? items.reduce((n, i) => n + (i.badge ? contadores[i.badge] : 0), 0) : 0;
+
         return (
           <div key={grupo.titulo} style={{ marginBottom: 4 }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.08em", padding: "6px 10px 2px" }}>
-              {grupo.titulo}
-            </div>
+            {grupo.colapsable ? (
+              <button type="button" onClick={() => alternar(grupo.titulo, abierto)} aria-expanded={abierto}
+                style={{ width: "100%", display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", fontFamily: FONT, fontSize: 11, fontWeight: 800, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.08em", padding: "6px 10px 2px", textAlign: "left" }}>
+                <ChevronRight size={12} strokeWidth={2.5} style={{ transform: abierto ? "rotate(90deg)" : "none", transition: "transform 0.15s", flexShrink: 0 }} />
+                <span style={{ flex: 1 }}>{grupo.titulo}</span>
+                {!abierto && pendientes > 0 && (
+                  <span style={{ fontSize: 11, fontWeight: 800, background: "#f05252", color: "#fff", borderRadius: 999, padding: "1px 6px" }}>{pendientes}</span>
+                )}
+              </button>
+            ) : (
+              <div style={{ fontSize: 11, fontWeight: 800, color: TEXT3, textTransform: "uppercase", letterSpacing: "0.08em", padding: "6px 10px 2px" }}>
+                {grupo.titulo}
+              </div>
+            )}
 
-            {items.map(item => {
+            {abierto && items.map(item => {
               const Icon = item.icon;
               const badge = item.badge ? contadores[item.badge] : 0;
 

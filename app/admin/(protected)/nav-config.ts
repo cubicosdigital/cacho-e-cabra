@@ -23,7 +23,9 @@ export type Item = {
   badge?: Badge;
 };
 
-export const GRUPOS: { titulo: string; items: Item[] }[] = [
+export type Grupo = { titulo: string; items: Item[]; /** Se muestra plegado: solo el título, y se abre al tocarlo. */ colapsable?: boolean };
+
+export const GRUPOS: Grupo[] = [
   {
     titulo: "General",
     items: [
@@ -76,6 +78,7 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
   },
   {
     titulo: "Desarrollos nuevos",
+    colapsable: true,
     items: [
       { href: "/admin/pedidos", label: "Pedidos local", corto: "Pedidos", icon: Receipt, acceso: ["pedidos", "r"], badge: "pedidosNuevos" },
       { href: "/admin/delivery", label: "Pedidos delivery", corto: "Delivery", icon: Bike, acceso: ["delivery", "r"], badge: "deliveryNuevos" },
