@@ -1,18 +1,16 @@
 "use client";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Menu, X, MapPin } from "lucide-react";
 import { useState, useEffect } from "react";
 import { BORDER, TEXT1, TEXT2, AMR, FONT, TITLE } from "../lib/tokens";
 
 const LINKS = [
   { href: "/", label: "Inicio" },
-  { href: "/carta", label: "Carta" },
   { href: "/menu-del-dia", label: "Menú del día" },
   { href: "/eventos", label: "Eventos" },
   { href: "/regala", label: "Gift Card" },
   { href: "/galeria", label: "Galería" },
-  { href: "/#ubicacion", label: "Ubicación" },
 ];
 
 export default function Header() {
@@ -46,14 +44,11 @@ export default function Header() {
       <style>{`
         .header-links { display: flex; align-items: center; gap: 8px; }
         .header-burger { display: none; }
-        .header-mobile-cta { display: none; }
         .header-logo-link { margin-left: -30px; }
         .header-logo { width: 224px; height: auto; }
         @media (max-width: 760px) {
           .header-links { display: none; }
           .header-burger { display: flex; }
-          .header-cta { display: none !important; }
-          .header-mobile-cta { display: inline-flex; }
           .header-logo-link { margin-left: 0; }
           .header-logo { width: 130px; height: auto; }
         }
@@ -66,8 +61,18 @@ export default function Header() {
         top: esHome ? 0 : undefined, left: esHome ? 0 : undefined, right: esHome ? 0 : undefined,
         zIndex: 30,
       }}>
+      <div style={{ background: "rgba(0,0,0,0.55)", borderBottom: `1px solid ${BORDER}` }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "5px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, fontFamily: FONT, fontSize: 13, fontWeight: 700, whiteSpace: "nowrap" }}>
+          <a href="/#ubicacion" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: TEXT2, textDecoration: "none" }}>
+            <MapPin size={14} color={AMR} /> Ubicación
+          </a>
+          <a href="/carta" target="_blank" rel="noopener noreferrer" style={{ color: AMR, textDecoration: "none", fontWeight: 800 }}>
+            Ver la carta →
+          </a>
+        </div>
+      </div>
       <div style={{
-        maxWidth: 1100, margin: "0 auto", padding: "20px 20px 8px", width: "100%",
+        maxWidth: 1100, margin: "0 auto", padding: "14px 20px 8px", width: "100%",
         display: "flex", alignItems: "center",
         minHeight: 60, gap: 28, flexWrap: "wrap",
       }}>
@@ -90,22 +95,6 @@ export default function Header() {
               );
             })}
           </nav>
-
-          <a href="/carta" target="_blank" rel="noopener noreferrer" className="header-cta" style={{
-            display: "inline-flex", alignItems: "center", gap: 6, background: AMR, color: "#1a1200",
-            borderRadius: 999, padding: "12px 28px", fontSize: 15, fontWeight: 800, textDecoration: "none", flexShrink: 0,
-            transition: "all 0.2s ease", cursor: "pointer",
-          }}>
-            Ver la carta
-          </a>
-
-          <a href="/carta" target="_blank" rel="noopener noreferrer" className="header-mobile-cta" style={{
-            alignItems: "center", justifyContent: "center", gap: 6, flexShrink: 0,
-            background: AMR, color: "#1a1200", borderRadius: 999, padding: "8px 16px",
-            fontSize: 13, fontWeight: 800, textDecoration: "none", whiteSpace: "nowrap",
-          }}>
-            Ver la carta
-          </a>
 
           <button
             className="header-burger"
